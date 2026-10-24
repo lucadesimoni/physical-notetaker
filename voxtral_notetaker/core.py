@@ -15,6 +15,7 @@ from .audio import AudioRecorder, RecordingInfo
 from .transcription import VoxtralTranscriber, TranscriptionResult
 from .diarization import SpeakerDiarizer, SpeakerSegment
 from .storage import CloudStorage, UploadResult
+from .commands import CommandParser, CommandExecutor, CommandType, VoiceCommand, CommandResult
 
 
 @dataclass
@@ -53,6 +54,10 @@ class Notetaker:
         self._start_time: Optional[datetime] = None
         self._interrupted = False
         self._speaker_names: Dict[str, str] = {}
+        
+        # Command processing
+        self._command_parser = CommandParser()
+        self._command_executor = CommandExecutor(self)
     
     def start_recording(self, output_file: Optional[str] = None) -> bool:
         """Start recording from conference microphone"""
@@ -218,6 +223,26 @@ class Notetaker:
             )
         
         return None
+    
+    def process_command(self, text: str, language: str = "auto") -> Optional[CommandResult]:
+        """Process a voice command (German or English)"""
+        return self._command_executor.execute(text, language)
+    
+    def get_notes(self) -> List[Dict[str, Any]]:
+        """Get all notes created from voice commands"""
+        return self._command_executor.get_notes()
+    
+    def get_tasks(self) -> List[Dict[str, Any]]:
+        """Get all tasks created from voice commands"""
+        return self._command_executor.get_tasks()
+    
+    def get_research_queries(self) -> List[Dict[str, Any]]:
+        """Get all research queries from voice commands"""
+        return self._command_executor.get_research_queries()
+    
+    def clear_commands(self):
+        """Clear all saved commands"""
+        self._command_executor.clear_all()
     
     def set_speaker_name(self, speaker_id: str, name: str):
         """Set custom name for a speaker"""

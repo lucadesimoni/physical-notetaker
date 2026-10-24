@@ -8,5 +8,17 @@ __version__ = "1.0.0"
 from .core import Notetaker
 from .config import Config, NotetakerConfig, Language
 from .audio import AudioRecorder
+from .commands import CommandParser, CommandExecutor, CommandType, VoiceCommand, CommandResult
 
-__all__ = ["Notetaker", "Config", "NotetakerConfig", "Language", "AudioRecorder"]
+__all__ = [
+    "Notetaker", 
+    "Config", 
+    "NotetakerConfig", 
+    "Language", 
+    "AudioRecorder",
+    "CommandParser",
+    "CommandExecutor",
+    "CommandType",
+    "VoiceCommand",
+    "CommandResult"
+]
