@@ -1,0 +1,90 @@
+# Voxtral Notetaker Configuration
+# Copy this file to config.yaml and customize for your setup
+
+# General settings
+name: "Voxtral Notetaker"
+
+# Audio Configuration
+audio:
+  sample_rate: 44100          # Audio sample rate (Hz)
+  channels: 1               # Number of audio channels (1 = mono, 2 = stereo)
+  format: wav              # Audio format: wav, mp3, flac, ogg
+  chunk_size: 1024         # Audio chunk size for streaming
+  device_index: null       # Specific audio device index (null = auto-detect)
+  auto_gain: true          # Enable automatic gain control
+  noise_reduction: true   # Enable noise reduction
+  enhancement: true        # Enable audio enhancement
+
+# Voxtral API Configuration
+voxtral:
+  api_key: ""             # Your Voxtral API key (get from https://voxtral.com)
+  base_url: "https://api.voxtral.com/v1"
+  model: "voxtral-4"      # Voxtral model to use
+  timeout: 30             # Request timeout in seconds
+  max_retries: 3          # Maximum number of retry attempts
+  temperature: 0.7        # Sampling temperature (0.0 - 1.0)
+  
+  # Swiss German specific settings
+  enable_swiss_german: true
+  swiss_german_model: "voxtral-4-de-ch"  # Swiss German optimized model
+  language_hint: "de-CH"  # Language hint for better Swiss German recognition
+
+# Speaker Diarization Configuration
+diarization:
+  enabled: true           # Enable speaker diarization
+  min_speakers: 1        # Minimum number of speakers to detect
+  max_speakers: 10       # Maximum number of speakers to detect
+  speaker_change_threshold: 0.7  # Threshold for speaker change detection (0.0 - 1.0)
+  overlap_threshold: 0.5  # Threshold for overlapping speech detection
+  use_pyannote: true      # Use pyannote.audio for diarization
+
+# Cloud Storage Configuration
+storage:
+  provider: local        # Storage provider: local, google_drive, dropbox, s3, all
+  local_path: "./recordings"  # Local storage path
+  
+  # Google Drive settings
+  google_credentials: null  # Path to Google credentials JSON file
+  google_folder_id: null   # Google Drive folder ID
+  
+  # Dropbox settings
+  dropbox_token: null      # Dropbox access token
+  dropbox_folder: "/VoxtralNotetaker"  # Dropbox folder path
+  
+  # Amazon S3 settings
+  s3_bucket: null          # S3 bucket name
+  s3_region: "eu-central-1"  # S3 region
+  s3_access_key: null     # S3 access key
+  s3_secret_key: null     # S3 secret key
+  
+  auto_upload: true       # Automatically upload to cloud
+  retain_local: true      # Keep local copy after upload
+
+# Email Configuration
+email:
+  enabled: true           # Enable email sending
+  smtp_host: "smtp.gmail.com"  # SMTP server host
+  smtp_port: 587          # SMTP server port
+  smtp_user: null         # SMTP username
+  smtp_password: null     # SMTP password (use app password for Gmail)
+  use_tls: true           # Use TLS encryption
+  
+  from_email: "notetaker@voxtral.local"  # Sender email address
+  to_emails: []           # List of recipient email addresses
+  cc_emails: []           # List of CC email addresses
+  bcc_emails: []          # List of BCC email addresses
+  
+  subject_template: "Meeting Notes - {date}"  # Email subject template
+  body_template: "Please find attached the meeting notes from {date}.\n\n{transcript}"  # Email body template
+  
+  send_audio: false        # Send audio file as attachment
+  send_transcript: true    # Send transcript as attachment
+  send_notes: true         # Send formatted notes as attachment
+
+# Performance settings
+max_recording_hours: 8    # Maximum recording duration in hours
+auto_split_minutes: 30   # Automatically split recordings every N minutes
+
+# Logging settings
+log_level: "INFO"         # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: "voxtral_notetaker.log"  # Log file path
