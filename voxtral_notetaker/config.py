@@ -22,6 +22,7 @@ class StorageProvider(Enum):
     GOOGLE_DRIVE = "google_drive"
     DROPBOX = "dropbox"
     S3 = "s3"
+    ALL = "all"
 
 
 @dataclass

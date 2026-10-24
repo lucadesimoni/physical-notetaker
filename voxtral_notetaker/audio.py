@@ -10,9 +10,15 @@ import threading
 from typing import Optional, List
 from dataclasses import dataclass
 
-import pyaudio
 import numpy as np
 import noisereduce as nr
+
+try:
+    import pyaudio
+    HAS_PYAUDIO = True
+except ImportError:
+    HAS_PYAUDIO = False
+    print("⚠️  PyAudio not installed. Audio recording will be limited.")
 
 from .config import AudioConfig
 
@@ -29,25 +35,37 @@ class AudioRecorder:
     
     def __init__(self, config: AudioConfig):
         self.config = config
-        self.audio = pyaudio.PyAudio()
+        self.audio = pyaudio.PyAudio() if HAS_PYAUDIO else None
         self._is_recording = False
         self._audio_queue = queue.Queue()
         self._audio_data = []
         self._start_time: Optional[float] = None
+        
+        if not HAS_PYAUDIO:
+            print("⚠️  Audio recording disabled: PyAudio not available")
     
     def _list_devices(self):
         """List available audio input devices"""
+        if not HAS_PYAUDIO or not self.audio:
+            return []
+        
+        devices = []
         for i in range(self.audio.get_device_count()):
             dev = self.audio.get_device_info_by_index(i)
             if dev.get('maxInputChannels', 0) > 0:
                 name = dev.get('name', '').lower()
                 if 'jabra' in name or 'spider' in name or 'conference' in name:
                     print(f"Found conference mic: {dev.get('name')} (index {i})")
+                devices.append(dev)
+        return devices
     
     def _get_device_index(self) -> int:
         """Get Jabra or first available input device"""
         if self.config.device_index is not None:
             return self.config.device_index
+        
+        if not HAS_PYAUDIO or not self.audio:
+            return 0
         
         for i in range(self.audio.get_device_count()):
             dev = self.audio.get_device_info_by_index(i)
@@ -67,6 +85,10 @@ class AudioRecorder:
     def start_recording(self, output_file: str) -> bool:
         """Start recording from conference microphone"""
         if self._is_recording:
+            return False
+        
+        if not HAS_PYAUDIO or not self.audio:
+            print("⚠️  Cannot start recording: PyAudio not available")
             return False
         
         try:
@@ -138,6 +160,9 @@ class AudioRecorder:
     
     def get_available_devices(self) -> List[dict]:
         """Get list of available audio input devices"""
+        if not HAS_PYAUDIO or not self.audio:
+            return []
+        
         devices = []
         for i in range(self.audio.get_device_count()):
             dev = self.audio.get_device_info_by_index(i)
@@ -154,7 +179,8 @@ class AudioRecorder:
         if hasattr(self, '_stream'):
             self._stream.stop_stream()
             self._stream.close()
-        self.audio.terminate()
+        if self.audio:
+            self.audio.terminate()
         self._is_recording = False
     
     def __enter__(self):
