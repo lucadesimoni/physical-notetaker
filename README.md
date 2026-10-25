@@ -97,9 +97,14 @@ voxtral:
   language_hint: "de-CH"
 
 storage:
-  provider: local  # or google_drive, dropbox, s3
+  provider: local  # or google_drive, dropbox, s3, all
   local_path: "./recordings"
   auto_upload: true
+
+diarization:
+  enabled: true
+  max_speakers: 10
+  hf_token: null  # Hugging Face token for pyannote (or set HF_TOKEN)
 ```
 
 ### Usage
@@ -200,8 +205,15 @@ pip install --force-reinstall pyaudio
 # Install required packages
 pip install pyannote.audio
 
+# pyannote models are gated: accept the terms for
+# pyannote/speaker-diarization-3.1 on Hugging Face, then
+export HF_TOKEN=your-hf-token   # or set diarization.hf_token in config.yaml
+
 # First run downloads models (may take several minutes)
 ```
+
+Cloud SDKs (boto3, Google, Dropbox), `noisereduce` and `pyannote.audio` are
+loaded only when used, so the package still runs if one of them is missing.
 
 ## 📊 Performance
 
@@ -312,6 +324,15 @@ class MeetingResult:
 ## 📜 License
 
 MIT License - see [LICENSE](LICENSE) for details
+
+## 🧪 Tests
+
+```bash
+pip install pytest
+python -m pytest tests
+```
+
+The tests need no microphone, network access or ML models.
 
 ## 🤝 Contributing
 
