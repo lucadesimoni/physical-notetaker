@@ -9,6 +9,8 @@ from .core import Notetaker
 from .config import Config, NotetakerConfig, Language
 from .audio import AudioRecorder
 from .commands import CommandParser, CommandExecutor, CommandType, VoiceCommand, CommandResult
+from .memo import Memo, Summarizer
+from .actions import parse_task_details
 
 __all__ = [
     "Notetaker", 
@@ -20,5 +22,8 @@ __all__ = [
     "CommandExecutor",
     "CommandType",
     "VoiceCommand",
-    "CommandResult"
+    "CommandResult",
+    "Memo",
+    "Summarizer",
+    "parse_task_details",
 ]

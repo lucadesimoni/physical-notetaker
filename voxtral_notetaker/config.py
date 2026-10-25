@@ -68,11 +68,23 @@ class DiarizationConfig:
 
 
 @dataclass
+class SummaryConfig:
+    """AI summary for the meeting memo (OpenAI-compatible chat API, e.g. Mistral)"""
+    enabled: bool = True
+    model: str = "mistral-small-latest"
+    base_url: Optional[str] = None  # defaults to voxtral.base_url
+    api_key: Optional[str] = None   # defaults to voxtral.api_key
+    max_points: int = 8
+    timeout: int = 60
+
+
+@dataclass
 class NotetakerConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     voxtral: VoxtralConfig = field(default_factory=VoxtralConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
     diarization: DiarizationConfig = field(default_factory=DiarizationConfig)
+    summary: SummaryConfig = field(default_factory=SummaryConfig)
     max_recording_minutes: int = 120
     
     def save(self, path: str = "config.yaml"):
@@ -121,6 +133,14 @@ class NotetakerConfig:
                 'max_speakers': self.diarization.max_speakers,
                 'hf_token': self.diarization.hf_token,
             },
+            'summary': {
+                'enabled': self.summary.enabled,
+                'model': self.summary.model,
+                'base_url': self.summary.base_url,
+                'api_key': self.summary.api_key,
+                'max_points': self.summary.max_points,
+                'timeout': self.summary.timeout,
+            },
             'max_recording_minutes': self.max_recording_minutes,
         }
     
@@ -128,7 +148,7 @@ class NotetakerConfig:
     def from_dict(cls, data):
         # Treat empty sections (e.g. "audio:" with no keys) as missing
         data = dict(data or {})
-        for section in ('audio', 'voxtral', 'storage', 'diarization'):
+        for section in ('audio', 'voxtral', 'storage', 'diarization', 'summary'):
             data[section] = data.get(section) or {}
         audio = AudioConfig(
             sample_rate=data.get('audio', {}).get('sample_rate', 16000),
@@ -168,11 +188,21 @@ class NotetakerConfig:
             hf_token=data.get('diarization', {}).get('hf_token'),
         )
         
+        summary = SummaryConfig(
+            enabled=data['summary'].get('enabled', True),
+            model=data['summary'].get('model', 'mistral-small-latest'),
+            base_url=data['summary'].get('base_url'),
+            api_key=data['summary'].get('api_key'),
+            max_points=data['summary'].get('max_points', 8),
+            timeout=data['summary'].get('timeout', 60),
+        )
+        
         return cls(
             audio=audio,
             voxtral=voxtral,
             storage=storage,
             diarization=diarization,
+            summary=summary,
             max_recording_minutes=data.get('max_recording_minutes', 120),
         )
 

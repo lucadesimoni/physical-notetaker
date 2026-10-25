@@ -3,7 +3,10 @@ Lean CLI for Voxtral Notetaker
 """
 
 import os
+import re
 import time
+from datetime import datetime
+
 import click
 
 from rich.console import Console
@@ -65,6 +68,10 @@ def record(output: str, device: int, language: str, no_diarization: bool, no_upl
             console.log(f"Speakers: {', '.join(result.speakers) if result.speakers else 'None'}")
             console.log(f"\n[bold]Transcript:[/bold]\n{result.transcript}")
             
+            if result.memo:
+                console.print(f"\n{result.memo.to_markdown()}")
+                console.log(f"Memo saved: {result.memo_file}")
+            
             if result.storage_results:
                 console.log("\n[bold]Uploaded:[/bold]")
                 for r in result.storage_results:
@@ -118,6 +125,63 @@ def transcribe(file: str, language: str, no_diarization: bool):
         console.log(f"Error: {e}", style="red")
     finally:
         notetaker.close()
+
+
+@cli.command()
+@click.argument('file')
+@click.option('--language', '-l', type=click.Choice(['en', 'de', 'de-CH', 'auto']),
+              default='auto', help='Meeting language')
+@click.option('--title', '-t', default=None, help='Memo title')
+@click.option('--date', 'meeting_date', default=None,
+              help='Meeting date (YYYY-MM-DD), used to resolve due dates')
+@click.option('--output', '-o', default=None, help='Output file (default: <file>_memo.md)')
+@click.option('--no-summary', is_flag=True, help='Skip the AI summary')
+def memo(file: str, language: str, title: str, meeting_date: str, output: str, no_summary: bool):
+    """Create a meeting memo from a transcript file"""
+    if not os.path.exists(file):
+        console.log(f"File not found: {file}", style="red")
+        return
+    
+    try:
+        date = datetime.strptime(meeting_date, '%Y-%m-%d') if meeting_date else datetime.now()
+    except ValueError:
+        console.log("Invalid --date, expected YYYY-MM-DD", style="red")
+        return
+    
+    with open(file, encoding='utf-8') as f:
+        transcript = f.read()
+    
+    if language == 'auto':
+        language = 'de-CH' if notetaker_language_is_german(transcript) else 'en'
+    
+    # Speakers from "[Name] ..." labels, in order of appearance
+    participants = list(dict.fromkeys(re.findall(r'^\s*\[([^\]]+)\]', transcript, re.MULTILINE)))
+    
+    notetaker = Notetaker(load_config())
+    try:
+        for name in participants:
+            notetaker.set_speaker_name(name, name)
+        notetaker.extract_commands(transcript, language, date)
+        result = notetaker.build_memo(
+            transcript=transcript, language=language, title=title,
+            participants=participants, date=date, summarize=not no_summary,
+        )
+        
+        output = output or f"{os.path.splitext(file)[0]}_memo.md"
+        with open(output, 'w', encoding='utf-8') as f:
+            f.write(result.to_markdown())
+        
+        console.print(result.to_markdown())
+        console.log(f"Memo saved: {output}")
+        if not no_summary and not notetaker.summarizer.available:
+            console.log("No AI summary: set voxtral.api_key (or summary.api_key) in config.yaml")
+    finally:
+        notetaker.close()
+
+
+def notetaker_language_is_german(text: str) -> bool:
+    from .commands import CommandParser
+    return CommandParser()._detect_language(text).startswith('de')
 
 
 @cli.command()
