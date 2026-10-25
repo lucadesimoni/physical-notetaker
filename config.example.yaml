@@ -6,7 +6,7 @@ name: "Voxtral Notetaker"
 
 # Audio Configuration
 audio:
-  sample_rate: 44100          # Audio sample rate (Hz)
+  sample_rate: 16000          # Audio sample rate (Hz, 16000 recommended for speech)
   channels: 1               # Number of audio channels (1 = mono, 2 = stereo)
   format: wav              # Audio format: wav, mp3, flac, ogg
   chunk_size: 1024         # Audio chunk size for streaming
@@ -37,6 +37,7 @@ diarization:
   speaker_change_threshold: 0.7  # Threshold for speaker change detection (0.0 - 1.0)
   overlap_threshold: 0.5  # Threshold for overlapping speech detection
   use_pyannote: true      # Use pyannote.audio for diarization
+  hf_token: null          # Hugging Face token for pyannote models (or set HF_TOKEN env var)
 
 # Cloud Storage Configuration
 storage:

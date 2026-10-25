@@ -3,14 +3,12 @@ Lean CLI for Voxtral Notetaker
 """
 
 import os
-import sys
 import time
-import argparse
 import click
 
 from rich.console import Console
 
-from .config import NotetakerConfig, Language, StorageProvider
+from .config import NotetakerConfig, Language, StorageProvider, load_config
 from .core import Notetaker
 
 
@@ -32,7 +30,7 @@ def cli():
 @click.option('--no-upload', is_flag=True, help='Disable cloud upload')
 def record(output: str, device: int, language: str, no_diarization: bool, no_upload: bool):
     """Start recording and transcribe meeting"""
-    config = NotetakerConfig.load() if os.path.exists('config.yaml') else NotetakerConfig()
+    config = load_config()
     
     if device is not None:
         config.audio.device_index = device
@@ -41,9 +39,6 @@ def record(output: str, device: int, language: str, no_diarization: bool, no_upl
         config.storage.auto_upload = False
     
     notetaker = Notetaker(config)
-    
-    if device is not None:
-        notetaker.set_device(device)
     
     try:
         console.log("Starting recording... (Ctrl+C to stop)")
@@ -60,30 +55,23 @@ def record(output: str, device: int, language: str, no_diarization: bool, no_upl
             
             lang = Language(language) if language != 'auto' else Language.AUTO
             
-            if no_diarization:
-                # Just transcribe without diarization
-                recording = notetaker.stop_recording()
-                if recording:
-                    result = notetaker.transcribe(recording.file_path, lang)
-                    console.log(f"\n[bold green]Transcript:[/bold green]\n{result.text}")
-            else:
-                result = notetaker.stop_and_transcribe(lang)
-                
-                console.log(f"\n[bold green]Meeting Result:[/bold green]")
-                console.log(f"File: {result.audio_file}")
-                console.log(f"Duration: {result.duration:.1f}s")
-                console.log(f"Language: {result.language}")
-                console.log(f"Confidence: {result.confidence*100:.1f}%")
-                console.log(f"Speakers: {', '.join(result.speakers) if result.speakers else 'None'}")
-                console.log(f"\n[bold]Transcript:[/bold]\n{result.transcript}")
-                
-                if result.storage_results:
-                    console.log("\n[bold]Uploaded:[/bold]")
-                    for r in result.storage_results:
-                        if r.success:
-                            console.log(f"  [green]✓ {r.provider}: {r.url or r.file_path}[/green]")
-                        else:
-                            console.log(f"  [red]✗ {r.provider}: {r.error}[/red]")
+            result = notetaker.stop_and_transcribe(lang, diarize=not no_diarization)
+            
+            console.log("\n[bold green]Meeting Result:[/bold green]")
+            console.log(f"File: {result.audio_file}")
+            console.log(f"Duration: {result.duration:.1f}s")
+            console.log(f"Language: {result.language}")
+            console.log(f"Confidence: {result.confidence*100:.1f}%")
+            console.log(f"Speakers: {', '.join(result.speakers) if result.speakers else 'None'}")
+            console.log(f"\n[bold]Transcript:[/bold]\n{result.transcript}")
+            
+            if result.storage_results:
+                console.log("\n[bold]Uploaded:[/bold]")
+                for r in result.storage_results:
+                    if r.success:
+                        console.log(f"  [green]✓ {r.provider}: {r.url or r.file_path}[/green]")
+                    else:
+                        console.log(f"  [red]✗ {r.provider}: {r.error}[/red]")
             
     except Exception as e:
         console.log(f"Error: {e}", style="red")
@@ -102,22 +90,22 @@ def transcribe(file: str, language: str, no_diarization: bool):
         console.log(f"File not found: {file}", style="red")
         return
     
-    config = NotetakerConfig.load() if os.path.exists('config.yaml') else NotetakerConfig()
+    config = load_config()
     notetaker = Notetaker(config)
     
     try:
         lang = Language(language) if language != 'auto' else Language.AUTO
         result = notetaker.transcribe(file, lang)
         
-        console.log(f"[bold green]Transcription:[/bold green]")
+        console.log("[bold green]Transcription:[/bold green]")
         console.log(f"Language: {result.language}")
         console.log(f"Confidence: {result.confidence*100:.1f}%")
         console.log(f"Duration: {result.duration:.1f}s")
         console.log(f"\n{result.text}")
         
-        if not no_diarization:
+        if not no_diarization and config.diarization.enabled:
             console.log("\n[bold]Diarizing...[/bold]")
-            segments = notetaker.diarizer.diarize(file)
+            segments = notetaker.diarizer.diarize(file, max_speakers=config.diarization.max_speakers)
             
             if segments:
                 console.log(f"Found {len(set(s.speaker_id for s in segments))} speakers")
@@ -142,6 +130,7 @@ def devices():
     
     if not devices:
         console.log("No audio input devices found", style="red")
+        notetaker.close()
         return
     
     console.log("Available audio input devices:")
@@ -166,17 +155,15 @@ def setup():
 
 
 @cli.command()
-@click.option('--provider', type=click.Choice(['local', 'google_drive', 'dropbox', 's3']), 
+@click.option('--provider', type=click.Choice(['local', 'google_drive', 'dropbox', 's3', 'all']), 
               default=None, help='Storage provider')
 @click.option('--file', default=None, help='File to upload')
 def upload(provider: str, file: str):
     """Upload file to cloud storage"""
-    config = NotetakerConfig.load() if os.path.exists('config.yaml') else NotetakerConfig()
+    config = load_config()
     
     if provider:
         config.storage.provider = StorageProvider(provider)
-    
-    notetaker = Notetaker(config)
     
     if not file:
         console.log("Please specify a file to upload", style="red")
@@ -185,6 +172,8 @@ def upload(provider: str, file: str):
     if not os.path.exists(file):
         console.log(f"File not found: {file}", style="red")
         return
+    
+    notetaker = Notetaker(config)
     
     try:
         results = notetaker.storage.upload(file)

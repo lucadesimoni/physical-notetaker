@@ -2,17 +2,10 @@
 Lean cloud storage for recordings and transcripts
 """
 
-import os
 import shutil
-from typing import Optional, List, Dict
+from typing import Optional, List
 from dataclasses import dataclass
 from pathlib import Path
-
-import boto3
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-import dropbox
 
 from .config import StorageConfig, StorageProvider
 
@@ -61,7 +54,8 @@ class CloudStorage:
         try:
             dest = Path(self.config.local_path) / Path(file_path).name
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(file_path, dest)
+            if not (dest.exists() and dest.samefile(file_path)):
+                shutil.copy2(file_path, dest)
             return UploadResult(success=True, file_path=str(dest), provider="local")
         except Exception as e:
             return UploadResult(success=False, file_path=file_path, provider="local", error=str(e))
@@ -69,6 +63,10 @@ class CloudStorage:
     def _upload_google(self, file_path: str) -> UploadResult:
         """Upload to Google Drive"""
         try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            from googleapiclient.http import MediaFileUpload
+            
             if not self._google_service:
                 creds = Credentials.from_authorized_user_file(
                     self.config.google_credentials,
@@ -95,17 +93,21 @@ class CloudStorage:
     def _upload_dropbox(self, file_path: str) -> UploadResult:
         """Upload to Dropbox"""
         try:
+            import dropbox
+            
             if not self._dropbox_client:
                 self._dropbox_client = dropbox.Dropbox(self.config.dropbox_token)
             
             dest = f"{self.config.dropbox_folder}/{Path(file_path).name}"
             with open(file_path, 'rb') as f:
-                response = self._dropbox_client.files_upload(f.read(), dest)
+                response = self._dropbox_client.files_upload(
+                    f.read(), dest, mode=dropbox.files.WriteMode.overwrite
+                )
             
             return UploadResult(
                 success=True, file_path=file_path,
                 provider="dropbox", 
-                url=f"https://www.dropbox.com{response.path_display}"
+                url=f"https://www.dropbox.com/home{response.path_display}"
             )
         except Exception as e:
             return UploadResult(success=False, file_path=file_path, provider="dropbox", error=str(e))
@@ -113,6 +115,8 @@ class CloudStorage:
     def _upload_s3(self, file_path: str) -> UploadResult:
         """Upload to S3"""
         try:
+            import boto3
+            
             if not self._s3_client:
                 self._s3_client = boto3.client(
                     's3', region_name=self.config.s3_region,

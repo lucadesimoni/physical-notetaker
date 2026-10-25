@@ -13,7 +13,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, '/workspace/github__lucadesimoni__physical-notetaker')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from voxtral_notetaker import Notetaker, NotetakerConfig, Language
 

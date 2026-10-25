@@ -5,20 +5,22 @@ Lean audio recording for conference microphones (Jabra, etc.)
 import os
 import wave
 import time
-import queue
-import threading
 from typing import Optional, List
 from dataclasses import dataclass
 
 import numpy as np
-import noisereduce as nr
+
+try:
+    import noisereduce as nr
+    HAS_NOISEREDUCE = True
+except ImportError:
+    HAS_NOISEREDUCE = False
 
 try:
     import pyaudio
     HAS_PYAUDIO = True
 except ImportError:
     HAS_PYAUDIO = False
-    print("⚠️  PyAudio not installed. Audio recording will be limited.")
 
 from .config import AudioConfig
 
@@ -37,7 +39,8 @@ class AudioRecorder:
         self.config = config
         self.audio = pyaudio.PyAudio() if HAS_PYAUDIO else None
         self._is_recording = False
-        self._audio_queue = queue.Queue()
+        self._stream = None
+        self._output_file: Optional[str] = None
         self._audio_data = []
         self._start_time: Optional[float] = None
         
@@ -78,7 +81,6 @@ class AudioRecorder:
     
     def _audio_callback(self, in_data: bytes, frame_count: int, time_info, status):
         if self._is_recording:
-            self._audio_queue.put(in_data)
             self._audio_data.append(in_data)
         return (in_data, pyaudio.paContinue)
     
@@ -93,6 +95,7 @@ class AudioRecorder:
         
         try:
             device_index = self._get_device_index()
+            self._audio_data = []
             
             self._stream = self.audio.open(
                 format=pyaudio.paInt16,
@@ -105,7 +108,7 @@ class AudioRecorder:
             )
             
             self._is_recording = True
-            self._audio_data = []
+            self._output_file = output_file
             self._start_time = time.time()
             return True
         except Exception as e:
@@ -118,10 +121,7 @@ class AudioRecorder:
             return None
         
         self._is_recording = False
-        
-        if hasattr(self, '_stream'):
-            self._stream.stop_stream()
-            self._stream.close()
+        self._close_stream()
         
         if self._audio_data:
             audio_np = np.frombuffer(b''.join(self._audio_data), dtype=np.int16)
@@ -131,19 +131,24 @@ class AudioRecorder:
                 audio_np = self._reduce_noise(audio_np, self.config.sample_rate)
             
             # Save to WAV
-            self._save_wav(audio_np, self.config.sample_rate, output_file)
+            self._save_wav(audio_np, self.config.sample_rate, self._output_file)
             
             duration = time.time() - self._start_time
-            return RecordingInfo(file_path=output_file, duration=duration, 
+            return RecordingInfo(file_path=self._output_file, duration=duration, 
                                 sample_rate=self.config.sample_rate)
         
         return None
     
     def _reduce_noise(self, audio_data: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply noise reduction"""
+        if not HAS_NOISEREDUCE:
+            return audio_data
         try:
-            return nr.reduce_noise(y=audio_data, sr=sample_rate, stationary=True, prop_decrease=0.8)
-        except:
+            reduced = nr.reduce_noise(y=audio_data.astype(np.float32), sr=sample_rate,
+                                      stationary=True, prop_decrease=0.8)
+            # noisereduce returns floats; convert back to 16-bit PCM for the WAV file
+            return np.clip(reduced, -32768, 32767).astype(np.int16)
+        except Exception:
             return audio_data
     
     def _save_wav(self, audio_data: np.ndarray, sample_rate: int, file_path: str):
@@ -153,7 +158,7 @@ class AudioRecorder:
             wf.setnchannels(self.config.channels)
             wf.setsampwidth(2)
             wf.setframerate(sample_rate)
-            wf.writeframes(audio_data.tobytes())
+            wf.writeframes(audio_data.astype(np.int16).tobytes())
     
     def is_recording(self) -> bool:
         return self._is_recording
@@ -174,13 +179,21 @@ class AudioRecorder:
                 })
         return devices
     
+    def _close_stream(self):
+        if self._stream is not None:
+            try:
+                self._stream.stop_stream()
+                self._stream.close()
+            except Exception:
+                pass
+            self._stream = None
+    
     def close(self):
         """Close the audio recorder"""
-        if hasattr(self, '_stream'):
-            self._stream.stop_stream()
-            self._stream.close()
+        self._close_stream()
         if self.audio:
             self.audio.terminate()
+            self.audio = None
         self._is_recording = False
     
     def __enter__(self):

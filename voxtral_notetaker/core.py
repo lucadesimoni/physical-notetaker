@@ -2,8 +2,6 @@
 Core Notetaker - Lean implementation for conference transcription
 """
 
-import os
-import time
 import asyncio
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
@@ -13,9 +11,9 @@ from pathlib import Path
 from .config import NotetakerConfig, Language
 from .audio import AudioRecorder, RecordingInfo
 from .transcription import VoxtralTranscriber, TranscriptionResult
-from .diarization import SpeakerDiarizer, SpeakerSegment
+from .diarization import SpeakerDiarizer
 from .storage import CloudStorage, UploadResult
-from .commands import CommandParser, CommandExecutor, CommandType, VoiceCommand, CommandResult
+from .commands import CommandParser, CommandExecutor, CommandResult
 
 
 @dataclass
@@ -45,7 +43,7 @@ class Notetaker:
         # Components
         self.audio = AudioRecorder(self.config.audio)
         self.transcriber = VoxtralTranscriber(self.config.voxtral)
-        self.diarizer = SpeakerDiarizer()
+        self.diarizer = SpeakerDiarizer(auth_token=self.config.diarization.hf_token)
         self.storage = CloudStorage(self.config.storage)
         
         # State
@@ -89,23 +87,18 @@ class Notetaker:
     
     def transcribe(self, audio_file: str, language: Language = Language.AUTO) -> TranscriptionResult:
         """Transcribe audio file"""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        try:
-            result = loop.run_until_complete(
-                self.transcriber.transcribe(audio_file, language)
-            )
-            return result
-        finally:
-            loop.close()
+        return asyncio.run(self.transcriber.transcribe(audio_file, language))
     
-    def stop_and_transcribe(self, language: Language = Language.AUTO) -> MeetingResult:
+    def stop_and_transcribe(self, language: Language = Language.AUTO,
+                            diarize: Optional[bool] = None) -> MeetingResult:
         """Stop recording and transcribe with speaker recognition"""
         recording = self.stop_recording()
         
         if not recording or not self._current_file:
             raise RuntimeError("No recording to transcribe")
+        
+        if diarize is None:
+            diarize = self.config.diarization.enabled
         
         # Transcribe
         transcription = self.transcribe(self._current_file, language)
@@ -114,8 +107,10 @@ class Notetaker:
         speaker_segments = []
         speakers = []
         
-        if self.config.voxtral.enable_swiss_german:
-            segments = self.diarizer.diarize(self._current_file)
+        if diarize:
+            segments = self.diarizer.diarize(
+                self._current_file, max_speakers=self.config.diarization.max_speakers
+            )
             for seg in segments:
                 speaker_name = self.diarizer.get_speaker_name(seg.speaker_id)
                 speaker_segments.append({
@@ -138,7 +133,7 @@ class Notetaker:
             storage_results = self.storage.upload(self._current_file)
             
             # Also upload transcript
-            transcript_file = f"{Path(self._current_file).stem}.txt"
+            transcript_file = str(Path(self._current_file).with_suffix('.txt'))
             with open(transcript_file, 'w', encoding='utf-8') as f:
                 f.write(formatted_transcript)
             storage_results.extend(self.storage.upload(transcript_file))
@@ -170,41 +165,61 @@ class Notetaker:
         if not segments:
             return text
         
+        # The transcript carries no timestamps, so approximate each segment's
+        # share of the text by its position within the total audio duration.
+        ordered = sorted(segments, key=lambda x: x['start'])
+        total = max(seg['end'] for seg in ordered)
+        if total <= 0:
+            return text
+        
+        def boundary(t: float) -> int:
+            # Snap to the next whitespace so words are never split
+            idx = int(t / total * len(text))
+            while 0 < idx < len(text) and not text[idx].isspace():
+                idx += 1
+            return idx
+        
         lines = []
-        current_pos = 0
-        
-        for seg in sorted(segments, key=lambda x: x['start']):
-            # Add text before this segment
-            start_idx = int(seg['start'] * 150)  # Approx words per minute
-            if start_idx > current_pos:
-                lines.append(text[current_pos:start_idx])
+        prev_speaker = None
+        for i, seg in enumerate(ordered):
+            start_idx = boundary(seg['start'])
+            end_idx = len(text) if i == len(ordered) - 1 else boundary(ordered[i + 1]['start'])
+            chunk = text[start_idx:end_idx].strip()
+            if not chunk:
+                continue
             
-            # Add speaker label
-            speaker = seg.get('speaker_name', seg.get('speaker_id', 'Unknown'))
-            lines.append(f"\n[{speaker}]")
-            
-            current_pos = int(seg['end'] * 150)
+            speaker = seg.get('speaker_name') or seg.get('speaker_id', 'Unknown')
+            if speaker != prev_speaker:
+                lines.append(f"[{speaker}] {chunk}")
+                prev_speaker = speaker
+            else:
+                lines[-1] += f" {chunk}"
         
-        # Add remaining text
-        if current_pos < len(text):
-            lines.append(text[current_pos:])
-        
-        return ''.join(lines)
+        return '\n'.join(lines) if lines else text
     
     def interrupt(self):
         """Handle interruption - pause and process immediately"""
         self._interrupted = True
         
         # Stop current recording
+        start_time = self._start_time
         recording = self.stop_recording()
+        self._current_file = None
+        self._start_time = None
         
         if recording:
             # Quick transcribe for live feedback
             result = self.transcribe(recording.file_path)
             
             # Diarize
-            segments = self.diarizer.diarize(recording.file_path)
-            speakers = list(set(seg.speaker_id for seg in segments))
+            segments = []
+            if self.config.diarization.enabled:
+                segments = self.diarizer.diarize(
+                    recording.file_path, max_speakers=self.config.diarization.max_speakers
+                )
+            speakers = list(dict.fromkeys(
+                self.diarizer.get_speaker_name(seg.speaker_id) for seg in segments
+            ))
             
             return MeetingResult(
                 audio_file=recording.file_path,
@@ -212,7 +227,7 @@ class Notetaker:
                 language=result.language,
                 confidence=result.confidence,
                 duration=recording.duration,
-                start_time=datetime.fromtimestamp(os.path.getmtime(recording.file_path)),
+                start_time=start_time or datetime.now(),
                 end_time=datetime.now(),
                 speakers=speakers,
                 speaker_segments=[{

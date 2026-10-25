@@ -3,7 +3,7 @@ Lean configuration for Voxtral Notetaker
 """
 
 import os
-from typing import Optional, List
+from typing import Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -39,7 +39,9 @@ class VoxtralConfig:
     base_url: str = "https://api.voxtral.com/v1"
     model: str = "voxtral-4"
     timeout: int = 30
+    max_retries: int = 3
     enable_swiss_german: bool = True
+    swiss_german_model: str = "voxtral-4-de-ch"
     language_hint: str = "de-CH"
 
 
@@ -59,10 +61,18 @@ class StorageConfig:
 
 
 @dataclass
+class DiarizationConfig:
+    enabled: bool = True
+    max_speakers: int = 10
+    hf_token: Optional[str] = None
+
+
+@dataclass
 class NotetakerConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     voxtral: VoxtralConfig = field(default_factory=VoxtralConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
+    diarization: DiarizationConfig = field(default_factory=DiarizationConfig)
     max_recording_minutes: int = 120
     
     def save(self, path: str = "config.yaml"):
@@ -73,7 +83,7 @@ class NotetakerConfig:
     def load(cls, path: str = "config.yaml") -> 'NotetakerConfig':
         with open(path, 'r') as f:
             data = yaml.safe_load(f)
-        return cls.from_dict(data)
+        return cls.from_dict(data or {})
     
     def to_dict(self):
         return {
@@ -88,7 +98,9 @@ class NotetakerConfig:
                 'base_url': self.voxtral.base_url,
                 'model': self.voxtral.model,
                 'timeout': self.voxtral.timeout,
+                'max_retries': self.voxtral.max_retries,
                 'enable_swiss_german': self.voxtral.enable_swiss_german,
+                'swiss_german_model': self.voxtral.swiss_german_model,
                 'language_hint': self.voxtral.language_hint,
             },
             'storage': {
@@ -104,11 +116,20 @@ class NotetakerConfig:
                 's3_secret_key': self.storage.s3_secret_key,
                 'auto_upload': self.storage.auto_upload,
             },
+            'diarization': {
+                'enabled': self.diarization.enabled,
+                'max_speakers': self.diarization.max_speakers,
+                'hf_token': self.diarization.hf_token,
+            },
             'max_recording_minutes': self.max_recording_minutes,
         }
     
     @classmethod
     def from_dict(cls, data):
+        # Treat empty sections (e.g. "audio:" with no keys) as missing
+        data = dict(data or {})
+        for section in ('audio', 'voxtral', 'storage', 'diarization'):
+            data[section] = data.get(section) or {}
         audio = AudioConfig(
             sample_rate=data.get('audio', {}).get('sample_rate', 16000),
             channels=data.get('audio', {}).get('channels', 1),
@@ -121,7 +142,9 @@ class NotetakerConfig:
             base_url=data.get('voxtral', {}).get('base_url', 'https://api.voxtral.com/v1'),
             model=data.get('voxtral', {}).get('model', 'voxtral-4'),
             timeout=data.get('voxtral', {}).get('timeout', 30),
+            max_retries=data.get('voxtral', {}).get('max_retries', 3),
             enable_swiss_german=data.get('voxtral', {}).get('enable_swiss_german', True),
+            swiss_german_model=data.get('voxtral', {}).get('swiss_german_model', 'voxtral-4-de-ch'),
             language_hint=data.get('voxtral', {}).get('language_hint', 'de-CH'),
         )
         
@@ -139,10 +162,17 @@ class NotetakerConfig:
             auto_upload=data.get('storage', {}).get('auto_upload', True),
         )
         
+        diarization = DiarizationConfig(
+            enabled=data.get('diarization', {}).get('enabled', True),
+            max_speakers=data.get('diarization', {}).get('max_speakers', 10),
+            hf_token=data.get('diarization', {}).get('hf_token'),
+        )
+        
         return cls(
             audio=audio,
             voxtral=voxtral,
             storage=storage,
+            diarization=diarization,
             max_recording_minutes=data.get('max_recording_minutes', 120),
         )
 

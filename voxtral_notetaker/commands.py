@@ -4,7 +4,6 @@ Handles interruptions and voice commands in German and English
 """
 
 import re
-import time
 from typing import Optional, Dict, List, Callable, Any
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -58,7 +57,8 @@ class CommandParser:
         r'notiz\s+erstellen',
         r'notieren',
         r'aufschreiben',
-        r'merken',
+        r'schreib\s+(das|es)\s+auf',
+        r'merke(n)?\b',
         r'notiz:',
     ]
     
@@ -68,20 +68,20 @@ class CommandParser:
         r'mach\s+(einen|den|die)?\s*task',
         r'task\s+erstellen',
         r'aufgabe\s+erstellen',
-        r'aufgabe\s+hinzufuegen',
-        r'task\s+hinzufuegen',
+        r'aufgabe\s+hinzuf(ü|ue)gen',
+        r'task\s+hinzuf(ü|ue)gen',
         r'aufgabe:',
         r'task:',
     ]
     
     GERMAN_RESEARCH_PATTERNS = [
-        r'recherchiere',
         r'recherchieren',
-        r'suche',
+        r'recherchiere',
+        r'suche\b',
         r'googeln',
         r'googel',
         r'nachschlagen',
-        r'informationen\s+findet',
+        r'informationen\s+finden',
         r'findet\s+heraus',
         r'recherche:',
         r'suche:',
@@ -161,58 +161,44 @@ class CommandParser:
     
     def parse(self, text: str, language: str = "auto") -> Optional[VoiceCommand]:
         """Parse text to detect voice commands"""
-        text = text.lower().strip()
+        text = text.strip()
         
         if not text:
             return None
-        
-        # Remove punctuation for matching
-        clean_text = re.sub(r'[^\w\s:]', '', text)
         
         # Detect language if auto
         if language == "auto":
             language = self._detect_language(text)
         
+        groups = []
         # Try German patterns first if language is German
         if language in ['de', 'de-CH']:
-            # Check for note
-            for pattern in self.GERMAN_NOTE_PATTERNS:
-                if re.search(pattern, clean_text, re.IGNORECASE):
-                    return self._create_note_command(text, language)
-            
-            # Check for task
-            for pattern in self.GERMAN_TASK_PATTERNS:
-                if re.search(pattern, clean_text, re.IGNORECASE):
-                    return self._create_task_command(text, language)
-            
-            # Check for research
-            for pattern in self.GERMAN_RESEARCH_PATTERNS:
-                if re.search(pattern, clean_text, re.IGNORECASE):
-                    return self._create_research_command(text, language)
-            
-            # Check for recording commands
-            for action, patterns in self.GERMAN_RECORDING_PATTERNS.items():
-                for pattern in patterns:
-                    if re.search(pattern, clean_text, re.IGNORECASE):
-                        return self._create_recording_command(text, language, action)
+            groups += [
+                (self.GERMAN_NOTE_PATTERNS, self._create_note_command),
+                (self.GERMAN_TASK_PATTERNS, self._create_task_command),
+                (self.GERMAN_RESEARCH_PATTERNS, self._create_research_command),
+            ]
+            groups += [
+                (patterns, self._recording_factory(action))
+                for action, patterns in self.GERMAN_RECORDING_PATTERNS.items()
+            ]
         
         # Try English patterns
-        for pattern in self.ENGLISH_NOTE_PATTERNS:
-            if re.search(pattern, clean_text, re.IGNORECASE):
-                return self._create_note_command(text, language)
+        groups += [
+            (self.ENGLISH_NOTE_PATTERNS, self._create_note_command),
+            (self.ENGLISH_TASK_PATTERNS, self._create_task_command),
+            (self.ENGLISH_RESEARCH_PATTERNS, self._create_research_command),
+        ]
+        groups += [
+            (patterns, self._recording_factory(action))
+            for action, patterns in self.ENGLISH_RECORDING_PATTERNS.items()
+        ]
         
-        for pattern in self.ENGLISH_TASK_PATTERNS:
-            if re.search(pattern, clean_text, re.IGNORECASE):
-                return self._create_task_command(text, language)
-        
-        for pattern in self.ENGLISH_RESEARCH_PATTERNS:
-            if re.search(pattern, clean_text, re.IGNORECASE):
-                return self._create_research_command(text, language)
-        
-        for action, patterns in self.ENGLISH_RECORDING_PATTERNS.items():
+        for patterns, factory in groups:
             for pattern in patterns:
-                if re.search(pattern, clean_text, re.IGNORECASE):
-                    return self._create_recording_command(text, language, action)
+                match = re.search(r'\b' + pattern, text, re.IGNORECASE)
+                if match:
+                    return factory(text, language, match)
         
         # Check for interruptions
         if self._is_interruption(text, language):
@@ -236,14 +222,25 @@ class CommandParser:
         
         return None
     
+    @staticmethod
+    def _contains_word(text: str, phrases: List[str]) -> bool:
+        """Check whether any phrase occurs in text as a whole word"""
+        return any(
+            re.search(r'\b' + re.escape(phrase) + r'\b', text, re.IGNORECASE)
+            for phrase in phrases
+        )
+    
     def _detect_language(self, text: str) -> str:
         """Detect language from text"""
-        # Simple heuristic: check for German words
-        german_words = ['der', 'die', 'das', 'und', 'oder', 'für', 'mit', 'von']
+        # Simple heuristic: check for common German words and command verbs
+        german_words = [
+            'der', 'die', 'das', 'und', 'oder', 'für', 'mit', 'von', 'uns', 'bitte',
+            'ein', 'eine', 'einen', 'mach', 'erstell', 'erstelle', 'notiz', 'aufgabe',
+            'recherchiere', 'suche', 'aufnahme', 'warten', 'unterbrechen', 'abbrechen',
+        ]
         
-        for word in german_words:
-            if word in text.lower():
-                return 'de-CH'
+        if self._contains_word(text, german_words):
+            return 'de-CH'
         
         return 'en'
     
@@ -265,13 +262,10 @@ class CommandParser:
                 'stop',
                 'pause',
                 'interrupt',
+                'moment',
             ]
         
-        for phrase in interrupt_phrases:
-            if phrase in text.lower():
-                return True
-        
-        return False
+        return self._contains_word(text, interrupt_phrases)
     
     def _is_cancel(self, text: str, language: str) -> bool:
         """Check if text is a cancel command"""
@@ -280,16 +274,12 @@ class CommandParser:
         else:
             cancel_phrases = ['cancel', 'abort', 'stop']
         
-        for phrase in cancel_phrases:
-            if phrase in text.lower():
-                return True
-        
-        return False
+        return self._contains_word(text, cancel_phrases)
     
-    def _create_note_command(self, text: str, language: str) -> VoiceCommand:
+    def _create_note_command(self, text: str, language: str, match: re.Match) -> VoiceCommand:
         """Create a note command"""
         # Extract the note text
-        note_text = self._extract_content(text, language, 'note')
+        note_text = self._extract_content(text, match)
         
         return VoiceCommand(
             command_type=CommandType.NOTE,
@@ -299,10 +289,10 @@ class CommandParser:
             parameters={'content': note_text, 'original_text': text}
         )
     
-    def _create_task_command(self, text: str, language: str) -> VoiceCommand:
+    def _create_task_command(self, text: str, language: str, match: re.Match) -> VoiceCommand:
         """Create a task command"""
         # Extract the task text
-        task_text = self._extract_content(text, language, 'task')
+        task_text = self._extract_content(text, match)
         
         return VoiceCommand(
             command_type=CommandType.TASK,
@@ -312,10 +302,10 @@ class CommandParser:
             parameters={'content': task_text, 'original_text': text}
         )
     
-    def _create_research_command(self, text: str, language: str) -> VoiceCommand:
+    def _create_research_command(self, text: str, language: str, match: re.Match) -> VoiceCommand:
         """Create a research command"""
         # Extract the research query
-        query = self._extract_content(text, language, 'research')
+        query = self._extract_content(text, match)
         
         return VoiceCommand(
             command_type=CommandType.RESEARCH,
@@ -324,6 +314,9 @@ class CommandParser:
             confidence=0.9,
             parameters={'query': query, 'original_text': text}
         )
+    
+    def _recording_factory(self, action: str) -> Callable[[str, str, re.Match], VoiceCommand]:
+        return lambda text, language, match: self._create_recording_command(text, language, action)
     
     def _create_recording_command(self, text: str, language: str, action: str) -> VoiceCommand:
         """Create a recording control command"""
@@ -335,38 +328,16 @@ class CommandParser:
             parameters={'action': action, 'original_text': text}
         )
     
-    def _extract_content(self, text: str, language: str, command_type: str) -> str:
-        """Extract the actual content from a command"""
-        # Remove command keywords
-        if language in ['de', 'de-CH']:
-            if command_type == 'note':
-                keywords = ['mach eine notiz', 'erstell eine notiz', 'notiz:', 'aufschreiben', 'merken']
-            elif command_type == 'task':
-                keywords = ['erstell einen task', 'mach einen task', 'task:', 'aufgabe:', 'erstellen']
-            elif command_type == 'research':
-                keywords = ['recherchiere', 'suche', 'googeln', 'nachschlagen', 'findet heraus']
-            else:
-                keywords = []
-        else:
-            if command_type == 'note':
-                keywords = ['make a note', 'create a note', 'note:', 'write this down']
-            elif command_type == 'task':
-                keywords = ['create a task', 'make a task', 'task:', 'to do:', 'reminder:']
-            elif command_type == 'research':
-                keywords = ['research', 'search', 'look up', 'google', 'find out']
-            else:
-                keywords = []
+    def _extract_content(self, text: str, match: re.Match) -> str:
+        """Extract the actual content following the command phrase"""
+        content = text[match.end():]
         
-        # Remove keywords
-        for keyword in keywords:
-            text = text.replace(keyword, '').strip()
+        # "Recherchiere für uns: Marktanalyse" -> "Marktanalyse"
+        if ':' in content:
+            content = content.split(':', 1)[1]
         
-        # Remove punctuation and clean up
-        text = re.sub(r'^[^a-zA-ZäöüßÄÖÜ]+', '', text)
-        text = re.sub(r'[^\w\säöüßÄÖÜ]', '', text)
-        text = text.strip()
-        
-        return text
+        # Strip leftover separators, keep punctuation inside the content
+        return content.strip(' \t\n:,.;-!?')
 
 
 class CommandExecutor:
