@@ -13,6 +13,7 @@ setup(
     version="1.0.0",
     description="Raspberry Pi based meeting notes recognition and transcription system using Voxtral 4",
     author="Physical Notetaker Team",
+    license="MIT",
     packages=find_packages(),
     install_requires=requirements,
     python_requires=">=3.10",
