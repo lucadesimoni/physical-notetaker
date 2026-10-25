@@ -1,0 +1,13 @@
+[Anna] Guten Morgen zusammen. Heute geht es um den Launch der neuen App im Dezember.
+[Marco] Das Backend ist zu achtzig Prozent fertig, aber die Zahlungsschnittstelle fehlt noch.
+[Anna] Mach eine Notiz: Backend zu 80 Prozent fertig, Zahlungsschnittstelle offen.
+[Sabine] Das Marketing braucht die finale Version bis zum 15. November für die Screenshots.
+[Marco] Das wird knapp. Erstell einen Task: Zahlungsschnittstelle bis 10. November fertigstellen, Marco.
+[Sabine] Wir wissen noch nicht, ob wir TWINT unterstützen müssen.
+[Anna] Recherchiere für uns: TWINT Integration Kosten und Aufwand für Schweizer Apps.
+[Sabine] Moment bitte, ich muss kurz etwas nachschauen.
+[Sabine] Okay, das Budget für die Kampagne liegt bei 20'000 Franken.
+[Anna] Notiz: Kampagnenbudget 20'000 CHF bestätigt.
+[Anna] Aufgabe: Sabine erstellt den Kampagnenplan bis Ende Oktober.
+[Marco] Task hinzufügen: Testserver für das Marketing bereitstellen.
+[Anna] Danke allen. Beende die Aufnahme.

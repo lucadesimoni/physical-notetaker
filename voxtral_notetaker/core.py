@@ -14,6 +14,7 @@ from .transcription import VoxtralTranscriber, TranscriptionResult
 from .diarization import SpeakerDiarizer
 from .storage import CloudStorage, UploadResult
 from .commands import CommandParser, CommandExecutor, CommandResult
+from .memo import Memo, Summarizer
 
 
 @dataclass
@@ -29,6 +30,8 @@ class MeetingResult:
     speakers: List[str] = field(default_factory=list)
     speaker_segments: List[Dict[str, Any]] = field(default_factory=list)
     storage_results: List[UploadResult] = field(default_factory=list)
+    memo: Optional[Memo] = None
+    memo_file: Optional[str] = None
 
 
 class Notetaker:
@@ -45,6 +48,7 @@ class Notetaker:
         self.transcriber = VoxtralTranscriber(self.config.voxtral)
         self.diarizer = SpeakerDiarizer(auth_token=self.config.diarization.hf_token)
         self.storage = CloudStorage(self.config.storage)
+        self.summarizer = Summarizer(self.config.summary, self.config.voxtral)
         
         # State
         self._is_recording = False
@@ -127,19 +131,35 @@ class Notetaker:
             transcription.text, speaker_segments
         )
         
+        end_time = datetime.now()
+        duration = (end_time - self._start_time).total_seconds() if self._start_time else 0
+        
+        # Voice commands spoken during the meeting -> notes, tasks, research
+        self._command_executor.extract_from_transcript(
+            formatted_transcript, transcription.language, self._start_time
+        )
+        memo = self.build_memo(
+            transcript=formatted_transcript,
+            language=transcription.language,
+            participants=speakers,
+            date=self._start_time,
+            duration_seconds=duration,
+        )
+        
+        # Save transcript and memo next to the recording
+        audio_path = Path(self._current_file)
+        transcript_file = str(audio_path.with_suffix('.txt'))
+        memo_file = str(audio_path.with_name(f"{audio_path.stem}_memo.md"))
+        with open(transcript_file, 'w', encoding='utf-8') as f:
+            f.write(formatted_transcript)
+        with open(memo_file, 'w', encoding='utf-8') as f:
+            f.write(memo.to_markdown())
+        
         # Upload to cloud
         storage_results = []
         if self.config.storage.auto_upload:
-            storage_results = self.storage.upload(self._current_file)
-            
-            # Also upload transcript
-            transcript_file = str(Path(self._current_file).with_suffix('.txt'))
-            with open(transcript_file, 'w', encoding='utf-8') as f:
-                f.write(formatted_transcript)
-            storage_results.extend(self.storage.upload(transcript_file))
-        
-        end_time = datetime.now()
-        duration = (end_time - self._start_time).total_seconds() if self._start_time else 0
+            for path in (self._current_file, transcript_file, memo_file):
+                storage_results.extend(self.storage.upload(path))
         
         result = MeetingResult(
             audio_file=self._current_file,
@@ -151,7 +171,9 @@ class Notetaker:
             end_time=end_time,
             speakers=speakers,
             speaker_segments=speaker_segments,
-            storage_results=storage_results
+            storage_results=storage_results,
+            memo=memo,
+            memo_file=memo_file
         )
         
         self._current_file = None
@@ -239,9 +261,44 @@ class Notetaker:
         
         return None
     
-    def process_command(self, text: str, language: str = "auto") -> Optional[CommandResult]:
+    def process_command(self, text: str, language: str = "auto",
+                        speaker: Optional[str] = None) -> Optional[CommandResult]:
         """Process a voice command (German or English)"""
-        return self._command_executor.execute(text, language)
+        return self._command_executor.execute(text, language, speaker=speaker)
+    
+    def extract_commands(self, transcript: str, language: str = "auto",
+                         timestamp: Optional[datetime] = None) -> List[CommandResult]:
+        """Collect notes, tasks and research spoken in a finished transcript"""
+        return self._command_executor.extract_from_transcript(transcript, language, timestamp)
+    
+    def build_memo(self, transcript: Optional[str] = None, language: str = "de-CH",
+                   title: Optional[str] = None, participants: Optional[List[str]] = None,
+                   date: Optional[datetime] = None, duration_seconds: Optional[float] = None,
+                   summarize: bool = True) -> Memo:
+        """Build a meeting memo from everything captured so far"""
+        date = date or self._start_time or datetime.now()
+        if not title:
+            title = ("Besprechung" if language.lower().startswith('de') else "Meeting") \
+                + f" {date.strftime('%d.%m.%Y %H:%M')}"
+        
+        summary = []
+        if summarize and transcript:
+            summary = self.summarizer.summarize(transcript, language)
+        
+        if participants is None:
+            participants = list(self._speaker_names.values())
+        
+        return Memo(
+            title=title,
+            language=language,
+            date=date,
+            participants=participants,
+            duration_seconds=duration_seconds,
+            summary=summary,
+            notes=list(self.get_notes()),
+            tasks=list(self.get_tasks()),
+            research=list(self.get_research_queries()),
+        )
     
     def get_notes(self) -> List[Dict[str, Any]]:
         """Get all notes created from voice commands"""

@@ -39,6 +39,15 @@ diarization:
   use_pyannote: true      # Use pyannote.audio for diarization
   hf_token: null          # Hugging Face token for pyannote models (or set HF_TOKEN env var)
 
+# Meeting memo AI summary (OpenAI-compatible chat API, e.g. Mistral)
+summary:
+  enabled: true
+  model: "mistral-small-latest"  # any chat model your API account offers
+  base_url: null          # defaults to voxtral.base_url
+  api_key: null           # defaults to voxtral.api_key
+  max_points: 8           # maximum bullet points in the summary
+  timeout: 60
+
 # Cloud Storage Configuration
 storage:
   provider: local        # Storage provider: local, google_drive, dropbox, s3, all

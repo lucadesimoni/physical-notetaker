@@ -105,6 +105,13 @@ diarization:
   enabled: true
   max_speakers: 10
   hf_token: null  # Hugging Face token for pyannote (or set HF_TOKEN)
+
+summary:
+  enabled: true
+  model: "mistral-small-latest"  # any chat model your API account offers
+  base_url: null   # defaults to voxtral.base_url
+  api_key: null    # defaults to voxtral.api_key
+  max_points: 8
 ```
 
 ### Usage
@@ -151,6 +158,7 @@ result = notetaker.stop_and_transcribe()
 print(f"Transcript: {result.transcript}")
 print(f"Speakers: {result.speakers}")
 print(f"Language: {result.language}")
+print(result.memo.to_markdown())   # saved as result.memo_file
 
 # Set custom speaker names
 notetaker.set_speaker_name("SPEAKER_001", "John Doe")
@@ -162,6 +170,63 @@ interrupt_result = notetaker.interrupt()
 # Close
 notetaker.close()
 ```
+
+## 📝 Meeting Memo & Actions
+
+Speak commands during the meeting. After `record` stops, they are picked up
+from the transcript and a memo is saved next to the recording
+(`meeting_..._memo.md`) and uploaded with it.
+
+| Say (German) | Say (English) | Result |
+|---|---|---|
+| *Mach eine Notiz: …* / *Notiz: …* | *Make a note: …* / *Note: …* | Note |
+| *Erstell einen Task: …* / *Aufgabe: …* | *Create a task: …* / *To do: …* | Task |
+| *Recherchiere für uns: …* | *Research: …* / *Look up: …* | Open question / research |
+| *Fass bitte zusammen* | *Summarize the meeting* | Interim memo |
+
+Commands must open a sentence ("Okay," / "Bitte" in front is fine), so
+ordinary speech like "Ich suche noch einen Termin" is not mistaken for one.
+
+Tasks are split into **owner** and **due date**:
+
+- *"Zahlungsschnittstelle bis 10. November fertigstellen, Marco"* → Marco · Zahlungsschnittstelle fertigstellen · 10.11.
+- *"Sabine erstellt den Kampagnenplan bis Ende Oktober"* → Sabine · 31.10.
+- *"Send the slides by Friday, Anna"* → Anna · next Friday
+
+Due dates understood: `10. November`, `15.11.`, `31.12.2026`, `Ende/Mitte/Anfang Oktober`,
+`morgen`, `übermorgen`, `Freitag`, `Ende der Woche`, and English equivalents.
+
+Create a memo from any transcript (try the included example):
+
+```bash
+python -m voxtral_notetaker memo examples/besprechung_app_launch.txt --date 2026-10-25 --title "App-Launch Planung"
+```
+
+```markdown
+# Protokoll: App-Launch Planung
+
+**Datum:** 25.10.2026
+**Teilnehmende:** Anna, Marco, Sabine
+
+## Notizen
+- Backend zu 80 Prozent fertig, Zahlungsschnittstelle offen
+- Kampagnenbudget 20'000 CHF bestätigt
+
+## Offene Fragen / Recherche
+- TWINT Integration Kosten und Aufwand für Schweizer Apps
+
+## Aufgaben
+| Wer | Was | Bis |
+|---|---|---|
+| Marco | Zahlungsschnittstelle fertigstellen | 10.11.2026 |
+| Sabine | erstellt den Kampagnenplan | 31.10.2026 |
+| – | Testserver für das Marketing bereitstellen | – |
+```
+
+With an API key configured, the memo also gets an AI **Zusammenfassung**
+(summary) of the whole discussion. It uses an OpenAI-compatible
+`/chat/completions` endpoint (Mistral by default; set `summary.model` to a model
+your account offers). Use `--no-summary` to skip it.
 
 ## 📋 Transcript Format
 

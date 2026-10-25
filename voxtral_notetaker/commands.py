@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+from .actions import parse_task_details
+
 
 class CommandType(Enum):
     """Types of voice commands"""
@@ -139,6 +141,19 @@ class CommandParser:
         r'search:',
     ]
     
+    GERMAN_SUMMARY_PATTERNS = [
+        r'fass(e)?\s+(das|es|alles|bitte)?\s*zusammen',
+        r'erstell(e)?\s+(eine|die)\s+zusammenfassung',
+        r'zusammenfassung\s+erstellen',
+    ]
+    
+    ENGLISH_SUMMARY_PATTERNS = [
+        r'summari[sz]e\s+(the|this)\s+meeting',
+        r'summari[sz]e\s+(it|that|everything)',
+        r'create\s+(a|the)\s+summary',
+        r'give\s+(me|us)\s+a\s+summary',
+    ]
+    
     ENGLISH_RECORDING_PATTERNS = {
         'start': [
             r'start\s+recording',
@@ -156,11 +171,23 @@ class CommandParser:
         ],
     }
     
+    # Words that may precede a command: "Okay, mach eine Notiz", "Please create a task"
+    LEAD_IN = re.compile(
+        r'^(?:\s*(?:okay|ok|also|so|und|dann|jetzt|gut|bitte|please|and|then|now|alright)'
+        r'[,:]?\s+)*',
+        re.IGNORECASE,
+    )
+    
     def __init__(self):
         self._custom_commands: Dict[str, Callable] = {}
     
-    def parse(self, text: str, language: str = "auto") -> Optional[VoiceCommand]:
-        """Parse text to detect voice commands"""
+    def parse(self, text: str, language: str = "auto", strict: bool = False) -> Optional[VoiceCommand]:
+        """
+        Parse text to detect voice commands.
+        
+        With strict=True the command phrase must open the sentence, so that
+        ordinary speech ("Ich suche noch einen Termin") is not taken as a command.
+        """
         text = text.strip()
         
         if not text:
@@ -174,6 +201,7 @@ class CommandParser:
         # Try German patterns first if language is German
         if language in ['de', 'de-CH']:
             groups += [
+                (self.GERMAN_SUMMARY_PATTERNS, self._create_summary_command),
                 (self.GERMAN_NOTE_PATTERNS, self._create_note_command),
                 (self.GERMAN_TASK_PATTERNS, self._create_task_command),
                 (self.GERMAN_RESEARCH_PATTERNS, self._create_research_command),
@@ -185,6 +213,7 @@ class CommandParser:
         
         # Try English patterns
         groups += [
+            (self.ENGLISH_SUMMARY_PATTERNS, self._create_summary_command),
             (self.ENGLISH_NOTE_PATTERNS, self._create_note_command),
             (self.ENGLISH_TASK_PATTERNS, self._create_task_command),
             (self.ENGLISH_RESEARCH_PATTERNS, self._create_research_command),
@@ -194,11 +223,15 @@ class CommandParser:
             for action, patterns in self.ENGLISH_RECORDING_PATTERNS.items()
         ]
         
+        command_start = self.LEAD_IN.match(text).end()
         for patterns, factory in groups:
             for pattern in patterns:
                 match = re.search(r'\b' + pattern, text, re.IGNORECASE)
-                if match:
+                if match and (not strict or match.start() == command_start):
                     return factory(text, language, match)
+        
+        if strict:
+            return None
         
         # Check for interruptions
         if self._is_interruption(text, language):
@@ -315,6 +348,16 @@ class CommandParser:
             parameters={'query': query, 'original_text': text}
         )
     
+    def _create_summary_command(self, text: str, language: str, match: re.Match) -> VoiceCommand:
+        """Create a summarize command"""
+        return VoiceCommand(
+            command_type=CommandType.SUMMARIZE,
+            text=text,
+            language=language,
+            confidence=0.9,
+            parameters={'original_text': text}
+        )
+    
     def _recording_factory(self, action: str) -> Callable[[str, str, re.Match], VoiceCommand]:
         return lambda text, language, match: self._create_recording_command(text, language, action)
     
@@ -352,13 +395,64 @@ class CommandExecutor:
         self._research_queries: List[Dict[str, Any]] = []
         self._parser = CommandParser()
     
-    def execute(self, text: str, language: str = "auto") -> Optional[CommandResult]:
+    # Commands that only collect content and can safely be replayed from a transcript
+    CONTENT_COMMANDS = (CommandType.NOTE, CommandType.TASK, CommandType.RESEARCH)
+    
+    def execute(self, text: str, language: str = "auto", speaker: Optional[str] = None,
+                timestamp: Optional[datetime] = None) -> Optional[CommandResult]:
         """Parse and execute a voice command"""
-        command = self._parser.parse(text, language)
-        
+        command = self._parse(text, language, speaker, timestamp)
         if not command:
             return None
+        return self._dispatch(command)
+    
+    def extract_from_transcript(self, transcript: str, language: str = "auto",
+                                timestamp: Optional[datetime] = None) -> List[CommandResult]:
+        """
+        Find note, task and research commands in a finished transcript.
         
+        Lines may carry a speaker label ("[Anna] Mach eine Notiz: ...").
+        Recording controls and interruptions are ignored, and items already
+        captured live are not added twice.
+        """
+        results = []
+        for speaker, sentence in split_transcript(transcript):
+            command = self._parse(sentence, language, speaker, timestamp, strict=True)
+            if not command or command.command_type not in self.CONTENT_COMMANDS:
+                continue
+            if self._is_duplicate(command):
+                continue
+            result = self._dispatch(command)
+            if result:
+                results.append(result)
+        return results
+    
+    def _parse(self, text: str, language: str, speaker: Optional[str],
+               timestamp: Optional[datetime], strict: bool = False) -> Optional[VoiceCommand]:
+        command = self._parser.parse(text, language, strict=strict)
+        if command:
+            command.parameters['speaker'] = speaker
+            if timestamp:
+                command.timestamp = timestamp
+        return command
+    
+    def _is_duplicate(self, command: VoiceCommand) -> bool:
+        def norm(value: str) -> str:
+            return re.sub(r'\W+', ' ', value or '').strip().lower()
+        
+        if command.command_type == CommandType.RESEARCH:
+            existing, key, new = self._research_queries, 'query', command.parameters.get('query')
+        elif command.command_type == CommandType.TASK:
+            existing, key, new = self._tasks, 'content', command.parameters.get('content')
+        else:
+            existing, key, new = self._notes, 'content', command.parameters.get('content')
+        return any(norm(item[key]) == norm(new) for item in existing)
+    
+    def _participants(self) -> List[str]:
+        names = getattr(self.notetaker, '_speaker_names', None) or {}
+        return list(names.values())
+    
+    def _dispatch(self, command: VoiceCommand) -> Optional[CommandResult]:
         # Execute based on command type
         if command.command_type == CommandType.NOTE:
             return self._execute_note(command)
@@ -393,6 +487,7 @@ class CommandExecutor:
             'content': content,
             'language': command.language,
             'timestamp': command.timestamp,
+            'speaker': command.parameters.get('speaker'),
             'original_text': command.parameters.get('original_text', command.text)
         }
         
@@ -429,8 +524,14 @@ class CommandExecutor:
             'language': command.language,
             'timestamp': command.timestamp,
             'status': 'open',
+            'requested_by': command.parameters.get('speaker'),
             'original_text': command.parameters.get('original_text', command.text)
         }
+        participants = self._participants()
+        speaker = command.parameters.get('speaker')
+        if speaker and speaker not in participants:
+            participants.append(speaker)
+        task.update(parse_task_details(content, participants, command.timestamp))
         
         self._tasks.append(task)
         
@@ -465,6 +566,7 @@ class CommandExecutor:
             'language': command.language,
             'timestamp': command.timestamp,
             'status': 'queued',
+            'requested_by': command.parameters.get('speaker'),
             'original_text': command.parameters.get('original_text', command.text)
         }
         
@@ -578,17 +680,23 @@ class CommandExecutor:
     
     def _execute_summarize(self, command: VoiceCommand) -> CommandResult:
         """Execute a summarize command"""
-        # This would trigger summarization of current meeting
+        # Interim memo of everything captured so far
+        memo = None
+        if hasattr(self.notetaker, 'build_memo'):
+            memo = self.notetaker.build_memo(language=command.language, summarize=False)
+        
+        counts = (len(self._notes), len(self._tasks), len(self._research_queries))
         if command.language in ['de', 'de-CH']:
-            response = "Zusammenfassung wird erstellt..."
+            response = "Zwischenstand: {} Notizen, {} Aufgaben, {} Recherchen".format(*counts)
         else:
-            response = "Creating summary..."
+            response = "So far: {} notes, {} tasks, {} research items".format(*counts)
         
         return CommandResult(
             success=True,
             command=command.text,
             response=response,
-            action="SUMMARIZE"
+            action="SUMMARIZE",
+            data={'memo': memo.to_markdown() if memo else None}
         )
     
     def get_notes(self) -> List[Dict[str, Any]]:
@@ -608,3 +716,24 @@ class CommandExecutor:
         self._notes = []
         self._tasks = []
         self._research_queries = []
+
+
+_SPEAKER_LINE = re.compile(r'^\s*\[(?P<speaker>[^\]]+)\]\s*(?P<text>.*)$')
+# Sentence end, but not the dot in "10. November" or "15.11."
+_SENTENCE_END = re.compile(r'(?<!\d)[.!?]+\s+')
+
+
+def split_transcript(transcript: str) -> List[tuple]:
+    """Split a transcript into (speaker, sentence) pairs"""
+    pairs = []
+    speaker = None
+    for line in transcript.splitlines():
+        if not line.strip():
+            continue
+        match = _SPEAKER_LINE.match(line)
+        if match:
+            speaker, line = match.group('speaker').strip(), match.group('text')
+        for sentence in _SENTENCE_END.split(line):
+            if sentence.strip():
+                pairs.append((speaker, sentence.strip()))
+    return pairs
