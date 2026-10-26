@@ -37,7 +37,7 @@ class AudioConfig:
 class VoxtralConfig:
     api_key: str = ""
     base_url: str = "https://api.mistral.ai/v1"
-    model: str = "voxtral-mini-latest"
+    model: str = "voxtral-small-transcribe-3-0"  # Voxtral Small Transcribe 3
     timeout: int = 30
     max_retries: int = 3
     
@@ -160,7 +160,7 @@ class NotetakerConfig:
         voxtral = VoxtralConfig(
             api_key=data.get('voxtral', {}).get('api_key', ''),
             base_url=data.get('voxtral', {}).get('base_url', 'https://api.mistral.ai/v1'),
-            model=data.get('voxtral', {}).get('model', 'voxtral-mini-latest'),
+            model=data.get('voxtral', {}).get('model', 'voxtral-small-transcribe-3-0'),
             timeout=data.get('voxtral', {}).get('timeout', 30),
             max_retries=data.get('voxtral', {}).get('max_retries', 3),
         )

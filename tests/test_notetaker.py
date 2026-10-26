@@ -231,7 +231,7 @@ def test_mistral_request_defaults(tmp_path):
     assert str(request.url) == "https://api.mistral.ai/v1/audio/transcriptions"
     assert request.headers["authorization"] == "Bearer secret"
     body = request.content.decode("utf-8", "replace")
-    assert 'name="model"\r\n\r\nvoxtral-mini-latest' in body
+    assert 'name="model"\r\n\r\nvoxtral-small-transcribe-3-0' in body
     assert 'name="language"\r\n\r\nde\r\n' in body  # Swiss German sent as "de"
     assert "diarize" not in body
     assert result.text == "Grüezi" and result.confidence is None
