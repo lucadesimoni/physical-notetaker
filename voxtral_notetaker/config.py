@@ -37,7 +37,10 @@ class AudioConfig:
 class VoxtralConfig:
     api_key: str = ""
     base_url: str = "https://api.mistral.ai/v1"
+    # Accurate model for the final meeting transcript, memo and speaker labels
     model: str = "voxtral-small-transcribe-3-0"  # Voxtral Small Transcribe 3
+    # Fast, cheaper model for quick interim transcripts ("Moment bitte")
+    fast_model: str = "voxtral-mini-transcribe-3-0"  # Voxtral Mini Transcribe 3
     timeout: int = 30
     max_retries: int = 3
     
@@ -111,6 +114,7 @@ class NotetakerConfig:
                 'api_key': self.voxtral.api_key,
                 'base_url': self.voxtral.base_url,
                 'model': self.voxtral.model,
+                'fast_model': self.voxtral.fast_model,
                 'timeout': self.voxtral.timeout,
                 'max_retries': self.voxtral.max_retries,
             },
@@ -161,6 +165,7 @@ class NotetakerConfig:
             api_key=data.get('voxtral', {}).get('api_key', ''),
             base_url=data.get('voxtral', {}).get('base_url', 'https://api.mistral.ai/v1'),
             model=data.get('voxtral', {}).get('model', 'voxtral-small-transcribe-3-0'),
+            fast_model=data.get('voxtral', {}).get('fast_model', 'voxtral-mini-transcribe-3-0'),
             timeout=data.get('voxtral', {}).get('timeout', 30),
             max_retries=data.get('voxtral', {}).get('max_retries', 3),
         )

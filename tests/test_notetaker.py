@@ -303,3 +303,49 @@ def test_stop_and_transcribe_uses_api_speaker_labels(tmp_path, monkeypatch):
     assert result.memo.participants == ["Anna", "Marco"]
     assert result.memo.tasks[0]["requested_by"] == "Marco"
     nt.close()
+
+
+def test_fast_model_used_on_request(tmp_path):
+    _, request = _capture_transcription(tmp_path, {"text": "ok"}, fast=True)
+    body = request.content.decode("utf-8", "replace")
+    assert 'name="model"\r\n\r\nvoxtral-mini-transcribe-3-0' in body
+
+
+def test_interrupt_uses_fast_model_and_final_uses_accurate(tmp_path, monkeypatch):
+    from voxtral_notetaker.audio import RecordingInfo
+    from voxtral_notetaker.transcription import TranscriptionResult
+
+    config = NotetakerConfig()
+    config.storage.auto_upload = False
+    config.diarization.enabled = False
+    nt = Notetaker(config)
+    calls = []
+
+    def fake_transcribe(f, lang=Language.AUTO, diarize=False, fast=False):
+        calls.append(fast)
+        return TranscriptionResult(text="Hallo", language="de", confidence=None, duration=0.1)
+
+    monkeypatch.setattr(nt, "transcribe", fake_transcribe)
+    audio = tmp_path / "part.wav"
+    audio.write_bytes(b"RIFF")
+    info = RecordingInfo(file_path=str(audio), duration=1.0, sample_rate=16000)
+
+    # "Moment bitte" -> quick interim transcript with the fast model
+    nt._is_recording = True
+    monkeypatch.setattr(nt.audio, "stop_recording", lambda: info)
+    assert nt.interrupt().transcript == "Hallo"
+
+    # End of meeting -> accurate model
+    nt._is_recording = True
+    nt._current_file = str(audio)
+    nt.stop_and_transcribe()
+    assert calls == [True, False]
+    nt.close()
+
+
+def test_fast_model_config_roundtrip(tmp_path):
+    config = NotetakerConfig()
+    config.voxtral.fast_model = "custom-mini"
+    path = tmp_path / "c.yaml"
+    config.save(str(path))
+    assert NotetakerConfig.load(str(path)).voxtral.fast_model == "custom-mini"

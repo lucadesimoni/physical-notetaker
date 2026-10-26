@@ -95,7 +95,8 @@ audio:
 voxtral:
   api_key: ""        # or set MISTRAL_API_KEY
   base_url: "https://api.mistral.ai/v1"
-  model: "voxtral-small-transcribe-3-0"
+  model: "voxtral-small-transcribe-3-0"      # final transcript
+  fast_model: "voxtral-mini-transcribe-3-0"  # quick interim transcripts
   timeout: 30
 
 storage:
@@ -134,6 +135,9 @@ python -m voxtral_notetaker transcribe meeting.wav
 
 # Transcribe with Swiss German
 python -m voxtral_notetaker transcribe meeting.wav --language de-CH
+
+# Quick, cheaper transcription with the Mini model
+python -m voxtral_notetaker transcribe meeting.wav --fast
 
 # Disable speaker diarization (faster)
 python -m voxtral_notetaker record --no-diarization
@@ -387,11 +391,13 @@ class MeetingResult:
 
 | Purpose | Default | Config |
 |---|---|---|
-| Transcription + speakers | `voxtral-small-transcribe-3-0` (Voxtral Small Transcribe 3, public preview) | `voxtral.model` |
+| Final transcript, speakers, memo | `voxtral-small-transcribe-3-0` (Voxtral Small Transcribe 3) | `voxtral.model` |
+| Quick interim transcript ("Moment bitte", `transcribe --fast`) | `voxtral-mini-transcribe-3-0` (Voxtral Mini Transcribe 3) | `voxtral.fast_model` |
 | Meeting summary | `mistral-small-2603` (Mistral Small 4) | `summary.model` |
 
-For lower cost, set `voxtral.model` to Voxtral Mini Transcribe 3
-(`voxtral-mini-transcribe-3-0`; check the exact ID in your Mistral model list).
+The accurate Small model is used where quality matters (the memo, tasks and
+speaker names come from it); the cheaper, faster Mini model where speed matters.
+Voxtral 3 is in public preview, so check both IDs in your Mistral model list.
 Both run on Mistral's API, so the Raspberry Pi only records and processes audio.
 Swiss German is transcribed as German; test with your own recordings.
 

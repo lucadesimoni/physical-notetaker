@@ -19,7 +19,8 @@ audio:
 voxtral:
   api_key: ""             # Mistral API key, or set the MISTRAL_API_KEY environment variable
   base_url: "https://api.mistral.ai/v1"
-  model: "voxtral-small-transcribe-3-0"  # Voxtral Small Transcribe 3 (cheaper: voxtral-mini-transcribe-3-0)
+  model: "voxtral-small-transcribe-3-0"      # Accurate: final transcript, memo, speakers
+  fast_model: "voxtral-mini-transcribe-3-0"  # Fast/cheap: interim transcripts ("Moment bitte")
   timeout: 30             # Request timeout in seconds
   max_retries: 3          # Retries on rate limits / server errors
 

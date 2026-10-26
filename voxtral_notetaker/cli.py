@@ -92,7 +92,8 @@ def record(output: str, device: int, language: str, no_diarization: bool, no_upl
 @click.option('--language', '-l', type=click.Choice(['en', 'de', 'de-CH', 'auto']), 
               default='auto', help='Language for transcription')
 @click.option('--no-diarization', is_flag=True, help='Disable speaker diarization')
-def transcribe(file: str, language: str, no_diarization: bool):
+@click.option('--fast', is_flag=True, help='Use the fast, cheaper model (voxtral.fast_model)')
+def transcribe(file: str, language: str, no_diarization: bool, fast: bool):
     """Transcribe an existing audio file"""
     if not os.path.exists(file):
         console.log(f"File not found: {file}", style="red")
@@ -104,7 +105,8 @@ def transcribe(file: str, language: str, no_diarization: bool):
     try:
         lang = Language(language) if language != 'auto' else Language.AUTO
         diarize = not no_diarization and config.diarization.enabled
-        result = notetaker.transcribe(file, lang, diarize=notetaker._use_api_diarization(diarize))
+        result = notetaker.transcribe(file, lang, diarize=notetaker._use_api_diarization(diarize),
+                                      fast=fast)
         
         console.log("[bold green]Transcription:[/bold green]")
         console.log(f"Language: {result.language}")
