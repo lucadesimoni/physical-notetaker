@@ -16,6 +16,9 @@ setup(
     license="MIT",
     packages=find_packages(),
     install_requires=requirements,
+    extras_require={
+        "local-diarization": ["pyannote.audio>=3.1.1"],
+    },
     python_requires=">=3.10",
     entry_points={
         "console_scripts": [

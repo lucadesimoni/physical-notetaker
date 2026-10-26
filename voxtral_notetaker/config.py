@@ -36,13 +36,14 @@ class AudioConfig:
 @dataclass
 class VoxtralConfig:
     api_key: str = ""
-    base_url: str = "https://api.voxtral.com/v1"
-    model: str = "voxtral-4"
+    base_url: str = "https://api.mistral.ai/v1"
+    model: str = "voxtral-mini-latest"
     timeout: int = 30
     max_retries: int = 3
-    enable_swiss_german: bool = True
-    swiss_german_model: str = "voxtral-4-de-ch"
-    language_hint: str = "de-CH"
+    
+    def resolved_api_key(self) -> str:
+        """API key from config, or the MISTRAL_API_KEY environment variable"""
+        return self.api_key or os.environ.get("MISTRAL_API_KEY", "")
 
 
 @dataclass
@@ -63,6 +64,7 @@ class StorageConfig:
 @dataclass
 class DiarizationConfig:
     enabled: bool = True
+    provider: str = "mistral"  # "mistral" (API, no local model) or "pyannote" (local)
     max_speakers: int = 10
     hf_token: Optional[str] = None
 
@@ -71,7 +73,7 @@ class DiarizationConfig:
 class SummaryConfig:
     """AI summary for the meeting memo (OpenAI-compatible chat API, e.g. Mistral)"""
     enabled: bool = True
-    model: str = "mistral-small-latest"
+    model: str = "mistral-small-2603"  # Mistral Small 4
     base_url: Optional[str] = None  # defaults to voxtral.base_url
     api_key: Optional[str] = None   # defaults to voxtral.api_key
     max_points: int = 8
@@ -111,9 +113,6 @@ class NotetakerConfig:
                 'model': self.voxtral.model,
                 'timeout': self.voxtral.timeout,
                 'max_retries': self.voxtral.max_retries,
-                'enable_swiss_german': self.voxtral.enable_swiss_german,
-                'swiss_german_model': self.voxtral.swiss_german_model,
-                'language_hint': self.voxtral.language_hint,
             },
             'storage': {
                 'provider': self.storage.provider.value,
@@ -130,6 +129,7 @@ class NotetakerConfig:
             },
             'diarization': {
                 'enabled': self.diarization.enabled,
+                'provider': self.diarization.provider,
                 'max_speakers': self.diarization.max_speakers,
                 'hf_token': self.diarization.hf_token,
             },
@@ -159,13 +159,10 @@ class NotetakerConfig:
         
         voxtral = VoxtralConfig(
             api_key=data.get('voxtral', {}).get('api_key', ''),
-            base_url=data.get('voxtral', {}).get('base_url', 'https://api.voxtral.com/v1'),
-            model=data.get('voxtral', {}).get('model', 'voxtral-4'),
+            base_url=data.get('voxtral', {}).get('base_url', 'https://api.mistral.ai/v1'),
+            model=data.get('voxtral', {}).get('model', 'voxtral-mini-latest'),
             timeout=data.get('voxtral', {}).get('timeout', 30),
             max_retries=data.get('voxtral', {}).get('max_retries', 3),
-            enable_swiss_german=data.get('voxtral', {}).get('enable_swiss_german', True),
-            swiss_german_model=data.get('voxtral', {}).get('swiss_german_model', 'voxtral-4-de-ch'),
-            language_hint=data.get('voxtral', {}).get('language_hint', 'de-CH'),
         )
         
         storage = StorageConfig(
@@ -184,13 +181,14 @@ class NotetakerConfig:
         
         diarization = DiarizationConfig(
             enabled=data.get('diarization', {}).get('enabled', True),
+            provider=data.get('diarization', {}).get('provider', 'mistral'),
             max_speakers=data.get('diarization', {}).get('max_speakers', 10),
             hf_token=data.get('diarization', {}).get('hf_token'),
         )
         
         summary = SummaryConfig(
             enabled=data['summary'].get('enabled', True),
-            model=data['summary'].get('model', 'mistral-small-latest'),
+            model=data['summary'].get('model', 'mistral-small-2603'),
             base_url=data['summary'].get('base_url'),
             api_key=data['summary'].get('api_key'),
             max_points=data['summary'].get('max_points', 8),

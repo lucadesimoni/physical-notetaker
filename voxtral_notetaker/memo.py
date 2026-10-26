@@ -172,7 +172,7 @@ class Summarizer:
     def __init__(self, config: SummaryConfig, voxtral: VoxtralConfig):
         self.config = config
         self.base_url = config.base_url or voxtral.base_url
-        self.api_key = config.api_key or voxtral.api_key
+        self.api_key = config.api_key or voxtral.resolved_api_key()
 
     @property
     def available(self) -> bool:

@@ -1,6 +1,6 @@
 """
 Voxtral Notetaker - Lean Raspberry Pi meeting transcription system
-Uses Voxtral 4 for superior transcription with Swiss German support
+Uses Mistral Voxtral for transcription and Mistral Small 4 for meeting summaries
 """
 
 __version__ = "1.0.0"

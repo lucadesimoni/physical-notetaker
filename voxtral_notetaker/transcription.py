@@ -1,12 +1,12 @@
 """
-Lean Voxtral 4 transcription with Swiss German support
+Voxtral transcription via the Mistral API, with optional speaker diarization
 """
 
 import os
 import time
 import asyncio
 from typing import Optional, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 from httpx import AsyncClient, HTTPStatusError
@@ -15,42 +15,63 @@ from .config import VoxtralConfig, Language
 
 
 @dataclass
+class TranscriptSegment:
+    start: float
+    end: float
+    text: str
+    speaker_id: Optional[str] = None
+
+
+@dataclass
 class TranscriptionResult:
     text: str
     language: str
-    confidence: float
+    confidence: Optional[float]
     duration: float
-    speaker_labels: Optional[List[str]] = None
+    segments: List[TranscriptSegment] = field(default_factory=list)
+    
+    @property
+    def has_speakers(self) -> bool:
+        return any(seg.speaker_id for seg in self.segments)
+
+
+# Mistral expects ISO 639-1 codes; Swiss German is transcribed as German
+API_LANGUAGE = {Language.EN: 'en', Language.DE: 'de', Language.DE_CH: 'de'}
 
 
 class VoxtralTranscriber:
-    """Voxtral API client for transcription"""
+    """Mistral audio transcription client (POST /audio/transcriptions)"""
     
     def __init__(self, config: VoxtralConfig):
         self.config = config
     
     def _make_client(self) -> AsyncClient:
         # A fresh client per call: callers may run each transcription in its own event loop
+        api_key = self.config.resolved_api_key()
         return AsyncClient(
             base_url=self.config.base_url,
             timeout=self.config.timeout,
-            headers={'Authorization': f'Bearer {self.config.api_key}'}
+            headers={'Authorization': f'Bearer {api_key}', 'x-api-key': api_key}
         )
     
-    async def transcribe(self, audio_file: str, 
-                        language: Language = Language.AUTO) -> TranscriptionResult:
+    def _form(self, language: Language, diarize: bool) -> dict:
+        form = {'model': self.config.model}
+        if diarize:
+            # Speaker labels come with segment timestamps, which the API does
+            # not combine with a fixed language, so the language is auto-detected
+            form['diarize'] = 'true'
+            form['timestamp_granularities'] = 'segment'
+        elif language in API_LANGUAGE:
+            form['language'] = API_LANGUAGE[language]
+        return form
+    
+    async def transcribe(self, audio_file: str, language: Language = Language.AUTO,
+                         diarize: bool = False) -> TranscriptionResult:
         """Transcribe audio file"""
-        model = self._get_model(language)
-        
         with open(audio_file, 'rb') as f:
             audio_data = f.read()
         
-        form = {'model': model}
-        if language != Language.AUTO:
-            form['language'] = language.value
-        elif self.config.enable_swiss_german and self.config.language_hint:
-            form['language_hint'] = self.config.language_hint
-        
+        form = self._form(language, diarize)
         retries = max(1, self.config.max_retries)
         async with self._make_client() as client:
             for attempt in range(retries):
@@ -63,14 +84,7 @@ class VoxtralTranscriber:
                         files={'file': (os.path.basename(audio_file), audio_data)}
                     )
                     response.raise_for_status()
-                    
-                    data = response.json()
-                    return TranscriptionResult(
-                        text=data.get('text', ''),
-                        language=data.get('language', language.value),
-                        confidence=data.get('confidence', 0.0),
-                        duration=time.time() - start
-                    )
+                    return self._parse(response.json(), language, time.time() - start)
                 except HTTPStatusError as e:
                     if e.response.status_code != 429 and e.response.status_code < 500:
                         raise
@@ -83,10 +97,26 @@ class VoxtralTranscriber:
         
         raise RuntimeError("Transcription failed")
     
-    def _get_model(self, language: Language) -> str:
-        if language == Language.DE_CH and self.config.enable_swiss_german:
-            return self.config.swiss_german_model
-        return self.config.model
+    @staticmethod
+    def _parse(data: dict, language: Language, duration: float) -> TranscriptionResult:
+        segments = []
+        for seg in data.get('segments') or []:
+            speaker = seg.get('speaker_id', seg.get('speaker'))
+            segments.append(TranscriptSegment(
+                start=float(seg.get('start', 0.0)),
+                end=float(seg.get('end', 0.0)),
+                text=(seg.get('text') or '').strip(),
+                speaker_id=str(speaker) if speaker is not None else None,
+            ))
+        
+        text = data.get('text') or ' '.join(seg.text for seg in segments)
+        return TranscriptionResult(
+            text=text.strip(),
+            language=data.get('language') or language.value,
+            confidence=data.get('confidence'),
+            duration=duration,
+            segments=segments,
+        )
     
     async def close(self):
         pass

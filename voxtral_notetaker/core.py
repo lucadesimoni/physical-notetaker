@@ -23,7 +23,7 @@ class MeetingResult:
     audio_file: str
     transcript: str
     language: str
-    confidence: float
+    confidence: Optional[float]
     duration: float
     start_time: datetime
     end_time: datetime
@@ -89,9 +89,35 @@ class Notetaker:
         self._is_recording = False
         return result
     
-    def transcribe(self, audio_file: str, language: Language = Language.AUTO) -> TranscriptionResult:
-        """Transcribe audio file"""
-        return asyncio.run(self.transcriber.transcribe(audio_file, language))
+    def transcribe(self, audio_file: str, language: Language = Language.AUTO,
+                   diarize: bool = False) -> TranscriptionResult:
+        """Transcribe audio file (diarize=True asks the API for speaker labels)"""
+        return asyncio.run(self.transcriber.transcribe(audio_file, language, diarize=diarize))
+    
+    def _use_api_diarization(self, diarize: bool) -> bool:
+        return diarize and self.config.diarization.provider == 'mistral'
+    
+    def _speaker_segments(self, audio_file: str, transcription: TranscriptionResult,
+                          diarize: bool) -> List[Dict[str, Any]]:
+        """Speaker segments from the API's labels, or from local pyannote"""
+        if not diarize:
+            return []
+        if transcription.has_speakers:
+            segments = [(s.start, s.end, s.speaker_id, s.text) for s in transcription.segments]
+        else:
+            segments = [
+                (s.start, s.end, s.speaker_id, None)
+                for s in self.diarizer.diarize(
+                    audio_file, max_speakers=self.config.diarization.max_speakers
+                )
+            ]
+        return [{
+            'start': start,
+            'end': end,
+            'speaker_id': speaker_id or 'Unknown',
+            'speaker_name': self.diarizer.get_speaker_name(speaker_id or 'Unknown'),
+            'text': text,
+        } for start, end, speaker_id, text in segments]
     
     def stop_and_transcribe(self, language: Language = Language.AUTO,
                             diarize: Optional[bool] = None) -> MeetingResult:
@@ -104,27 +130,15 @@ class Notetaker:
         if diarize is None:
             diarize = self.config.diarization.enabled
         
-        # Transcribe
-        transcription = self.transcribe(self._current_file, language)
+        # Transcribe, with speaker labels from the API when configured
+        if self._use_api_diarization(diarize):
+            transcription = self.transcribe(self._current_file, language, diarize=True)
+        else:
+            transcription = self.transcribe(self._current_file, language)
         
-        # Diarization for speaker recognition
-        speaker_segments = []
-        speakers = []
-        
-        if diarize:
-            segments = self.diarizer.diarize(
-                self._current_file, max_speakers=self.config.diarization.max_speakers
-            )
-            for seg in segments:
-                speaker_name = self.diarizer.get_speaker_name(seg.speaker_id)
-                speaker_segments.append({
-                    'start': seg.start,
-                    'end': seg.end,
-                    'speaker_id': seg.speaker_id,
-                    'speaker_name': speaker_name
-                })
-                if speaker_name not in speakers:
-                    speakers.append(speaker_name)
+        # Speaker recognition
+        speaker_segments = self._speaker_segments(self._current_file, transcription, diarize)
+        speakers = list(dict.fromkeys(seg['speaker_name'] for seg in speaker_segments))
         
         # Format transcript with speakers
         formatted_transcript = self._format_transcript_with_speakers(
@@ -187,6 +201,21 @@ class Notetaker:
         if not segments:
             return text
         
+        # Segments that carry their own text (API diarization): exact attribution
+        if all(seg.get('text') is not None for seg in segments):
+            lines = []
+            prev_speaker = None
+            for seg in sorted(segments, key=lambda x: x['start']):
+                if not seg['text']:
+                    continue
+                speaker = seg.get('speaker_name') or seg.get('speaker_id', 'Unknown')
+                if speaker != prev_speaker:
+                    lines.append(f"[{speaker}] {seg['text']}")
+                    prev_speaker = speaker
+                else:
+                    lines[-1] += f" {seg['text']}"
+            return '\n'.join(lines) if lines else text
+        
         # The transcript carries no timestamps, so approximate each segment's
         # share of the text by its position within the total audio duration.
         ordered = sorted(segments, key=lambda x: x['start'])
@@ -231,17 +260,14 @@ class Notetaker:
         
         if recording:
             # Quick transcribe for live feedback
-            result = self.transcribe(recording.file_path)
+            diarize = self.config.diarization.enabled
+            if self._use_api_diarization(diarize):
+                result = self.transcribe(recording.file_path, diarize=True)
+            else:
+                result = self.transcribe(recording.file_path)
             
-            # Diarize
-            segments = []
-            if self.config.diarization.enabled:
-                segments = self.diarizer.diarize(
-                    recording.file_path, max_speakers=self.config.diarization.max_speakers
-                )
-            speakers = list(dict.fromkeys(
-                self.diarizer.get_speaker_name(seg.speaker_id) for seg in segments
-            ))
+            segments = self._speaker_segments(recording.file_path, result, diarize)
+            speakers = list(dict.fromkeys(seg['speaker_name'] for seg in segments))
             
             return MeetingResult(
                 audio_file=recording.file_path,
@@ -252,11 +278,7 @@ class Notetaker:
                 start_time=start_time or datetime.now(),
                 end_time=datetime.now(),
                 speakers=speakers,
-                speaker_segments=[{
-                    'start': s.start, 'end': s.end, 
-                    'speaker_id': s.speaker_id,
-                    'speaker_name': self.diarizer.get_speaker_name(s.speaker_id)
-                } for s in segments]
+                speaker_segments=segments
             )
         
         return None

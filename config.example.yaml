@@ -15,23 +15,18 @@ audio:
   noise_reduction: true   # Enable noise reduction
   enhancement: true        # Enable audio enhancement
 
-# Voxtral API Configuration
+# Mistral Voxtral transcription (https://docs.mistral.ai/studio/audio/overview)
 voxtral:
-  api_key: ""             # Your Voxtral API key (get from https://voxtral.com)
-  base_url: "https://api.voxtral.com/v1"
-  model: "voxtral-4"      # Voxtral model to use
+  api_key: ""             # Mistral API key, or set the MISTRAL_API_KEY environment variable
+  base_url: "https://api.mistral.ai/v1"
+  model: "voxtral-mini-latest"  # Voxtral transcription model
   timeout: 30             # Request timeout in seconds
-  max_retries: 3          # Maximum number of retry attempts
-  temperature: 0.7        # Sampling temperature (0.0 - 1.0)
-  
-  # Swiss German specific settings
-  enable_swiss_german: true
-  swiss_german_model: "voxtral-4-de-ch"  # Swiss German optimized model
-  language_hint: "de-CH"  # Language hint for better Swiss German recognition
+  max_retries: 3          # Retries on rate limits / server errors
 
 # Speaker Diarization Configuration
 diarization:
   enabled: true           # Enable speaker diarization
+  provider: mistral       # mistral (API, no local model) or pyannote (local)
   min_speakers: 1        # Minimum number of speakers to detect
   max_speakers: 10       # Maximum number of speakers to detect
   speaker_change_threshold: 0.7  # Threshold for speaker change detection (0.0 - 1.0)
@@ -42,7 +37,7 @@ diarization:
 # Meeting memo AI summary (OpenAI-compatible chat API, e.g. Mistral)
 summary:
   enabled: true
-  model: "mistral-small-latest"  # any chat model your API account offers
+  model: "mistral-small-2603"  # Mistral Small 4
   base_url: null          # defaults to voxtral.base_url
   api_key: null           # defaults to voxtral.api_key
   max_points: 8           # maximum bullet points in the summary

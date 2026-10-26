@@ -64,7 +64,8 @@ def record(output: str, device: int, language: str, no_diarization: bool, no_upl
             console.log(f"File: {result.audio_file}")
             console.log(f"Duration: {result.duration:.1f}s")
             console.log(f"Language: {result.language}")
-            console.log(f"Confidence: {result.confidence*100:.1f}%")
+            if result.confidence is not None:
+                console.log(f"Confidence: {result.confidence*100:.1f}%")
             console.log(f"Speakers: {', '.join(result.speakers) if result.speakers else 'None'}")
             console.log(f"\n[bold]Transcript:[/bold]\n{result.transcript}")
             
@@ -102,24 +103,23 @@ def transcribe(file: str, language: str, no_diarization: bool):
     
     try:
         lang = Language(language) if language != 'auto' else Language.AUTO
-        result = notetaker.transcribe(file, lang)
+        diarize = not no_diarization and config.diarization.enabled
+        result = notetaker.transcribe(file, lang, diarize=notetaker._use_api_diarization(diarize))
         
         console.log("[bold green]Transcription:[/bold green]")
         console.log(f"Language: {result.language}")
-        console.log(f"Confidence: {result.confidence*100:.1f}%")
+        if result.confidence is not None:
+            console.log(f"Confidence: {result.confidence*100:.1f}%")
         console.log(f"Duration: {result.duration:.1f}s")
-        console.log(f"\n{result.text}")
         
-        if not no_diarization and config.diarization.enabled:
-            console.log("\n[bold]Diarizing...[/bold]")
-            segments = notetaker.diarizer.diarize(file, max_speakers=config.diarization.max_speakers)
-            
-            if segments:
-                console.log(f"Found {len(set(s.speaker_id for s in segments))} speakers")
-                for seg in segments[:10]:
-                    console.log(f"  [{seg.speaker_id}] {seg.start:.1f}s - {seg.end:.1f}s")
-            else:
+        segments = notetaker._speaker_segments(file, result, diarize)
+        if segments:
+            console.log(f"Found {len(set(s['speaker_id'] for s in segments))} speakers\n")
+            console.print(notetaker._format_transcript_with_speakers(result.text, segments))
+        else:
+            if diarize:
                 console.log("No speakers detected")
+            console.print(f"\n{result.text}")
         
     except Exception as e:
         console.log(f"Error: {e}", style="red")
@@ -174,7 +174,7 @@ def memo(file: str, language: str, title: str, meeting_date: str, output: str, n
         console.print(result.to_markdown())
         console.log(f"Memo saved: {output}")
         if not no_summary and not notetaker.summarizer.available:
-            console.log("No AI summary: set voxtral.api_key (or summary.api_key) in config.yaml")
+            console.log("No AI summary: set MISTRAL_API_KEY or voxtral.api_key in config.yaml")
     finally:
         notetaker.close()
 
@@ -211,10 +211,10 @@ def setup():
     config = NotetakerConfig()
     config.save('config.yaml')
     console.log("Created config.yaml")
-    console.log("\nEdit the file to add your Voxtral API key and storage settings.")
+    console.log("\nSet your Mistral API key and storage settings.")
     console.log("\nQuick start:")
-    console.log("  1. Get Voxtral API key from https://voxtral.com")
-    console.log("  2. Edit config.yaml and set voxtral.api_key")
+    console.log("  1. Create an API key in Mistral AI Studio (https://console.mistral.ai)")
+    console.log("  2. export MISTRAL_API_KEY=... (or set voxtral.api_key in config.yaml)")
     console.log("  3. Run: python -m voxtral_notetaker record")
 
 

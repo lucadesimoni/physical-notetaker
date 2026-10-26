@@ -93,8 +93,8 @@ def main():
         print_success("Default configuration created")
         print_info(f"  Sample rate: {config.audio.sample_rate}Hz")
         print_info(f"  Voxtral model: {config.voxtral.model}")
-        print_info(f"  Swiss German enabled: {config.voxtral.enable_swiss_german}")
-        print_info(f"  Language hint: {config.voxtral.language_hint}")
+        print_info(f"  API: {config.voxtral.base_url}")
+        print_info(f"  Summary model: {config.summary.model}")
         print_info(f"  Storage provider: {config.storage.provider.value}")
         print_info(f"  Auto upload: {config.storage.auto_upload}")
         
