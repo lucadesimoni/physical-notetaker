@@ -3,10 +3,11 @@ Voxtral transcription via the Mistral API, with optional speaker diarization
 """
 
 import os
+import json
 import time
 import asyncio
 from typing import Optional, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 import httpx
 from httpx import AsyncClient, HTTPStatusError
@@ -33,6 +34,24 @@ class TranscriptionResult:
     @property
     def has_speakers(self) -> bool:
         return any(seg.speaker_id for seg in self.segments)
+
+
+def save_transcription(result: TranscriptionResult, path: str):
+    """Keep the raw transcription, so a memo can be remade without paying again"""
+    tmp = f"{path}.tmp"
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(asdict(result), f, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
+def load_transcription(path: str) -> Optional[TranscriptionResult]:
+    try:
+        with open(path, encoding='utf-8') as f:
+            data = json.load(f)
+        data['segments'] = [TranscriptSegment(**seg) for seg in data.get('segments') or []]
+        return TranscriptionResult(**data)
+    except (OSError, ValueError, TypeError):
+        return None
 
 
 # Mistral expects ISO 639-1 codes; Swiss German is transcribed as German

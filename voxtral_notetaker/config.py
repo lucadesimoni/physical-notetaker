@@ -112,6 +112,9 @@ class DeviceConfig:
     """Physical controls and feedback for the meeting device"""
     beeps: bool = True                 # play tones through the speakerphone
     beep_volume: float = 0.3
+    voice: bool = True                 # spoken announcements (espeak-ng or Piper)
+    piper_model: str = ""              # optional Piper voice (.onnx) for a nicer voice
+    long_press_seconds: float = 3.0    # hold the button: the device says its address
     button_gpio: Optional[int] = None  # GPIO pin of a start/stop push button
     led_gpio: Optional[int] = None     # GPIO pin of a status LED
     # Buttons on a USB device (e.g. the speakerphone's call button), via evdev
@@ -124,8 +127,13 @@ class ServiceConfig:
     """Background service: autostart, crash recovery and the processing queue"""
     recordings_dir: str = "./recordings"
     language: str = "auto"              # meeting language: auto, de, de-CH, en
+    ui_language: str = "de"             # web page and announcements: de or en
     retry_interval_seconds: int = 300   # first retry after a failure; doubles up to 1 hour
     max_attempts: int = 0               # 0 = keep retrying network errors
+    keep_audio_days: int = 30           # delete audio of finished meetings after N days (0 = never)
+    min_free_mb: int = 500              # free space to keep; oldest finished audio goes first
+    live_commands: bool = True          # confirm voice commands during the meeting
+    live_interval_seconds: int = 30     # how often new audio is checked (fast Mini model)
 
 
 @dataclass

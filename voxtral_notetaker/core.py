@@ -11,7 +11,8 @@ from pathlib import Path
 
 from .config import NotetakerConfig, Language
 from .audio import AudioRecorder, RecordingInfo
-from .transcription import VoxtralTranscriber, TranscriptionResult
+from .transcription import (VoxtralTranscriber, TranscriptionResult, save_transcription,
+                            load_transcription)
 from .diarization import SpeakerDiarizer
 from .storage import CloudStorage, UploadResult
 from .commands import CommandParser, CommandExecutor, CommandResult
@@ -154,26 +155,36 @@ class Notetaker:
     def process_recording(self, audio_file: str, language: Language = Language.AUTO,
                           diarize: Optional[bool] = None, start_time: Optional[datetime] = None,
                           duration: Optional[float] = None, title: Optional[str] = None,
-                          upload: Optional[bool] = None, keep_commands: bool = False) -> MeetingResult:
+                          upload: Optional[bool] = None, keep_commands: bool = False,
+                          use_cache: bool = True) -> MeetingResult:
         """
         Turn a recording into transcript and memo files next to it, and upload them.
         
         Works for any saved recording, e.g. one queued before a reboot.
         Notes and tasks captured live are kept only with keep_commands=True.
+        The raw transcription is cached next to the recording (….segments.json),
+        so remaking a memo (e.g. after renaming speakers) costs no new transcription
+        and works even after the audio was deleted.
         """
         if diarize is None:
             diarize = self.config.diarization.enabled
         if upload is None:
             upload = self.config.storage.auto_upload
-        start_time = start_time or datetime.fromtimestamp(os.path.getmtime(audio_file))
+        cache_file = transcription_cache_path(audio_file)
+        if not start_time:
+            source = audio_file if os.path.exists(audio_file) else cache_file
+            start_time = datetime.fromtimestamp(os.path.getmtime(source))
         if not keep_commands:
             self.clear_commands()
         
-        # Transcribe, with speaker labels from the API when configured
-        if self._use_api_diarization(diarize):
-            transcription = self.transcribe(audio_file, language, diarize=True)
-        else:
-            transcription = self.transcribe(audio_file, language)
+        transcription = load_transcription(cache_file) if use_cache else None
+        if transcription is None:
+            # Transcribe, with speaker labels from the API when configured
+            if self._use_api_diarization(diarize):
+                transcription = self.transcribe(audio_file, language, diarize=True)
+            else:
+                transcription = self.transcribe(audio_file, language)
+            save_transcription(transcription, cache_file)
         
         # Speaker recognition, named from introductions ("Ich bin Anna")
         speaker_segments = self._speaker_segments(audio_file, transcription, diarize)
@@ -414,3 +425,7 @@ def _write_text(path: str, text: str):
     with open(tmp, 'w', encoding='utf-8') as f:
         f.write(text)
     os.replace(tmp, path)
+
+
+def transcription_cache_path(audio_file: str) -> str:
+    return str(Path(audio_file).with_suffix('.segments.json'))

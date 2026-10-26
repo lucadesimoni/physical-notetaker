@@ -46,14 +46,18 @@
 Nothing to install or type for meeting participants:
 
 1. **Press the button** (on the device, or the call button of the speakerphone).
-   A rising beep means it's recording, and the light is on.
+   The device says *"Aufnahme gestartet. Diese Besprechung wird aufgezeichnet."*
+   (everyone knows they are recorded), and the light is on.
 2. Optionally, everyone introduces themselves: *"Ich bin Anna"*, *"Mein Name ist Marco"*.
    The memo then uses real names.
-3. Talk normally. Say *"Mach eine Notiz: …"* or *"Erstell einen Task: … bis Freitag, Marco"*
-   for notes and tasks.
-4. **Press the button again** at the end. A falling beep means it's saved.
-   The light blinks while the memo is created.
+3. Talk normally. Say *"Mach eine Notiz: …"* or *"Erstell einen Task: … bis Freitag, Marco"*.
+   About half a minute later the device confirms: *"Notiz notiert"* / *"Aufgabe notiert"*.
+4. **Press the button again** at the end, or say *"Beende die Aufnahme"*.
+   The device says *"Aufnahme gespeichert. Das Protokoll kommt per E-Mail."*
 5. The **memo arrives by email**, and is on the device's web page.
+
+Names wrong in the memo? Open the meeting on the web page, correct the names and
+press *Protokoll neu erstellen*. Nothing is transcribed again for this.
 
 What happens if…
 
@@ -61,12 +65,18 @@ What happens if…
 |---|---|
 | Power cut / crash mid-meeting | The recording is on the SD card up to the last ~2 seconds; it is repaired and processed after restart |
 | No internet after the meeting | The memo is created automatically when the connection is back (retries with growing pauses) |
-| Wrong API key / email password | The web page shows *Needs attention* with the reason; fix it in Settings and it retries |
-| Meeting runs too long | Warning beep 5 minutes before the limit (default 120 min), then it stops and saves |
-| Microphone unplugged | Error beep (three low tones) and a message on the web page |
+| Wrong API key / email password | The web page shows *Bitte prüfen* with the reason; fix it in Settings and it retries |
+| Meeting runs too long | Announcement 5 minutes before the limit (default 120 min), then it stops and saves |
+| Microphone unplugged | *"Mikrofon nicht gefunden"* and a message on the web page |
+| SD card filling up | Audio of finished meetings is deleted after 30 days (memos stay); if space still runs low, oldest audio first. A full card stops and saves the recording |
+| Don't know the address | Hold the button for 3 seconds: the device says its address |
 
-Beeps: rising = recording, falling = saved, three low tones = problem.
+Without a speech engine the device uses tones instead: rising = recording,
+falling = saved, three low tones = problem.
 Light: on = recording, slow blink = creating memo, fast blink = problem.
+
+The web page and announcements are in German by default; switch to English
+in Settings (*Sprache des Geräts*).
 
 ## 🔌 Device Setup (one time)
 
@@ -78,21 +88,33 @@ cd physical-notetaker
 sudo ./deploy/install.sh
 ```
 
-The installer sets everything up and starts the notetaker on every boot. Then on
-your phone, open the address it prints (e.g. `http://raspberrypi.local:8080`):
+The installer names the device `notetaker` and starts it on every boot. Then on
+your phone (**same Wi-Fi as the device**), open **`http://notetaker.local`**, or scan
+the QR code the installer shows:
 
 1. Choose a PIN (protects the settings)
 2. Paste your Mistral API key
 3. Optional: email addresses for the memos and your SMTP server
+4. Print the sticker (*Aufkleber mit QR-Code*) and put it on the device: it
+   explains the button and links to the page
+
+The phone must be in the same network as the device. If `notetaker.local` does
+not open (some Android phones), use the IP address on the sticker, or hold the
+button for 3 seconds and the device says it.
 
 **No Wi-Fi yet?** Start the Pi without a network. After about a minute it opens
 the Wi-Fi **Notetaker-Setup** (password `notetaker`). Connect your phone and open
-`http://10.42.0.1:8080`, then enter your Wi-Fi in Settings.
+`http://10.42.0.1`, then enter your Wi-Fi in Settings.
 
-**Buttons:** the speakerphone's call button works if Linux reports it as a key
-(`KEY_PHONE`/`KEY_PLAYPAUSE`; see `device.input_keys`). For a dedicated button,
-wire a push button between a GPIO pin and GND and set `device.button_gpio`
-(e.g. `17`); an LED with a resistor on `device.led_gpio` (e.g. `27`).
+**Buttons:** the speakerphone's call button works if Linux reports it as a key.
+Check with `sudo evtest` (press the button; `KEY_PHONE`/`KEY_PLAYPAUSE` are
+used by default, see `device.input_keys`). For a dedicated button, wire a push
+button between a GPIO pin and GND and set `device.button_gpio` (e.g. `17`);
+an LED with a resistor on `device.led_gpio` (e.g. `27`).
+
+**Nicer voice:** announcements use `espeak-ng` (robotic but clear). For a natural
+voice install [Piper](https://github.com/rhasspy/piper) and set
+`device.piper_model` to a German voice model (`.onnx`).
 
 Useful commands on the Pi:
 
@@ -100,7 +122,7 @@ Useful commands on the Pi:
 journalctl -u notetaker -f                     # live log
 ~/notetaker/venv/bin/notetaker queue           # recordings and their status
 ~/notetaker/venv/bin/notetaker retry           # retry everything that failed
-~/notetaker/venv/bin/notetaker process FILE.wav --speaker speaker_0=Anna  # redo a memo
+~/notetaker/venv/bin/notetaker process FILE.wav --speaker speaker_0=Anna  # redo a memo (add --fresh to transcribe again)
 ```
 
 ## 🚀 Quick Start (developers)

@@ -100,6 +100,7 @@ def config(tmp_path, monkeypatch):
     c.service.recordings_dir = str(tmp_path / "rec")
     c.storage.local_path = str(tmp_path / "cloud")
     c.service.retry_interval_seconds = 60
+    c.service.ui_language = "en"
     return c
 
 
@@ -563,3 +564,17 @@ def test_noise_reduction_runs_in_background_once(config, tmp_path, monkeypatch):
     svc.process_due()
     assert len(calls) == 1               # not repeated on retry
     assert svc.store.all()[0].status == DONE
+
+
+def test_error_messages_in_german(config):
+    from voxtral_notetaker.i18n import TEXTS
+    config.service.ui_language = "de"
+    store = JobStore(config.service.recordings_dir)
+    path = store.new_recording_path()
+    write_wav(path)
+    FakeNotetaker.fail_with = http_error(401)
+    job = JobProcessor(config, store, FakeNotetaker).process(store.create(path, status=PENDING))
+    assert job.last_error == "Mistral-API-Schlüssel abgelehnt (401). Bitte in den Einstellungen prüfen."
+    assert describe_error(httpx.ConnectError("x"), "de").startswith("Keine Verbindung")
+    # Every text exists in both languages
+    assert set(TEXTS["de"]) == set(TEXTS["en"])

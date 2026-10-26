@@ -2,10 +2,11 @@
 Wi-Fi setup through NetworkManager (nmcli), as on Raspberry Pi OS Bookworm
 """
 
+import socket
 import shutil
 import logging
 import subprocess
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 log = logging.getLogger(__name__)
 
@@ -45,3 +46,33 @@ def start_hotspot(ssid: str, password: str) -> bool:
     ok, output = _nmcli(['device', 'wifi', 'hotspot', 'ssid', ssid, 'password', password])
     log.info("Setup hotspot %r: %s", ssid, output)
     return ok
+
+
+def local_ip() -> Optional[str]:
+    """The device's address in the local network (no packet is sent)"""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(('192.0.2.1', 80))  # TEST-NET address: only selects the route
+            ip = s.getsockname()[0]
+            return None if ip.startswith('127.') else ip
+    except OSError:
+        return None
+
+
+def device_urls(port: int) -> List[str]:
+    """Addresses a phone can open: name.local first, then the IP address"""
+    suffix = '' if port == 80 else f':{port}'
+    urls = [f"http://{socket.gethostname()}.local{suffix}"]
+    ip = local_ip()
+    if ip:
+        urls.append(f"http://{ip}{suffix}")
+    return urls
+
+
+def speakable_address(ip: str, port: int, lang: str = 'de') -> str:
+    """'192.168.1.23' -> '1 9 2 Punkt 1 6 8 Punkt 1 Punkt 2 3' (clear when spoken)"""
+    dot = ' Punkt ' if lang.startswith('de') else ' dot '
+    text = dot.join(' '.join(part) for part in ip.split('.'))
+    if port != 80:
+        text += (', Port ' if lang.startswith('de') else ', port ') + ' '.join(str(port))
+    return text

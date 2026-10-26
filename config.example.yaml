@@ -64,10 +64,13 @@ storage:
   s3_secret_key: null
   auto_upload: true
 
-# Buttons, beeps and status light
+# Buttons, sounds and status light
 device:
   beeps: true             # tones through the speakerphone
   beep_volume: 0.3
+  voice: true             # spoken announcements ("Aufnahme gestartet…"), needs espeak-ng
+  piper_model: ""         # optional: path to a Piper voice (.onnx) for a more natural voice
+  long_press_seconds: 3.0 # hold the button this long: the device says its address
   button_gpio: null       # GPIO pin of a start/stop push button (to GND), e.g. 17
   led_gpio: null          # GPIO pin of a status LED, e.g. 27
   input_device: "jabra"   # USB device whose buttons start/stop ("" = off)
@@ -76,15 +79,20 @@ device:
 # Background service
 service:
   recordings_dir: "./recordings"
-  language: auto          # auto, de-CH, de, en
+  language: auto          # meeting language: auto, de-CH, de, en
+  ui_language: de         # web page and announcements: de or en
   retry_interval_seconds: 300  # first retry when offline; doubles up to 1 hour
   max_attempts: 0         # 0 = keep retrying network problems
+  keep_audio_days: 30     # delete audio of finished meetings after N days (0 = never)
+  min_free_mb: 500        # keep this much space free: oldest finished audio goes first
+  live_commands: true     # confirm voice commands during the meeting ("Notiz notiert")
+  live_interval_seconds: 30  # how often the newest audio is checked (fast Mini model)
 
 # Setup and status web page
 web:
   enabled: true
   host: "0.0.0.0"
-  port: 8080
+  port: 8080              # the installer sets 80, so the address is just http://notetaker.local
   pin: ""                 # chosen on the first visit to Settings
   setup_hotspot: true     # no network at boot -> open Wi-Fi "Notetaker-Setup"
   hotspot_ssid: "Notetaker-Setup"
