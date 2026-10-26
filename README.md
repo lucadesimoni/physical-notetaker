@@ -16,7 +16,7 @@
 - Noise reduction for clear audio
 
 ### 📝 Transcription
-- **Mistral Voxtral** (`voxtral-mini-latest`) via the Mistral API
+- **Mistral Voxtral Small Transcribe 3** (`voxtral-small-transcribe-3-0`) via the Mistral API
 - **Swiss German (de-CH)** meetings, sent to the API as German
 - Transcribed after the meeting, or on interruption ("Moment bitte")
 - AI meeting summary with **Mistral Small 4** (`mistral-small-2603`)
@@ -95,7 +95,7 @@ audio:
 voxtral:
   api_key: ""        # or set MISTRAL_API_KEY
   base_url: "https://api.mistral.ai/v1"
-  model: "voxtral-mini-latest"
+  model: "voxtral-small-transcribe-3-0"
   timeout: 30
 
 storage:
@@ -387,9 +387,11 @@ class MeetingResult:
 
 | Purpose | Default | Config |
 |---|---|---|
-| Transcription + speakers | `voxtral-mini-latest` | `voxtral.model` |
+| Transcription + speakers | `voxtral-small-transcribe-3-0` (Voxtral Small Transcribe 3, public preview) | `voxtral.model` |
 | Meeting summary | `mistral-small-2603` (Mistral Small 4) | `summary.model` |
 
+For lower cost, set `voxtral.model` to Voxtral Mini Transcribe 3
+(`voxtral-mini-transcribe-3-0`; check the exact ID in your Mistral model list).
 Both run on Mistral's API, so the Raspberry Pi only records and processes audio.
 Swiss German is transcribed as German; test with your own recordings.
 
