@@ -41,7 +41,69 @@
 - Duration tracking
 - Multiple format support (WAV, MP3, etc.)
 
-## 🚀 Quick Start
+## 🟢 Using the Device
+
+Nothing to install or type for meeting participants:
+
+1. **Press the button** (on the device, or the call button of the speakerphone).
+   A rising beep means it's recording, and the light is on.
+2. Optionally, everyone introduces themselves: *"Ich bin Anna"*, *"Mein Name ist Marco"*.
+   The memo then uses real names.
+3. Talk normally. Say *"Mach eine Notiz: …"* or *"Erstell einen Task: … bis Freitag, Marco"*
+   for notes and tasks.
+4. **Press the button again** at the end. A falling beep means it's saved.
+   The light blinks while the memo is created.
+5. The **memo arrives by email**, and is on the device's web page.
+
+What happens if…
+
+| Situation | What the device does |
+|---|---|
+| Power cut / crash mid-meeting | The recording is on the SD card up to the last ~2 seconds; it is repaired and processed after restart |
+| No internet after the meeting | The memo is created automatically when the connection is back (retries with growing pauses) |
+| Wrong API key / email password | The web page shows *Needs attention* with the reason; fix it in Settings and it retries |
+| Meeting runs too long | Warning beep 5 minutes before the limit (default 120 min), then it stops and saves |
+| Microphone unplugged | Error beep (three low tones) and a message on the web page |
+
+Beeps: rising = recording, falling = saved, three low tones = problem.
+Light: on = recording, slow blink = creating memo, fast blink = problem.
+
+## 🔌 Device Setup (one time)
+
+On the Raspberry Pi (Raspberry Pi OS Bookworm or newer):
+
+```bash
+git clone https://github.com/lucadesimoni/physical-notetaker.git
+cd physical-notetaker
+sudo ./deploy/install.sh
+```
+
+The installer sets everything up and starts the notetaker on every boot. Then on
+your phone, open the address it prints (e.g. `http://raspberrypi.local:8080`):
+
+1. Choose a PIN (protects the settings)
+2. Paste your Mistral API key
+3. Optional: email addresses for the memos and your SMTP server
+
+**No Wi-Fi yet?** Start the Pi without a network. After about a minute it opens
+the Wi-Fi **Notetaker-Setup** (password `notetaker`). Connect your phone and open
+`http://10.42.0.1:8080`, then enter your Wi-Fi in Settings.
+
+**Buttons:** the speakerphone's call button works if Linux reports it as a key
+(`KEY_PHONE`/`KEY_PLAYPAUSE`; see `device.input_keys`). For a dedicated button,
+wire a push button between a GPIO pin and GND and set `device.button_gpio`
+(e.g. `17`); an LED with a resistor on `device.led_gpio` (e.g. `27`).
+
+Useful commands on the Pi:
+
+```bash
+journalctl -u notetaker -f                     # live log
+~/notetaker/venv/bin/notetaker queue           # recordings and their status
+~/notetaker/venv/bin/notetaker retry           # retry everything that failed
+~/notetaker/venv/bin/notetaker process FILE.wav --speaker speaker_0=Anna  # redo a memo
+```
+
+## 🚀 Quick Start (developers)
 
 ### Prerequisites
 - Raspberry Pi (Pi 5 recommended; any model with USB works)
@@ -341,6 +403,12 @@ for seg in result.speaker_segments:
 notetaker.set_speaker_name("SPEAKER_001", "Alice")
 notetaker.set_speaker_name("SPEAKER_002", "Bob")
 ```
+
+Speakers are also named automatically from introductions such as *"Ich bin Anna"*,
+*"Mein Name ist Marco"*, *"I bi d'Sabine"* or *"My name is Tom"*. Job titles
+(*"Ich bin Projektleiter"*) and dates (*"Ich bin Mitte Oktober weg"*) are ignored,
+and a name is never given to two speakers. Turn it off with
+`diarization.detect_names: false`.
 
 ## ☁️ Cloud Storage Setup
 

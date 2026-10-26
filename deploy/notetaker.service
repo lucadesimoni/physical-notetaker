@@ -1,0 +1,21 @@
+# Installed by deploy/install.sh (placeholders @USER@ and @HOME@ are filled in)
+[Unit]
+Description=Meeting Notetaker (Voxtral)
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@HOME@/notetaker
+Environment=NOTETAKER_CONFIG=@HOME@/notetaker/config.yaml
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@HOME@/notetaker/venv/bin/python -m voxtral_notetaker run
+# Clean shutdown saves the running recording; give it time
+TimeoutStopSec=30
+KillSignal=SIGTERM
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -2,10 +2,11 @@
 Core Notetaker - Lean implementation for conference transcription
 """
 
+import os
 import asyncio
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import NotetakerConfig, Language
@@ -15,6 +16,7 @@ from .diarization import SpeakerDiarizer
 from .storage import CloudStorage, UploadResult
 from .commands import CommandParser, CommandExecutor, CommandResult
 from .memo import Memo, Summarizer
+from .speakers import detect_speaker_names
 
 
 @dataclass
@@ -32,6 +34,7 @@ class MeetingResult:
     storage_results: List[UploadResult] = field(default_factory=list)
     memo: Optional[Memo] = None
     memo_file: Optional[str] = None
+    transcript_file: Optional[str] = None
 
 
 class Notetaker:
@@ -77,6 +80,7 @@ class Notetaker:
             self._current_file = output_file
             self._start_time = datetime.now()
             self._interrupted = False
+            self.clear_commands()  # a new meeting starts with empty notes and tasks
         
         return success
     
@@ -134,73 +138,107 @@ class Notetaker:
         if not recording or not self._current_file:
             raise RuntimeError("No recording to transcribe")
         
-        if diarize is None:
-            diarize = self.config.diarization.enabled
-        
-        # Transcribe, with speaker labels from the API when configured
-        if self._use_api_diarization(diarize):
-            transcription = self.transcribe(self._current_file, language, diarize=True)
-        else:
-            transcription = self.transcribe(self._current_file, language)
-        
-        # Speaker recognition
-        speaker_segments = self._speaker_segments(self._current_file, transcription, diarize)
-        speakers = list(dict.fromkeys(seg['speaker_name'] for seg in speaker_segments))
-        
-        # Format transcript with speakers
-        formatted_transcript = self._format_transcript_with_speakers(
-            transcription.text, speaker_segments
-        )
-        
         end_time = datetime.now()
-        duration = (end_time - self._start_time).total_seconds() if self._start_time else 0
-        
-        # Voice commands spoken during the meeting -> notes, tasks, research
-        self._command_executor.extract_from_transcript(
-            formatted_transcript, transcription.language, self._start_time
-        )
-        memo = self.build_memo(
-            transcript=formatted_transcript,
-            language=transcription.language,
-            participants=speakers,
-            date=self._start_time,
-            duration_seconds=duration,
-        )
-        
-        # Save transcript and memo next to the recording
-        audio_path = Path(self._current_file)
-        transcript_file = str(audio_path.with_suffix('.txt'))
-        memo_file = str(audio_path.with_name(f"{audio_path.stem}_memo.md"))
-        with open(transcript_file, 'w', encoding='utf-8') as f:
-            f.write(formatted_transcript)
-        with open(memo_file, 'w', encoding='utf-8') as f:
-            f.write(memo.to_markdown())
-        
-        # Upload to cloud
-        storage_results = []
-        if self.config.storage.auto_upload:
-            for path in (self._current_file, transcript_file, memo_file):
-                storage_results.extend(self.storage.upload(path))
-        
-        result = MeetingResult(
-            audio_file=self._current_file,
-            transcript=formatted_transcript,
-            language=transcription.language,
-            confidence=transcription.confidence,
-            duration=duration,
-            start_time=self._start_time or datetime.now(),
-            end_time=end_time,
-            speakers=speakers,
-            speaker_segments=speaker_segments,
-            storage_results=storage_results,
-            memo=memo,
-            memo_file=memo_file
+        start_time = self._start_time or end_time
+        result = self.process_recording(
+            self._current_file, language=language, diarize=diarize,
+            start_time=start_time, duration=(end_time - start_time).total_seconds(),
+            keep_commands=True,
         )
         
         self._current_file = None
         self._start_time = None
         
         return result
+    
+    def process_recording(self, audio_file: str, language: Language = Language.AUTO,
+                          diarize: Optional[bool] = None, start_time: Optional[datetime] = None,
+                          duration: Optional[float] = None, title: Optional[str] = None,
+                          upload: Optional[bool] = None, keep_commands: bool = False) -> MeetingResult:
+        """
+        Turn a recording into transcript and memo files next to it, and upload them.
+        
+        Works for any saved recording, e.g. one queued before a reboot.
+        Notes and tasks captured live are kept only with keep_commands=True.
+        """
+        if diarize is None:
+            diarize = self.config.diarization.enabled
+        if upload is None:
+            upload = self.config.storage.auto_upload
+        start_time = start_time or datetime.fromtimestamp(os.path.getmtime(audio_file))
+        if not keep_commands:
+            self.clear_commands()
+        
+        # Transcribe, with speaker labels from the API when configured
+        if self._use_api_diarization(diarize):
+            transcription = self.transcribe(audio_file, language, diarize=True)
+        else:
+            transcription = self.transcribe(audio_file, language)
+        
+        # Speaker recognition, named from introductions ("Ich bin Anna")
+        speaker_segments = self._speaker_segments(audio_file, transcription, diarize)
+        if diarize and self.config.diarization.detect_names:
+            self._name_speakers_from_introductions(speaker_segments)
+        speakers = list(dict.fromkeys(seg['speaker_name'] for seg in speaker_segments))
+        
+        formatted_transcript = self._format_transcript_with_speakers(
+            transcription.text, speaker_segments
+        )
+        if duration is None:
+            duration = max((seg['end'] for seg in speaker_segments), default=0.0)
+        
+        # Voice commands spoken during the meeting -> notes, tasks, research
+        self._command_executor.extract_from_transcript(
+            formatted_transcript, transcription.language, start_time
+        )
+        memo = self.build_memo(
+            transcript=formatted_transcript,
+            language=transcription.language,
+            title=title,
+            participants=speakers,
+            date=start_time,
+            duration_seconds=duration,
+        )
+        
+        # Save transcript and memo next to the recording
+        audio_path = Path(audio_file)
+        transcript_file = str(audio_path.with_suffix('.txt'))
+        memo_file = str(audio_path.with_name(f"{audio_path.stem}_memo.md"))
+        _write_text(transcript_file, formatted_transcript)
+        _write_text(memo_file, memo.to_markdown())
+        
+        # Upload to cloud
+        storage_results = []
+        if upload:
+            for path in (audio_file, transcript_file, memo_file):
+                storage_results.extend(self.storage.upload(path))
+        
+        return MeetingResult(
+            audio_file=audio_file,
+            transcript=formatted_transcript,
+            language=transcription.language,
+            confidence=transcription.confidence,
+            duration=duration,
+            start_time=start_time,
+            end_time=start_time + timedelta(seconds=duration or 0),
+            speakers=speakers,
+            speaker_segments=speaker_segments,
+            storage_results=storage_results,
+            memo=memo,
+            memo_file=memo_file,
+            transcript_file=transcript_file,
+        )
+    
+    def _name_speakers_from_introductions(self, segments: List[Dict[str, Any]]):
+        """Replace speaker ids with names people introduced themselves with"""
+        found = detect_speaker_names(
+            ((seg['speaker_id'], seg.get('text') or '') for seg in segments),
+            known=self._speaker_names,
+        )
+        for speaker_id, name in found.items():
+            self.set_speaker_name(speaker_id, name)
+        for seg in segments:
+            seg['speaker_name'] = self.diarizer.get_speaker_name(seg['speaker_id'])
     
     def _format_transcript_with_speakers(self, text: str, 
                                          segments: List[Dict[str, Any]]) -> str:
@@ -368,3 +406,11 @@ class Notetaker:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+def _write_text(path: str, text: str):
+    """Write a file atomically, so a crash never leaves half a memo"""
+    tmp = f"{path}.tmp"
+    with open(tmp, 'w', encoding='utf-8') as f:
+        f.write(text)
+    os.replace(tmp, path)

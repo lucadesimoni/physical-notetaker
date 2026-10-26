@@ -1,10 +1,15 @@
 """
 Lean audio recording for conference microphones (Jabra, etc.)
+
+Audio is written to disk while recording, so a crash or power cut loses
+seconds, not the meeting.
 """
 
 import os
 import wave
 import time
+import struct
+import threading
 from typing import Optional, List
 from dataclasses import dataclass
 
@@ -25,11 +30,95 @@ except ImportError:
 from .config import AudioConfig
 
 
+# Force buffered audio onto the SD card at least this often (seconds)
+FSYNC_INTERVAL = 2.0
+# Noise reduction works on chunks of this length (seconds) to bound memory use
+NOISE_CHUNK_SECONDS = 60
+
+
 @dataclass
 class RecordingInfo:
     file_path: str
     duration: float
     sample_rate: int
+
+
+def repair_wav(path: str) -> bool:
+    """
+    Fix the size fields of a WAV file that was cut off (crash, power loss).
+    
+    Returns True when the file is readable afterwards.
+    """
+    try:
+        size = os.path.getsize(path)
+        if size < 44:
+            return False
+        with open(path, 'r+b') as f:
+            header = f.read(44)
+            if header[:4] != b'RIFF' or header[8:12] != b'WAVE' or header[36:40] != b'data':
+                return False
+            block_align = struct.unpack('<H', header[32:34])[0] or 1
+            data_size = size - 44
+            data_size -= data_size % block_align  # drop a partial last frame
+            f.seek(4)
+            f.write(struct.pack('<I', 36 + data_size))
+            f.seek(40)
+            f.write(struct.pack('<I', data_size))
+            f.truncate(44 + data_size)
+        with wave.open(path, 'rb'):
+            return True
+    except (OSError, wave.Error, struct.error):
+        return False
+
+
+def wav_duration(path: str) -> float:
+    try:
+        with wave.open(path, 'rb') as wf:
+            return wf.getnframes() / float(wf.getframerate() or 1)
+    except (OSError, wave.Error, EOFError):
+        return 0.0
+
+
+def reduce_noise(audio_data: np.ndarray, sample_rate: int) -> np.ndarray:
+    """Apply noise reduction to 16-bit samples (unchanged if noisereduce is missing)"""
+    if not HAS_NOISEREDUCE:
+        return audio_data
+    try:
+        reduced = nr.reduce_noise(y=audio_data.astype(np.float32), sr=sample_rate,
+                                  stationary=True, prop_decrease=0.8)
+        # noisereduce returns floats; convert back to 16-bit PCM for the WAV file
+        return np.clip(reduced, -32768, 32767).astype(np.int16)
+    except Exception:
+        return audio_data
+
+
+def reduce_noise_file(path: str) -> bool:
+    """
+    Apply noise reduction to a WAV file in place, chunk by chunk.
+    
+    Slow for long meetings, so the service runs it in the background.
+    """
+    if not HAS_NOISEREDUCE:
+        return False
+    tmp = f"{path}.nr.tmp"
+    try:
+        with wave.open(path, 'rb') as src, wave.open(tmp, 'wb') as dst:
+            dst.setparams(src.getparams())
+            rate = src.getframerate()
+            chunk = rate * NOISE_CHUNK_SECONDS
+            while True:
+                data = src.readframes(chunk)
+                if not data:
+                    break
+                samples = np.frombuffer(data, dtype=np.int16)
+                dst.writeframes(reduce_noise(samples, rate).astype(np.int16).tobytes())
+        os.replace(tmp, path)  # the original stays untouched until this point
+        return True
+    except Exception as e:
+        print(f"Noise reduction skipped: {e}")
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        return False
 
 
 class AudioRecorder:
@@ -41,7 +130,11 @@ class AudioRecorder:
         self._is_recording = False
         self._stream = None
         self._output_file: Optional[str] = None
-        self._audio_data = []
+        self._file = None
+        self._wav = None
+        self._lock = threading.Lock()
+        self._frames_written = 0
+        self._last_sync = 0.0
         self._start_time: Optional[float] = None
         
         if not HAS_PYAUDIO:
@@ -80,9 +173,57 @@ class AudioRecorder:
         return self.audio.get_default_input_device_info()['index']
     
     def _audio_callback(self, in_data: bytes, frame_count: int, time_info, status):
-        if self._is_recording:
-            self._audio_data.append(in_data)
+        self._write(in_data, frame_count)
         return (in_data, pyaudio.paContinue)
+    
+    def _open_file(self, output_file: str):
+        os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
+        self._file = open(output_file, 'wb')
+        self._wav = wave.open(self._file, 'wb')
+        self._wav.setnchannels(self.config.channels)
+        self._wav.setsampwidth(2)
+        self._wav.setframerate(self.config.sample_rate)
+        self._frames_written = 0
+        self._last_sync = time.time()
+    
+    def _write(self, data: bytes, frame_count: int):
+        """Append audio to the WAV file (called from the audio thread)"""
+        with self._lock:
+            if not self._is_recording or self._wav is None:
+                return
+            try:
+                # wave rewrites the header sizes on every write, so the file is
+                # valid on disk at all times
+                self._wav.writeframes(data)
+                self._frames_written += frame_count
+                now = time.time()
+                if now - self._last_sync >= FSYNC_INTERVAL:
+                    self._file.flush()
+                    os.fsync(self._file.fileno())
+                    self._last_sync = now
+            except (OSError, ValueError) as e:
+                print(f"Writing audio failed: {e}")
+    
+    def _close_file(self):
+        with self._lock:
+            if self._wav is not None:
+                try:
+                    self._wav.close()
+                except (OSError, wave.Error):
+                    pass
+                self._wav = None
+            if self._file is not None:
+                try:
+                    self._file.flush()
+                    os.fsync(self._file.fileno())
+                except (OSError, ValueError):
+                    pass
+                self._file.close()
+                self._file = None
+    
+    @property
+    def recorded_seconds(self) -> float:
+        return self._frames_written / float(self.config.sample_rate)
     
     def start_recording(self, output_file: str) -> bool:
         """Start recording from conference microphone"""
@@ -95,7 +236,10 @@ class AudioRecorder:
         
         try:
             device_index = self._get_device_index()
-            self._audio_data = []
+            self._open_file(output_file)
+            self._output_file = output_file
+            self._start_time = time.time()
+            self._is_recording = True
             
             self._stream = self.audio.open(
                 format=pyaudio.paInt16,
@@ -106,13 +250,11 @@ class AudioRecorder:
                 input_device_index=device_index,
                 stream_callback=self._audio_callback
             )
-            
-            self._is_recording = True
-            self._output_file = output_file
-            self._start_time = time.time()
             return True
         except Exception as e:
             print(f"Failed to start: {e}")
+            self._is_recording = False
+            self._close_file()
             return False
     
     def stop_recording(self) -> Optional[RecordingInfo]:
@@ -120,36 +262,21 @@ class AudioRecorder:
         if not self._is_recording:
             return None
         
-        self._is_recording = False
         self._close_stream()
+        self._is_recording = False
+        self._close_file()
         
-        if self._audio_data:
-            audio_np = np.frombuffer(b''.join(self._audio_data), dtype=np.int16)
-            
-            # Apply noise reduction
-            if self.config.noise_reduction:
-                audio_np = self._reduce_noise(audio_np, self.config.sample_rate)
-            
-            # Save to WAV
-            self._save_wav(audio_np, self.config.sample_rate, self._output_file)
-            
-            duration = time.time() - self._start_time
-            return RecordingInfo(file_path=self._output_file, duration=duration, 
-                                sample_rate=self.config.sample_rate)
+        if not self._frames_written:
+            return None
         
-        return None
+        if self.config.noise_reduction:
+            reduce_noise_file(self._output_file)
+        
+        return RecordingInfo(file_path=self._output_file, duration=self.recorded_seconds,
+                             sample_rate=self.config.sample_rate)
     
     def _reduce_noise(self, audio_data: np.ndarray, sample_rate: int) -> np.ndarray:
-        """Apply noise reduction"""
-        if not HAS_NOISEREDUCE:
-            return audio_data
-        try:
-            reduced = nr.reduce_noise(y=audio_data.astype(np.float32), sr=sample_rate,
-                                      stationary=True, prop_decrease=0.8)
-            # noisereduce returns floats; convert back to 16-bit PCM for the WAV file
-            return np.clip(reduced, -32768, 32767).astype(np.int16)
-        except Exception:
-            return audio_data
+        return reduce_noise(audio_data, sample_rate)
     
     def _save_wav(self, audio_data: np.ndarray, sample_rate: int, file_path: str):
         """Save audio as WAV file"""
@@ -191,6 +318,8 @@ class AudioRecorder:
     def close(self):
         """Close the audio recorder"""
         self._close_stream()
+        self._is_recording = False
+        self._close_file()
         if self.audio:
             self.audio.terminate()
             self.audio = None

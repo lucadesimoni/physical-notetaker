@@ -3,8 +3,8 @@ Lean configuration for Voxtral Notetaker
 """
 
 import os
-from typing import Optional
-from dataclasses import dataclass, field
+from typing import Optional, List
+from dataclasses import dataclass, field, fields
 from enum import Enum
 
 import yaml
@@ -43,7 +43,7 @@ class VoxtralConfig:
     fast_model: str = "voxtral-mini-transcribe-3-0"  # Voxtral Mini Transcribe 3
     timeout: int = 30
     max_retries: int = 3
-    
+
     def resolved_api_key(self) -> str:
         """API key from config, or the MISTRAL_API_KEY environment variable"""
         return self.api_key or os.environ.get("MISTRAL_API_KEY", "")
@@ -70,6 +70,8 @@ class DiarizationConfig:
     provider: str = "mistral"  # "mistral" (API, no local model) or "pyannote" (local)
     max_speakers: int = 10
     hf_token: Optional[str] = None
+    # Name speakers from introductions like "Ich bin Anna" / "My name is Anna"
+    detect_names: bool = True
 
 
 @dataclass
@@ -84,138 +86,150 @@ class SummaryConfig:
 
 
 @dataclass
+class EmailConfig:
+    """Send the memo by email after each meeting"""
+    enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""  # or the NOTETAKER_SMTP_PASSWORD environment variable
+    use_tls: bool = True     # STARTTLS on smtp_port (port 465 uses SSL automatically)
+    from_email: str = ""
+    to_emails: List[str] = field(default_factory=list)
+    attach_transcript: bool = True
+    attach_audio: bool = False
+
+    def resolved_password(self) -> str:
+        return self.smtp_password or os.environ.get("NOTETAKER_SMTP_PASSWORD", "")
+
+    @property
+    def ready(self) -> bool:
+        return bool(self.enabled and self.smtp_host and self.to_emails)
+
+
+@dataclass
+class DeviceConfig:
+    """Physical controls and feedback for the meeting device"""
+    beeps: bool = True                 # play tones through the speakerphone
+    beep_volume: float = 0.3
+    button_gpio: Optional[int] = None  # GPIO pin of a start/stop push button
+    led_gpio: Optional[int] = None     # GPIO pin of a status LED
+    # Buttons on a USB device (e.g. the speakerphone's call button), via evdev
+    input_device: str = "jabra"        # match on the input device name; "" disables
+    input_keys: List[str] = field(default_factory=lambda: ["KEY_PHONE", "KEY_PLAYPAUSE"])
+
+
+@dataclass
+class ServiceConfig:
+    """Background service: autostart, crash recovery and the processing queue"""
+    recordings_dir: str = "./recordings"
+    language: str = "auto"              # meeting language: auto, de, de-CH, en
+    retry_interval_seconds: int = 300   # first retry after a failure; doubles up to 1 hour
+    max_attempts: int = 0               # 0 = keep retrying network errors
+
+
+@dataclass
+class WebConfig:
+    """Setup and status page for a phone or laptop on the same network"""
+    enabled: bool = True
+    host: str = "0.0.0.0"
+    port: int = 8080
+    pin: str = ""  # required to change settings; chosen on the first visit
+    # No network at boot: open a Wi-Fi hotspot so a phone can reach the setup page
+    setup_hotspot: bool = True
+    hotspot_ssid: str = "Notetaker-Setup"
+    hotspot_password: str = "notetaker"  # at least 8 characters (WPA2)
+
+
+SECTIONS = {
+    'audio': AudioConfig,
+    'voxtral': VoxtralConfig,
+    'storage': StorageConfig,
+    'diarization': DiarizationConfig,
+    'summary': SummaryConfig,
+    'email': EmailConfig,
+    'device': DeviceConfig,
+    'service': ServiceConfig,
+    'web': WebConfig,
+}
+
+
+def _section_to_dict(section) -> dict:
+    out = {}
+    for f in fields(section):
+        value = getattr(section, f.name)
+        out[f.name] = value.value if isinstance(value, Enum) else value
+    return out
+
+
+def _section_from_dict(cls, data: Optional[dict]):
+    """Build a section from YAML data; missing or empty keys keep their default"""
+    data = data or {}
+    kwargs = {}
+    for f in fields(cls):
+        value = data.get(f.name)
+        if value is None:
+            continue
+        if isinstance(f.default, Enum):
+            value = type(f.default)(value)
+        kwargs[f.name] = value
+    return cls(**kwargs)
+
+
+@dataclass
 class NotetakerConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     voxtral: VoxtralConfig = field(default_factory=VoxtralConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
     diarization: DiarizationConfig = field(default_factory=DiarizationConfig)
     summary: SummaryConfig = field(default_factory=SummaryConfig)
+    email: EmailConfig = field(default_factory=EmailConfig)
+    device: DeviceConfig = field(default_factory=DeviceConfig)
+    service: ServiceConfig = field(default_factory=ServiceConfig)
+    web: WebConfig = field(default_factory=WebConfig)
     max_recording_minutes: int = 120
-    
+
     def save(self, path: str = "config.yaml"):
-        with open(path, 'w') as f:
-            yaml.dump(self.to_dict(), f, default_flow_style=False)
-    
+        tmp = f"{path}.tmp"
+        with open(tmp, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)
+        os.replace(tmp, path)  # never leave a half-written config behind
+
     @classmethod
     def load(cls, path: str = "config.yaml") -> 'NotetakerConfig':
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
         return cls.from_dict(data or {})
-    
+
     def to_dict(self):
-        return {
-            'audio': {
-                'sample_rate': self.audio.sample_rate,
-                'channels': self.audio.channels,
-                'device_index': self.audio.device_index,
-                'noise_reduction': self.audio.noise_reduction,
-            },
-            'voxtral': {
-                'api_key': self.voxtral.api_key,
-                'base_url': self.voxtral.base_url,
-                'model': self.voxtral.model,
-                'fast_model': self.voxtral.fast_model,
-                'timeout': self.voxtral.timeout,
-                'max_retries': self.voxtral.max_retries,
-            },
-            'storage': {
-                'provider': self.storage.provider.value,
-                'local_path': self.storage.local_path,
-                'google_credentials': self.storage.google_credentials,
-                'google_folder_id': self.storage.google_folder_id,
-                'dropbox_token': self.storage.dropbox_token,
-                'dropbox_folder': self.storage.dropbox_folder,
-                's3_bucket': self.storage.s3_bucket,
-                's3_region': self.storage.s3_region,
-                's3_access_key': self.storage.s3_access_key,
-                's3_secret_key': self.storage.s3_secret_key,
-                'auto_upload': self.storage.auto_upload,
-            },
-            'diarization': {
-                'enabled': self.diarization.enabled,
-                'provider': self.diarization.provider,
-                'max_speakers': self.diarization.max_speakers,
-                'hf_token': self.diarization.hf_token,
-            },
-            'summary': {
-                'enabled': self.summary.enabled,
-                'model': self.summary.model,
-                'base_url': self.summary.base_url,
-                'api_key': self.summary.api_key,
-                'max_points': self.summary.max_points,
-                'timeout': self.summary.timeout,
-            },
-            'max_recording_minutes': self.max_recording_minutes,
-        }
-    
+        out = {name: _section_to_dict(getattr(self, name)) for name in SECTIONS}
+        out['max_recording_minutes'] = self.max_recording_minutes
+        return out
+
     @classmethod
     def from_dict(cls, data):
-        # Treat empty sections (e.g. "audio:" with no keys) as missing
         data = dict(data or {})
-        for section in ('audio', 'voxtral', 'storage', 'diarization', 'summary'):
-            data[section] = data.get(section) or {}
-        audio = AudioConfig(
-            sample_rate=data.get('audio', {}).get('sample_rate', 16000),
-            channels=data.get('audio', {}).get('channels', 1),
-            device_index=data.get('audio', {}).get('device_index'),
-            noise_reduction=data.get('audio', {}).get('noise_reduction', True),
-        )
-        
-        voxtral = VoxtralConfig(
-            api_key=data.get('voxtral', {}).get('api_key', ''),
-            base_url=data.get('voxtral', {}).get('base_url', 'https://api.mistral.ai/v1'),
-            model=data.get('voxtral', {}).get('model', 'voxtral-small-transcribe-3-0'),
-            fast_model=data.get('voxtral', {}).get('fast_model', 'voxtral-mini-transcribe-3-0'),
-            timeout=data.get('voxtral', {}).get('timeout', 30),
-            max_retries=data.get('voxtral', {}).get('max_retries', 3),
-        )
-        
-        storage = StorageConfig(
-            provider=StorageProvider(data.get('storage', {}).get('provider', 'local')),
-            local_path=data.get('storage', {}).get('local_path', './recordings'),
-            google_credentials=data.get('storage', {}).get('google_credentials'),
-            google_folder_id=data.get('storage', {}).get('google_folder_id'),
-            dropbox_token=data.get('storage', {}).get('dropbox_token'),
-            dropbox_folder=data.get('storage', {}).get('dropbox_folder', '/VoxtralNotetaker'),
-            s3_bucket=data.get('storage', {}).get('s3_bucket'),
-            s3_region=data.get('storage', {}).get('s3_region', 'eu-central-1'),
-            s3_access_key=data.get('storage', {}).get('s3_access_key'),
-            s3_secret_key=data.get('storage', {}).get('s3_secret_key'),
-            auto_upload=data.get('storage', {}).get('auto_upload', True),
-        )
-        
-        diarization = DiarizationConfig(
-            enabled=data.get('diarization', {}).get('enabled', True),
-            provider=data.get('diarization', {}).get('provider', 'mistral'),
-            max_speakers=data.get('diarization', {}).get('max_speakers', 10),
-            hf_token=data.get('diarization', {}).get('hf_token'),
-        )
-        
-        summary = SummaryConfig(
-            enabled=data['summary'].get('enabled', True),
-            model=data['summary'].get('model', 'mistral-small-2603'),
-            base_url=data['summary'].get('base_url'),
-            api_key=data['summary'].get('api_key'),
-            max_points=data['summary'].get('max_points', 8),
-            timeout=data['summary'].get('timeout', 60),
-        )
-        
-        return cls(
-            audio=audio,
-            voxtral=voxtral,
-            storage=storage,
-            diarization=diarization,
-            summary=summary,
-            max_recording_minutes=data.get('max_recording_minutes', 120),
-        )
+        sections = {name: _section_from_dict(section_cls, data.get(name))
+                    for name, section_cls in SECTIONS.items()}
+        return cls(**sections, max_recording_minutes=data.get('max_recording_minutes') or 120)
+
+
+def find_config_path(path: Optional[str] = None) -> str:
+    """The config file to use: explicit path, $NOTETAKER_CONFIG, or ./config.yaml"""
+    if path:
+        return path
+    if os.environ.get("NOTETAKER_CONFIG"):
+        return os.environ["NOTETAKER_CONFIG"]
+    for p in ['config.yaml', 'config.yml']:
+        if os.path.exists(p):
+            return p
+    return 'config.yaml'
 
 
 def load_config(path: Optional[str] = None) -> NotetakerConfig:
-    if path and os.path.exists(path):
+    path = find_config_path(path)
+    if os.path.exists(path):
         return NotetakerConfig.load(path)
-    for p in ['config.yaml', 'config.yml']:
-        if os.path.exists(p):
-            return NotetakerConfig.load(p)
     return NotetakerConfig()
 
 
