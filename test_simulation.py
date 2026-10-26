@@ -109,7 +109,7 @@ def test_config():
         print(f"📝 Default config created:")
         print(f"   - Sample rate: {config.audio.sample_rate}Hz")
         print(f"   - Voxtral model: {config.voxtral.model}")
-        print(f"   - Swiss German: {config.voxtral.enable_swiss_german}")
+        print(f"   - API: {config.voxtral.base_url}")
         print(f"   - Storage: {config.storage.provider.value}")
         
         # Test saving and loading

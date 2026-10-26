@@ -204,3 +204,102 @@ def test_stop_recording_saves_captured_audio(tmp_path):
     with wave.open(str(out)) as wf:
         assert wf.getnframes() == 1600
     recorder.close()
+
+
+def _capture_transcription(tmp_path, reply, **call):
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"RIFF")
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json=reply)
+
+    config = VoxtralConfig(api_key="secret")
+    transcriber = VoxtralTranscriber(config)
+    transport = httpx.MockTransport(handler)
+    real_client = transcriber._make_client
+    transcriber._make_client = lambda: httpx.AsyncClient(
+        base_url=config.base_url, transport=transport, headers=real_client().headers)
+    result = asyncio.run(transcriber.transcribe(str(audio), **call))
+    return result, requests[0]
+
+
+def test_mistral_request_defaults(tmp_path):
+    result, request = _capture_transcription(
+        tmp_path, {"text": "Grüezi", "language": "de"}, language=Language.DE_CH)
+    assert str(request.url) == "https://api.mistral.ai/v1/audio/transcriptions"
+    assert request.headers["authorization"] == "Bearer secret"
+    body = request.content.decode("utf-8", "replace")
+    assert 'name="model"\r\n\r\nvoxtral-mini-latest' in body
+    assert 'name="language"\r\n\r\nde\r\n' in body  # Swiss German sent as "de"
+    assert "diarize" not in body
+    assert result.text == "Grüezi" and result.confidence is None
+
+
+def test_mistral_diarization_request_and_segments(tmp_path):
+    reply = {"text": "Hallo zusammen. Danke Anna.", "language": "de", "segments": [
+        {"start": 0.0, "end": 1.5, "text": "Hallo zusammen.", "speaker_id": "speaker_0"},
+        {"start": 1.5, "end": 3.0, "text": "Danke Anna.", "speaker_id": "speaker_1"},
+    ]}
+    result, request = _capture_transcription(
+        tmp_path, reply, language=Language.DE_CH, diarize=True)
+    body = request.content.decode("utf-8", "replace")
+    assert 'name="diarize"\r\n\r\ntrue' in body
+    assert 'name="timestamp_granularities"\r\n\r\nsegment' in body
+    assert 'name="language"' not in body  # not combinable with timestamps
+    assert result.has_speakers
+    assert [s.speaker_id for s in result.segments] == ["speaker_0", "speaker_1"]
+
+
+def test_api_key_from_environment(monkeypatch):
+    monkeypatch.setenv("MISTRAL_API_KEY", "from-env")
+    assert VoxtralConfig().resolved_api_key() == "from-env"
+    assert VoxtralConfig(api_key="explicit").resolved_api_key() == "explicit"
+
+
+def test_default_models():
+    config = NotetakerConfig()
+    assert config.voxtral.base_url == "https://api.mistral.ai/v1"
+    assert config.summary.model == "mistral-small-2603"  # Mistral Small 4
+    assert config.diarization.provider == "mistral"
+
+
+def test_stop_and_transcribe_uses_api_speaker_labels(tmp_path, monkeypatch):
+    from voxtral_notetaker.transcription import TranscriptionResult, TranscriptSegment
+
+    config = NotetakerConfig()
+    config.storage.auto_upload = False
+    nt = Notetaker(config)
+    nt.set_speaker_name("speaker_0", "Anna")
+    nt.set_speaker_name("speaker_1", "Marco")
+    monkeypatch.setattr(nt.diarizer, "diarize",
+                        lambda *a, **k: pytest.fail("local diarization must not run"))
+
+    audio = tmp_path / "meeting.wav"
+    audio.write_bytes(b"RIFF")
+    nt._is_recording = True
+    nt._current_file = str(audio)
+    monkeypatch.setattr(nt.audio, "stop_recording", lambda: object())
+    calls = []
+
+    def fake_transcribe(f, lang, diarize=False):
+        calls.append(diarize)
+        return TranscriptionResult(text="", language="de", confidence=None, duration=1.0, segments=[
+            TranscriptSegment(0, 2, "Mach eine Notiz: Budget fix.", "speaker_0"),
+            TranscriptSegment(2, 4, "Erstell einen Task: Server bestellen bis Freitag.", "speaker_1"),
+            TranscriptSegment(4, 5, "Gut.", "speaker_1"),
+        ])
+
+    monkeypatch.setattr(nt, "transcribe", fake_transcribe)
+    result = nt.stop_and_transcribe()
+
+    assert calls == [True]
+    assert result.speakers == ["Anna", "Marco"]
+    assert result.transcript.split("\n") == [
+        "[Anna] Mach eine Notiz: Budget fix.",
+        "[Marco] Erstell einen Task: Server bestellen bis Freitag. Gut.",
+    ]
+    assert result.memo.participants == ["Anna", "Marco"]
+    assert result.memo.tasks[0]["requested_by"] == "Marco"
+    nt.close()

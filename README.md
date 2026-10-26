@@ -1,10 +1,10 @@
 # Voxtral Notetaker - Lean Conference Transcription System
 
-**Raspberry Pi based meeting transcription with Voxtral 4, Swiss German support, and speaker recognition**
+**Raspberry Pi based meeting transcription with Mistral Voxtral, Swiss German support, speaker recognition and memos (Mistral Small 4)**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Compatible-green.svg)](https://www.raspberrypi.org/)
-[![Voxtral 4](https://img.shields.io/badge/Voxtral-4-orange.svg)](https://voxtral.com)
+[![Mistral Voxtral](https://img.shields.io/badge/Mistral-Voxtral-orange.svg)](https://docs.mistral.ai/studio/audio/overview)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Core Features
@@ -15,14 +15,15 @@
 - Optimized for multi-speaker scenarios
 - Noise reduction for clear audio
 
-### 📝 Live Transcription
-- **Voxtral 4** for superior accuracy
-- **Swiss German (de-CH)** native support
-- Real-time transcription
-- Interruption handling
+### 📝 Transcription
+- **Mistral Voxtral** (`voxtral-mini-latest`) via the Mistral API
+- **Swiss German (de-CH)** meetings, sent to the API as German
+- Transcribed after the meeting, or on interruption ("Moment bitte")
+- AI meeting summary with **Mistral Small 4** (`mistral-small-2603`)
 
 ### 👥 Speaker Recognition
-- Automatic speaker diarization
+- Speaker diarization by the Mistral API (no local model needed on the Pi)
+- Optional local fallback with pyannote.audio
 - Distinguishes between multiple speakers
 - Speaker labeling in transcripts
 - Works with chaotic discussions
@@ -43,10 +44,10 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Raspberry Pi (any model with USB)
+- Raspberry Pi (Pi 5 recommended; any model with USB works)
 - Conference microphone (Jabra Spider recommended)
 - Python 3.10+
-- Voxtral API key
+- Mistral API key ([Mistral AI Studio](https://docs.mistral.ai/studio/audio/overview))
 
 ### Installation
 
@@ -66,8 +67,11 @@ pip install -r requirements.txt
 sudo apt-get install portaudio19-dev python3-pyaudio
 pip install pyaudio
 
-# Install speaker diarization models
-pip install pyannote.audio
+# Mistral API key
+export MISTRAL_API_KEY=your-key   # or set voxtral.api_key in config.yaml
+
+# Optional: local speaker diarization instead of the API
+# pip install ".[local-diarization]"
 ```
 
 ### Configuration
@@ -89,12 +93,10 @@ audio:
   noise_reduction: true
 
 voxtral:
-  api_key: "your-voxtral-api-key"  # Get from https://voxtral.com
-  base_url: "https://api.voxtral.com/v1"
-  model: "voxtral-4"
+  api_key: ""        # or set MISTRAL_API_KEY
+  base_url: "https://api.mistral.ai/v1"
+  model: "voxtral-mini-latest"
   timeout: 30
-  enable_swiss_german: true
-  language_hint: "de-CH"
 
 storage:
   provider: local  # or google_drive, dropbox, s3, all
@@ -103,12 +105,13 @@ storage:
 
 diarization:
   enabled: true
+  provider: mistral  # or pyannote (local model)
   max_speakers: 10
   hf_token: null  # Hugging Face token for pyannote (or set HF_TOKEN)
 
 summary:
   enabled: true
-  model: "mistral-small-latest"  # any chat model your API account offers
+  model: "mistral-small-2603"  # Mistral Small 4
   base_url: null   # defaults to voxtral.base_url
   api_key: null    # defaults to voxtral.api_key
   max_points: 8
@@ -225,8 +228,7 @@ python -m voxtral_notetaker memo examples/besprechung_app_launch.txt --date 2026
 
 With an API key configured, the memo also gets an AI **Zusammenfassung**
 (summary) of the whole discussion. It uses an OpenAI-compatible
-`/chat/completions` endpoint (Mistral by default; set `summary.model` to a model
-your account offers). Use `--no-summary` to skip it.
+`/chat/completions` endpoint, by default Mistral Small 4 (`mistral-small-2603`). Use `--no-summary` to skip it.
 
 ## 📋 Transcript Format
 
@@ -260,15 +262,18 @@ sudo apt-get install portaudio19-dev python3-pyaudio
 pip install --force-reinstall pyaudio
 ```
 
-### Voxtral API Errors
-- Verify API key is correct
-- Check internet connection
+### Mistral API Errors
+- Verify `MISTRAL_API_KEY` (or `voxtral.api_key`) is correct
+- Check internet connection and that `api.mistral.ai` is reachable
 - Ensure sufficient credits
+- If a model is rejected, set `voxtral.model` / `summary.model` to one listed in your Mistral account
 
 ### Speaker Diarization Not Working
+With `diarization.provider: mistral` (default) speakers come from the API.
+To use a local model instead, set `provider: pyannote` and:
 ```bash
 # Install required packages
-pip install pyannote.audio
+pip install ".[local-diarization]"
 
 # pyannote models are gated: accept the terms for
 # pyannote/speaker-diarization-3.1 on Hugging Face, then
@@ -289,7 +294,7 @@ loaded only when used, so the package still runs if one of them is missing.
 - Works on all Raspberry Pi models
 
 ### Audio Settings
-- **Sample Rate:** 16000 Hz (recommended for Voxtral)
+- **Sample Rate:** 16000 Hz (recommended for speech)
 - **Channels:** 1 (mono)
 - **Format:** WAV (uncompressed for best quality)
 
@@ -378,13 +383,15 @@ class MeetingResult:
     storage_results: List[UploadResult]  # Cloud upload results
 ```
 
-## 🎯 Why Voxtral 4?
+## 🎯 Models
 
-- **Superior Accuracy:** Outperforms other models in benchmarks
-- **Swiss German Support:** Native de-CH model for best results
-- **Multilingual:** Supports 100+ languages
-- **Context Understanding:** Better at technical terms and context
-- **Fast:** Low latency transcription
+| Purpose | Default | Config |
+|---|---|---|
+| Transcription + speakers | `voxtral-mini-latest` | `voxtral.model` |
+| Meeting summary | `mistral-small-2603` (Mistral Small 4) | `summary.model` |
+
+Both run on Mistral's API, so the Raspberry Pi only records and processes audio.
+Swiss German is transcribed as German; test with your own recordings.
 
 ## 📜 License
 

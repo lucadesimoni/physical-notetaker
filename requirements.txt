@@ -9,8 +9,8 @@ noisereduce>=1.0.11
 # Voxtral API
 httpx>=0.25.0
 
-# Speaker diarization
-pyannote.audio>=3.1.1
+# Speaker diarization runs on the Mistral API by default.
+# For local diarization instead: pip install ".[local-diarization]"
 
 # Cloud storage
 boto3>=1.28.0
