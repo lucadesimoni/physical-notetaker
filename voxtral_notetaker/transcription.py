@@ -54,8 +54,9 @@ class VoxtralTranscriber:
             headers={'Authorization': f'Bearer {api_key}', 'x-api-key': api_key}
         )
     
-    def _form(self, language: Language, diarize: bool) -> dict:
-        form = {'model': self.config.model}
+    def _form(self, language: Language, diarize: bool, fast: bool = False) -> dict:
+        model = self.config.fast_model if fast and self.config.fast_model else self.config.model
+        form = {'model': model}
         if diarize:
             # Speaker labels come with segment timestamps, which the API does
             # not combine with a fixed language, so the language is auto-detected
@@ -66,12 +67,12 @@ class VoxtralTranscriber:
         return form
     
     async def transcribe(self, audio_file: str, language: Language = Language.AUTO,
-                         diarize: bool = False) -> TranscriptionResult:
-        """Transcribe audio file"""
+                         diarize: bool = False, fast: bool = False) -> TranscriptionResult:
+        """Transcribe audio file (fast=True uses the cheaper fast_model)"""
         with open(audio_file, 'rb') as f:
             audio_data = f.read()
         
-        form = self._form(language, diarize)
+        form = self._form(language, diarize, fast)
         retries = max(1, self.config.max_retries)
         async with self._make_client() as client:
             for attempt in range(retries):

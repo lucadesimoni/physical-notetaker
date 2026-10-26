@@ -90,9 +90,16 @@ class Notetaker:
         return result
     
     def transcribe(self, audio_file: str, language: Language = Language.AUTO,
-                   diarize: bool = False) -> TranscriptionResult:
-        """Transcribe audio file (diarize=True asks the API for speaker labels)"""
-        return asyncio.run(self.transcriber.transcribe(audio_file, language, diarize=diarize))
+                   diarize: bool = False, fast: bool = False) -> TranscriptionResult:
+        """
+        Transcribe audio file.
+        
+        diarize=True asks the API for speaker labels; fast=True uses the cheaper
+        fast model (Mini) instead of the accurate one (Small).
+        """
+        return asyncio.run(
+            self.transcriber.transcribe(audio_file, language, diarize=diarize, fast=fast)
+        )
     
     def _use_api_diarization(self, diarize: bool) -> bool:
         return diarize and self.config.diarization.provider == 'mistral'
@@ -259,12 +266,11 @@ class Notetaker:
         self._start_time = None
         
         if recording:
-            # Quick transcribe for live feedback
+            # Quick transcribe for live feedback, with the fast model
             diarize = self.config.diarization.enabled
-            if self._use_api_diarization(diarize):
-                result = self.transcribe(recording.file_path, diarize=True)
-            else:
-                result = self.transcribe(recording.file_path)
+            result = self.transcribe(
+                recording.file_path, diarize=self._use_api_diarization(diarize), fast=True
+            )
             
             segments = self._speaker_segments(recording.file_path, result, diarize)
             speakers = list(dict.fromkeys(seg['speaker_name'] for seg in segments))
