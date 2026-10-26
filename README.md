@@ -390,7 +390,8 @@ class MeetingResult:
 | Transcription + speakers | `voxtral-small-transcribe-3-0` (Voxtral Small Transcribe 3, public preview) | `voxtral.model` |
 | Meeting summary | `mistral-small-2603` (Mistral Small 4) | `summary.model` |
 
-For lower cost, set `voxtral.model` to the Mini model (`voxtral-mini-latest`).
+For lower cost, set `voxtral.model` to Voxtral Mini Transcribe 3
+(`voxtral-mini-transcribe-3-0`; check the exact ID in your Mistral model list).
 Both run on Mistral's API, so the Raspberry Pi only records and processes audio.
 Swiss German is transcribed as German; test with your own recordings.
 
