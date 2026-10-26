@@ -1,19 +1,15 @@
-# Voxtral Notetaker Configuration
-# Copy this file to config.yaml and customize for your setup
+# Voxtral Notetaker configuration
+#
+# On the device, use the web page (http://<device>:8080 -> Settings) instead of
+# editing this file. To edit by hand: copy to config.yaml and change what you need.
+# Every setting is optional; missing ones use the defaults shown here.
 
-# General settings
-name: "Voxtral Notetaker"
-
-# Audio Configuration
+# Microphone
 audio:
-  sample_rate: 16000          # Audio sample rate (Hz, 16000 recommended for speech)
-  channels: 1               # Number of audio channels (1 = mono, 2 = stereo)
-  format: wav              # Audio format: wav, mp3, flac, ogg
-  chunk_size: 1024         # Audio chunk size for streaming
-  device_index: null       # Specific audio device index (null = auto-detect)
-  auto_gain: true          # Enable automatic gain control
-  noise_reduction: true   # Enable noise reduction
-  enhancement: true        # Enable audio enhancement
+  sample_rate: 16000      # Hz; 16000 is ideal for speech
+  channels: 1             # 1 = mono
+  device_index: null      # null = auto-detect (prefers Jabra / conference mics)
+  noise_reduction: true   # applied after the meeting, needs the noisereduce package
 
 # Mistral Voxtral transcription (https://docs.mistral.ai/studio/audio/overview)
 voxtral:
@@ -21,76 +17,77 @@ voxtral:
   base_url: "https://api.mistral.ai/v1"
   model: "voxtral-small-transcribe-3-0"      # Accurate: final transcript, memo, speakers
   fast_model: "voxtral-mini-transcribe-3-0"  # Fast/cheap: interim transcripts ("Moment bitte")
-  timeout: 30             # Request timeout in seconds
-  max_retries: 3          # Retries on rate limits / server errors
+  timeout: 30             # seconds per request
+  max_retries: 3          # quick retries on rate limits / server errors
 
-# Speaker Diarization Configuration
+# Speaker recognition
 diarization:
-  enabled: true           # Enable speaker diarization
+  enabled: true
   provider: mistral       # mistral (API, no local model) or pyannote (local)
-  min_speakers: 1        # Minimum number of speakers to detect
-  max_speakers: 10       # Maximum number of speakers to detect
-  speaker_change_threshold: 0.7  # Threshold for speaker change detection (0.0 - 1.0)
-  overlap_threshold: 0.5  # Threshold for overlapping speech detection
-  use_pyannote: true      # Use pyannote.audio for diarization
-  hf_token: null          # Hugging Face token for pyannote models (or set HF_TOKEN env var)
+  max_speakers: 10        # pyannote only
+  hf_token: null          # pyannote only: Hugging Face token (or HF_TOKEN env var)
+  detect_names: true      # name speakers from "Ich bin Anna" / "My name is Tom"
 
-# Meeting memo AI summary (OpenAI-compatible chat API, e.g. Mistral)
+# AI summary in the memo (OpenAI-compatible chat API)
 summary:
   enabled: true
   model: "mistral-small-2603"  # Mistral Small 4
   base_url: null          # defaults to voxtral.base_url
   api_key: null           # defaults to voxtral.api_key
-  max_points: 8           # maximum bullet points in the summary
+  max_points: 8           # bullet points in the summary
   timeout: 60
 
-# Cloud Storage Configuration
-storage:
-  provider: local        # Storage provider: local, google_drive, dropbox, s3, all
-  local_path: "./recordings"  # Local storage path
-  
-  # Google Drive settings
-  google_credentials: null  # Path to Google credentials JSON file
-  google_folder_id: null   # Google Drive folder ID
-  
-  # Dropbox settings
-  dropbox_token: null      # Dropbox access token
-  dropbox_folder: "/VoxtralNotetaker"  # Dropbox folder path
-  
-  # Amazon S3 settings
-  s3_bucket: null          # S3 bucket name
-  s3_region: "eu-central-1"  # S3 region
-  s3_access_key: null     # S3 access key
-  s3_secret_key: null     # S3 secret key
-  
-  auto_upload: true       # Automatically upload to cloud
-  retain_local: true      # Keep local copy after upload
-
-# Email Configuration
+# Email the memo after each meeting
 email:
-  enabled: true           # Enable email sending
-  smtp_host: "smtp.gmail.com"  # SMTP server host
-  smtp_port: 587          # SMTP server port
-  smtp_user: null         # SMTP username
-  smtp_password: null     # SMTP password (use app password for Gmail)
-  use_tls: true           # Use TLS encryption
-  
-  from_email: "notetaker@voxtral.local"  # Sender email address
-  to_emails: []           # List of recipient email addresses
-  cc_emails: []           # List of CC email addresses
-  bcc_emails: []          # List of BCC email addresses
-  
-  subject_template: "Meeting Notes - {date}"  # Email subject template
-  body_template: "Please find attached the meeting notes from {date}.\n\n{transcript}"  # Email body template
-  
-  send_audio: false        # Send audio file as attachment
-  send_transcript: true    # Send transcript as attachment
-  send_notes: true         # Send formatted notes as attachment
+  enabled: false
+  to_emails: []           # e.g. ["team@example.com", "anna@example.com"]
+  smtp_host: ""           # e.g. smtp.gmail.com, smtp.office365.com
+  smtp_port: 587          # 587 = STARTTLS, 465 = SSL
+  smtp_user: ""
+  smtp_password: ""       # or the NOTETAKER_SMTP_PASSWORD environment variable
+  use_tls: true           # STARTTLS on port 587
+  from_email: ""          # defaults to smtp_user
+  attach_transcript: true
+  attach_audio: false     # recordings are large; attachments over 15 MB are skipped
 
-# Performance settings
-max_recording_hours: 8    # Maximum recording duration in hours
-auto_split_minutes: 30   # Automatically split recordings every N minutes
+# Copies of recordings, transcripts and memos
+storage:
+  provider: local         # local, google_drive, dropbox, s3, all
+  local_path: "./recordings"
+  google_credentials: null  # path to an authorized-user credentials JSON
+  google_folder_id: null
+  dropbox_token: null
+  dropbox_folder: "/VoxtralNotetaker"
+  s3_bucket: null
+  s3_region: "eu-central-1"
+  s3_access_key: null
+  s3_secret_key: null
+  auto_upload: true
 
-# Logging settings
-log_level: "INFO"         # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
-log_file: "voxtral_notetaker.log"  # Log file path
+# Buttons, beeps and status light
+device:
+  beeps: true             # tones through the speakerphone
+  beep_volume: 0.3
+  button_gpio: null       # GPIO pin of a start/stop push button (to GND), e.g. 17
+  led_gpio: null          # GPIO pin of a status LED, e.g. 27
+  input_device: "jabra"   # USB device whose buttons start/stop ("" = off)
+  input_keys: ["KEY_PHONE", "KEY_PLAYPAUSE"]
+
+# Background service
+service:
+  recordings_dir: "./recordings"
+  language: auto          # auto, de-CH, de, en
+  retry_interval_seconds: 300  # first retry when offline; doubles up to 1 hour
+  max_attempts: 0         # 0 = keep retrying network problems
+
+# Setup and status web page
+web:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8080
+  pin: ""                 # chosen on the first visit to Settings
+  setup_hotspot: true     # no network at boot -> open Wi-Fi "Notetaker-Setup"
+  hotspot_ssid: "Notetaker-Setup"
+  hotspot_password: "notetaker"
+
+max_recording_minutes: 120  # stops and saves automatically (warning beep 5 min before)

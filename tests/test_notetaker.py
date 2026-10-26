@@ -11,7 +11,7 @@ import pytest
 from click.testing import CliRunner
 
 from voxtral_notetaker import Notetaker, NotetakerConfig, CommandParser, CommandType, Language
-from voxtral_notetaker.audio import AudioRecorder
+from voxtral_notetaker.audio import AudioRecorder, repair_wav, wav_duration
 from voxtral_notetaker.cli import cli
 from voxtral_notetaker.config import AudioConfig, StorageConfig, StorageProvider, VoxtralConfig
 from voxtral_notetaker.storage import CloudStorage
@@ -191,19 +191,51 @@ def test_cli_setup_and_help(tmp_path, monkeypatch):
     assert (tmp_path / "config.yaml").exists()
 
 
-def test_stop_recording_saves_captured_audio(tmp_path):
+def _start_fake_recording(recorder, path):
+    # Simulate an in-progress recording without real hardware
+    recorder._open_file(str(path))
+    recorder._output_file = str(path)
+    recorder._start_time = 0.0
+    recorder._is_recording = True
+
+
+def test_recording_streams_to_disk(tmp_path):
     recorder = AudioRecorder(AudioConfig(noise_reduction=False))
     out = tmp_path / "rec.wav"
-    # Simulate an in-progress recording without real hardware
-    recorder._is_recording = True
-    recorder._output_file = str(out)
-    recorder._start_time = 0.0
-    recorder._audio_data = [np.zeros(1600, dtype=np.int16).tobytes()]
+    _start_fake_recording(recorder, out)
+    for _ in range(10):
+        recorder._write(np.zeros(1600, dtype=np.int16).tobytes(), 1600)
+    # Readable while the recording is still running
+    recorder._file.flush()
+    with wave.open(str(out)) as wf:
+        assert wf.getnframes() == 16000
     info = recorder.stop_recording()
     assert info.file_path == str(out)
+    assert info.duration == pytest.approx(1.0)
     with wave.open(str(out)) as wf:
-        assert wf.getnframes() == 1600
+        assert wf.getnframes() == 16000
     recorder.close()
+
+
+def test_recording_survives_power_cut(tmp_path):
+    recorder = AudioRecorder(AudioConfig(noise_reduction=False))
+    out = tmp_path / "rec.wav"
+    _start_fake_recording(recorder, out)
+    recorder._write(np.ones(16000, dtype=np.int16).tobytes(), 16000)
+    recorder._file.flush()
+    # Power cut: more audio reached the disk than the header says, last frame partial
+    with open(out, "ab") as f:
+        f.write(b"\x01\x00" * 8000 + b"\x01")
+    assert repair_wav(str(out))
+    with wave.open(str(out)) as wf:
+        assert wf.getnframes() == 24000
+    assert wav_duration(str(out)) == pytest.approx(1.5)
+
+
+def test_repair_rejects_non_wav(tmp_path):
+    bad = tmp_path / "x.wav"
+    bad.write_bytes(b"not audio at all" * 10)
+    assert not repair_wav(str(bad))
 
 
 def _capture_transcription(tmp_path, reply, **call):

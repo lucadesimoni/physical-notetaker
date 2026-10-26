@@ -187,6 +187,81 @@ def notetaker_language_is_german(text: str) -> bool:
 
 
 @cli.command()
+@click.option('--config', 'config_path', default=None, help='Config file (default: config.yaml)')
+@click.option('--no-web', is_flag=True, help='Do not start the setup/status web page')
+@click.option('-v', '--verbose', is_flag=True, help='Debug logging')
+def run(config_path: str, no_web: bool, verbose: bool):
+    """Run the always-on notetaker (button start/stop, queue, web page)"""
+    import logging
+    from .service import NotetakerService
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO,
+                        format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+    service = NotetakerService(config_path=config_path)
+    if not no_web and service.config.web.enabled:
+        console.log(f"Web page: http://<this-device>:{service.config.web.port}")
+    service.run_forever(web=not no_web)
+
+
+@cli.command()
+@click.argument('file')
+@click.option('--language', '-l', type=click.Choice(['en', 'de', 'de-CH', 'auto']),
+              default=None, help='Meeting language (default: service.language)')
+@click.option('--title', '-t', default=None, help='Memo title')
+@click.option('--speaker', 'speakers', multiple=True, metavar='ID=NAME',
+              help='Name a speaker, e.g. --speaker speaker_0=Anna (repeatable)')
+@click.option('--no-upload', is_flag=True, help='Do not upload the results')
+def process(file: str, language: str, title: str, speakers, no_upload: bool):
+    """Create transcript and memo for an existing recording"""
+    if not os.path.exists(file):
+        console.log(f"File not found: {file}", style="red")
+        raise SystemExit(1)
+    config = load_config()
+    lang = Language(language or config.service.language or 'auto')
+    notetaker = Notetaker(config)
+    try:
+        for entry in speakers:
+            speaker_id, _, name = entry.partition('=')
+            if speaker_id and name:
+                notetaker.set_speaker_name(speaker_id.strip(), name.strip())
+        result = notetaker.process_recording(file, language=lang, title=title,
+                                             upload=False if no_upload else None)
+        console.print(result.memo.to_markdown())
+        console.log(f"Memo saved: {result.memo_file}")
+        console.log(f"Transcript saved: {result.transcript_file}")
+    except Exception as e:
+        console.log(f"Error: {e}", style="red")
+        raise SystemExit(1)
+    finally:
+        notetaker.close()
+
+
+@cli.command()
+def queue():
+    """Show recordings and their processing status"""
+    from .jobs import JobStore
+    config = load_config()
+    jobs = JobStore(config.service.recordings_dir).all()
+    if not jobs:
+        console.log("No recordings yet")
+        return
+    for job in jobs:
+        line = f"{job.id}  {job.status:<10} {job.title or ''}"
+        if job.last_error and job.status != 'done':
+            line += f"  ({job.last_error})"
+        console.print(line)
+
+
+@cli.command()
+@click.argument('job_id', required=False)
+def retry(job_id: str):
+    """Queue failed recordings again (all, or one by id)"""
+    from .jobs import JobStore
+    config = load_config()
+    count = JobStore(config.service.recordings_dir).retry(job_id)
+    console.log(f"{count} recording(s) queued again. The running service picks them up.")
+
+
+@cli.command()
 def devices():
     """List available audio input devices"""
     config = NotetakerConfig()

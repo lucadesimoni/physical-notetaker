@@ -18,6 +18,8 @@ setup(
     install_requires=requirements,
     extras_require={
         "local-diarization": ["pyannote.audio>=3.1.1"],
+        # Buttons and status LED (on Raspberry Pi OS these come from apt)
+        "device": ["gpiozero>=2.0", "evdev>=1.6"],
     },
     python_requires=">=3.10",
     entry_points={
