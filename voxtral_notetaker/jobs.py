@@ -21,6 +21,7 @@ import httpx
 from .audio import repair_wav, wav_duration
 from .config import NotetakerConfig, Language
 from .notify import build_memo_email, send_email, memo_subject
+from .i18n import t
 
 RECORDING = 'recording'
 PENDING = 'pending'
@@ -53,6 +54,9 @@ class Job:
     upload_urls: List[str] = field(default_factory=list)
     emailed: bool = False
     noise_reduced: bool = False
+    audio_deleted: bool = False
+    speakers: Dict[str, str] = field(default_factory=dict)           # id -> name in the memo
+    speaker_overrides: Dict[str, str] = field(default_factory=dict)  # names set by the user
     updated_at: Optional[str] = None
 
     @property
@@ -89,19 +93,21 @@ def classify_error(error: Exception) -> bool:
     return False
 
 
-def describe_error(error: Exception) -> str:
+def describe_error(error: Exception, lang: str = 'de') -> str:
+    """A message the user can act on"""
     if isinstance(error, httpx.HTTPStatusError):
         code = error.response.status_code
         if code in (401, 403):
-            return f"Mistral API key rejected ({code}). Check the API key in the settings."
+            return t('err_api_key_rejected', lang, code=code)
         if code == 404:
-            return f"Model not found ({code}). Check the model names in the settings."
-        detail = error.response.text[:200]
-        return f"Mistral API error {code}: {detail}"
+            return t('err_model_not_found', lang, code=code)
+        return t('err_api', lang, code=code, detail=error.response.text[:200])
     if isinstance(error, httpx.TransportError):
-        return f"No connection to the Mistral API ({type(error).__name__}). Will retry."
+        return t('err_offline', lang)
     if isinstance(error, smtplib.SMTPAuthenticationError):
-        return "Email login failed. Check the email settings."
+        return t('err_email_login', lang)
+    if isinstance(error, PermanentError):
+        return str(error)
     return f"{type(error).__name__}: {error}"
 
 
@@ -210,6 +216,10 @@ class JobProcessor:
             notetaker_factory = Notetaker
         self.notetaker_factory = notetaker_factory
 
+    @property
+    def lang(self) -> str:
+        return self.config.service.ui_language
+
     def process(self, job: Job) -> Job:
         job.status = PROCESSING
         job.attempts += 1
@@ -219,7 +229,7 @@ class JobProcessor:
             job.status = DONE
             job.last_error = None
         except Exception as e:
-            job.last_error = describe_error(e)
+            job.last_error = describe_error(e, self.lang)
             limit = self.config.service.max_attempts
             if classify_error(e) and not (limit and job.attempts >= limit):
                 job.status = PENDING
@@ -231,10 +241,12 @@ class JobProcessor:
         return job
 
     def _run_stages(self, job: Job):
-        if not os.path.exists(job.audio_file):
-            raise PermanentError(f"Recording not found: {job.audio_file}")
+        from .core import transcription_cache_path
+        has_audio = os.path.exists(job.audio_file)
+        if not has_audio and not os.path.exists(transcription_cache_path(job.audio_file)):
+            raise PermanentError(t('err_recording_missing', self.lang, path=job.audio_file))
 
-        if self.config.audio.noise_reduction and not job.noise_reduced:
+        if has_audio and self.config.audio.noise_reduction and not job.noise_reduced:
             from .audio import reduce_noise_file
             reduce_noise_file(job.audio_file)
             job.noise_reduced = True  # once only, even if noisereduce is missing
@@ -253,13 +265,15 @@ class JobProcessor:
 
     def _make_memo(self, job: Job):
         if not self.config.voxtral.resolved_api_key():
-            raise PermanentError("No Mistral API key. Add it in the settings.")
+            raise PermanentError(t('err_no_api_key', self.lang))
         language = self.config.service.language or 'auto'
         try:
             lang = Language(language)
         except ValueError:
             lang = Language.AUTO
         notetaker = self.notetaker_factory(self.config)
+        for speaker_id, name in job.speaker_overrides.items():
+            notetaker.set_speaker_name(speaker_id, name)
         try:
             result = notetaker.process_recording(
                 job.audio_file, language=lang, start_time=job.start_datetime,
@@ -273,6 +287,8 @@ class JobProcessor:
         job.title = result.memo.title if result.memo else job.id
         job.language = result.language
         job.duration = result.duration
+        job.speakers = {seg['speaker_id']: seg['speaker_name']
+                        for seg in (getattr(result, 'speaker_segments', None) or [])}
 
     def _upload(self, job: Job):
         from .storage import CloudStorage
@@ -290,7 +306,7 @@ class JobProcessor:
         job.upload_urls = urls
         if errors:
             # Treated as temporary: cloud services are often just unreachable
-            raise ConnectionError("Upload failed: " + "; ".join(errors))
+            raise ConnectionError(t('err_upload', self.lang, detail="; ".join(errors)))
         job.uploaded = True
 
     def _email(self, job: Job):

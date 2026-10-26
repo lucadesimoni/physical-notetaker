@@ -11,6 +11,8 @@ WorkingDirectory=@HOME@/notetaker
 Environment=NOTETAKER_CONFIG=@HOME@/notetaker/config.yaml
 Environment=PYTHONUNBUFFERED=1
 ExecStart=@HOME@/notetaker/venv/bin/python -m voxtral_notetaker run
+# Serve the web page on port 80 (http://notetaker.local) without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 # Clean shutdown saves the running recording; give it time
 TimeoutStopSec=30
 KillSignal=SIGTERM

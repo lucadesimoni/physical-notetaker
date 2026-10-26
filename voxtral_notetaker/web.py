@@ -1,8 +1,13 @@
 """
-Setup and status page, made for a phone: http://<device>:8080
+Setup and status page, made for a phone: http://<device> (port 80 after install)
 
-- Big start/stop button and the list of meetings with their memos
-- Settings (API key, email, language, Wi-Fi) protected by a PIN chosen on first visit
+- Big start/stop button, the meetings with their memos, free storage
+- Correct speaker names and remake a memo without transcribing again
+- Printable sticker with QR codes for the device
+- Settings (API key, email, language, Wi-Fi) behind a PIN chosen on first visit
+
+The phone needs to be in the same network as the device (or in the device's
+setup hotspot).
 """
 
 import os
@@ -12,24 +17,19 @@ import json
 import logging
 import threading
 from html import escape
-from urllib.parse import parse_qs, quote
+from urllib.parse import parse_qs, quote, unquote
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Dict, Optional
 
 from .config import NotetakerConfig
 from .jobs import DONE, FAILED, PENDING, PROCESSING, RECORDING
+from .i18n import t, normalize
 
 log = logging.getLogger(__name__)
 
 MAX_FORM_BYTES = 64 * 1024
-LANGUAGES = [('auto', 'Automatic'), ('de-CH', 'Swiss German'), ('de', 'German'), ('en', 'English')]
-STATUS_LABELS = {
-    RECORDING: ('Recording', 'rec'),
-    PENDING: ('Waiting', 'wait'),
-    PROCESSING: ('Creating memo…', 'wait'),
-    DONE: ('Done', 'ok'),
-    FAILED: ('Needs attention', 'bad'),
-}
+MEETING_LANGUAGES = ['auto', 'de-CH', 'de', 'en']
+STATUS_CSS = {RECORDING: 'rec', PENDING: 'wait', PROCESSING: 'wait', DONE: 'ok', FAILED: 'bad'}
 
 STYLE = """
 :root { --bg:#f6f6f4; --card:#fff; --text:#1d1d1b; --muted:#6b6b66; --line:#e3e3de;
@@ -66,25 +66,25 @@ button.small { padding:8px 14px; font-size:15px; border-radius:8px; border:1px s
                background:var(--card); color:var(--text); cursor:pointer; }
 pre { white-space:pre-wrap; word-wrap:break-word; font:14px/1.5 ui-monospace,monospace; }
 .error { color:var(--rec); }
+.sticker { background:#fff; color:#000; border:2px dashed #999; border-radius:12px;
+           padding:20px; max-width:420px; }
+.sticker h1 { margin-top:0; }
+.sticker ol { padding-left:22px; font-size:18px; line-height:1.6; }
+.qr { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+.qr div { text-align:center; font-size:13px; word-break:break-all; max-width:180px; }
+@media print { .noprint { display:none; } body { background:#fff; } .sticker { border-color:#ccc; } }
 """
 
 
-def _page(title: str, body: str, refresh: Optional[int] = None) -> bytes:
+def _page(title: str, body: str, lang: str, refresh: Optional[int] = None) -> bytes:
     meta = f'<meta http-equiv="refresh" content="{refresh}">' if refresh else ''
     html = (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        f'<!doctype html><html lang="{normalize(lang)}"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'{meta}<title>{escape(title)}</title><style>{STYLE}</style></head>'
         f'<body><main>{body}</main></body></html>'
     )
     return html.encode('utf-8')
-
-
-def _minutes(seconds: Optional[float]) -> str:
-    if not seconds:
-        return ''
-    minutes = int(seconds // 60)
-    return f"{minutes} min" if minutes else f"{int(seconds)} s"
 
 
 def _job_date(job) -> str:
@@ -93,11 +93,35 @@ def _job_date(job) -> str:
     return job.started_at.replace('T', ' ')[:16]
 
 
+def qr_svg(text: str) -> Optional[str]:
+    """Inline SVG QR code, or None when segno is not installed"""
+    try:
+        import segno
+    except ImportError:
+        return None
+    return segno.make(text, error='m').svg_inline(scale=5, border=2, dark='#000', light='#fff')
+
+
 class Handler(BaseHTTPRequestHandler):
     service = None  # set by start_web_server
 
     def log_message(self, fmt, *args):
         log.debug("web: " + fmt, *args)
+
+    @property
+    def lang(self) -> str:
+        return self.service.config.service.ui_language
+
+    def t(self, key: str, **kwargs) -> str:
+        return t(key, self.lang, **kwargs)
+
+    def _duration(self, seconds: Optional[float]) -> str:
+        if not seconds:
+            return ''
+        minutes = int(seconds // 60)
+        if minutes:
+            return self.t('minutes_short', n=minutes)
+        return self.t('seconds_short', n=int(seconds))
 
     # --- helpers -----------------------------------------------------------
 
@@ -114,6 +138,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _html(self, title: str, body: str, refresh: Optional[int] = None):
+        self._send(_page(title, body, self.lang, refresh))
+
     def _redirect(self, location: str):
         self.send_response(303)
         self.send_header('Location', location)
@@ -128,7 +155,8 @@ class Handler(BaseHTTPRequestHandler):
         return {k: v[-1] for k, v in parse_qs(raw, keep_blank_values=True).items()}
 
     def _not_found(self):
-        self._send(_page("Not found", "<h1>Not found</h1><p><a href='/'>Back</a></p>"), 404)
+        self._send(_page(self.t('not_found'), f"<h1>{escape(self.t('not_found'))}</h1>"
+                         f"<p><a href='/'>{escape(self.t('back'))}</a></p>", self.lang), 404)
 
     # --- routes ------------------------------------------------------------
 
@@ -138,14 +166,16 @@ class Handler(BaseHTTPRequestHandler):
             return self._home()
         if path == '/settings':
             return self._settings()
+        if path == '/sticker':
+            return self._sticker()
         if path == '/api/status':
             return self._api_status()
         if path.startswith('/meeting/'):
-            return self._meeting(path[len('/meeting/'):])
+            return self._meeting(unquote(path[len('/meeting/'):]))
         if path.startswith('/file/'):
             parts = path.split('/')
             if len(parts) == 4:
-                return self._file(parts[2], parts[3])
+                return self._file(unquote(parts[2]), parts[3])
         self._not_found()
 
     def do_POST(self):
@@ -164,87 +194,162 @@ class Handler(BaseHTTPRequestHandler):
             return self._redirect('/')
         if path == '/settings':
             return self._save_settings(self._form())
+        if path.startswith('/meeting/') and path.endswith('/speakers'):
+            job_id = unquote(path[len('/meeting/'):-len('/speakers')])
+            return self._save_speakers(job_id, self._form())
         self._not_found()
 
     # --- pages -------------------------------------------------------------
 
     def _home(self):
         status = self.service.status()
-        parts = ['<h1>Meeting Notetaker</h1>']
+        parts = [f'<h1>{escape(self.t("app_title"))}</h1>']
 
         if not status['api_key_set']:
-            parts.append('<div class="card banner"><b>Setup needed.</b> Add your Mistral API '
-                         'key so recordings can be turned into memos. '
-                         '<a href="/settings">Open settings</a></div>')
+            parts.append(f'<div class="card banner"><b>{escape(self.t("setup_needed"))}</b> '
+                         f'{escape(self.t("setup_needed_text"))} '
+                         f'<a href="/settings">{escape(self.t("open_settings"))}</a></div>')
+        if status['storage_low']:
+            parts.append(f'<div class="card banner">'
+                         f'{escape(self.t("storage_low", free=status["free_text"]))}</div>')
 
         if status['recording']:
-            limit = status['max_recording_minutes']
+            elapsed = self._duration(status['recording_seconds']) or self.t('seconds_short', n=0)
             parts.append(
                 '<form method="post" action="/toggle"><input type="hidden" name="action" value="stop">'
-                f'<button class="big stop">■ Stop meeting · {escape(_minutes(status["recording_seconds"]) or "0 s")}</button>'
-                f'</form><p class="muted">Recording. Stops automatically after {limit} minutes.</p>'
+                f'<button class="big stop">{escape(self.t("stop_meeting", elapsed=elapsed))}</button>'
+                f'</form><p class="muted">'
+                f'{escape(self.t("recording_hint", minutes=status["max_recording_minutes"]))}</p>'
             )
+            if status['live_items']:
+                items = ''.join(f'<li>{escape(text)}</li>' for _, text in status['live_items'][-5:])
+                parts.append(f'<div class="card"><ul>{items}</ul></div>')
         else:
             parts.append(
                 '<form method="post" action="/toggle"><input type="hidden" name="action" value="start">'
-                '<button class="big">● Start meeting</button></form>'
-                '<p class="muted">Or press the button on the device.</p>'
+                f'<button class="big">{escape(self.t("start_meeting"))}</button></form>'
+                f'<p class="muted">{escape(self.t("start_hint"))}</p>'
             )
 
         if status['last_event']:
             parts.append(f'<p class="muted">{escape(status["last_event"])}</p>')
 
-        parts.append('<h2>Meetings</h2>')
+        parts.append(f'<h2>{escape(self.t("meetings"))}</h2>')
         jobs = status['jobs']
         if not jobs:
-            parts.append('<p class="muted">No meetings yet.</p>')
+            parts.append(f'<p class="muted">{escape(self.t("no_meetings"))}</p>')
         if any(j.status == FAILED for j in jobs):
-            parts.append('<form method="post" action="/retry"><button class="small">'
-                         'Retry all problems</button></form><br>')
+            parts.append(f'<form method="post" action="/retry"><button class="small">'
+                         f'{escape(self.t("retry_all"))}</button></form><br>')
+        days = self.service.config.service.keep_audio_days
         for job in jobs[:30]:
-            label, css = STATUS_LABELS.get(job.status, (job.status, 'wait'))
-            title = escape(job.title or 'Meeting')
+            css = STATUS_CSS.get(job.status, 'wait')
+            label = self.t(f'status_{job.status}')
+            title = escape(job.title or self.t('meeting_default_title'))
             jid = quote(job.id)
             links = []
             if job.memo_file and os.path.exists(job.memo_file):
-                links.append(f'<a href="/meeting/{jid}">Memo</a>')
+                links.append(f'<a href="/meeting/{jid}">{escape(self.t("memo"))}</a>')
             if job.transcript_file and os.path.exists(job.transcript_file):
-                links.append(f'<a href="/file/{jid}/transcript">Transcript</a>')
+                links.append(f'<a href="/file/{jid}/transcript">{escape(self.t("transcript"))}</a>')
             if os.path.exists(job.audio_file):
-                links.append(f'<a href="/file/{jid}/audio">Audio</a>')
+                links.append(f'<a href="/file/{jid}/audio">{escape(self.t("audio"))}</a>')
             extra = ''
             if job.last_error and job.status != DONE:
                 extra += f'<p class="error">{escape(job.last_error)}</p>'
             if job.status == PENDING and job.attempts:
-                extra += '<p class="muted">Will retry automatically.</p>'
+                extra += f'<p class="muted">{escape(self.t("will_retry"))}</p>'
             if job.status == FAILED:
                 extra += (f'<form method="post" action="/retry"><input type="hidden" name="id" '
-                          f'value="{escape(job.id)}"><button class="small">Retry</button></form>')
+                          f'value="{escape(job.id)}"><button class="small">'
+                          f'{escape(self.t("retry"))}</button></form>')
             if job.status == DONE and job.emailed:
-                extra += '<p class="muted">Sent by email.</p>'
+                extra += f'<p class="muted">{escape(self.t("sent_by_email"))}</p>'
+            if job.audio_deleted:
+                extra += f'<p class="muted">{escape(self.t("audio_deleted", days=days))}</p>'
             parts.append(
                 f'<div class="card"><div class="row"><b>{title}</b>'
                 f'<span class="badge {css}">{escape(label)}</span></div>'
-                f'<div class="muted">{escape(_job_date(job))} · {escape(_minutes(job.duration))}</div>'
+                f'<div class="muted">{escape(_job_date(job))} · {escape(self._duration(job.duration))}</div>'
                 f'<div class="links">{" ".join(links)}</div>{extra}</div>'
             )
 
-        parts.append('<p><a href="/settings">Settings</a></p>')
+        parts.append(f'<p class="muted">{escape(self.t("storage_free", free=status["free_text"]))}</p>')
+        parts.append(f'<p class="links"><a href="/settings">{escape(self.t("settings"))}</a>'
+                     f'<a href="/sticker">{escape(self.t("sticker"))}</a></p>')
         busy = status['recording'] or any(j.status in (PENDING, PROCESSING) for j in jobs)
-        self._send(_page("Meeting Notetaker", ''.join(parts), refresh=5 if busy else 30))
+        self._html(self.t('app_title'), ''.join(parts), refresh=5 if busy else 30)
 
-    def _meeting(self, job_id: str):
+    def _meeting(self, job_id: str, message: str = ''):
         job = self.service.store.get(job_id)
-        if not job or not job.memo_file or not os.path.exists(job.memo_file):
+        if not job:
             return self._not_found()
-        with open(job.memo_file, encoding='utf-8') as f:
-            memo = f.read()
         jid = quote(job.id)
-        body = (f'<p><a href="/">← Back</a></p><div class="card"><pre>{escape(memo)}</pre></div>'
-                f'<p class="links"><a href="/file/{jid}/memo">Download memo</a>'
-                f'<a href="/file/{jid}/transcript">Transcript</a>'
-                f'<a href="/file/{jid}/audio">Audio</a></p>')
-        self._send(_page(job.title or "Memo", body))
+        parts = [f'<p><a href="/">{escape(self.t("back"))}</a></p>']
+        if message:
+            parts.append(f'<div class="card">{escape(message)}</div>')
+        if job.memo_file and os.path.exists(job.memo_file):
+            with open(job.memo_file, encoding='utf-8') as f:
+                memo = f.read()
+            parts.append(f'<div class="card"><pre>{escape(memo)}</pre></div>')
+        else:
+            parts.append(f'<div class="card">{escape(self.t("status_" + job.status))}</div>')
+
+        if job.speakers and job.status not in (RECORDING, PROCESSING):
+            rows = []
+            for i, (speaker_id, name) in enumerate(sorted(job.speakers.items())):
+                current = job.speaker_overrides.get(speaker_id, name)
+                rows.append(
+                    f'<input type="hidden" name="id_{i}" value="{escape(speaker_id)}">'
+                    f'<label for="name_{i}">{escape(speaker_id)}</label>'
+                    f'<input id="name_{i}" name="name_{i}" type="text" value="{escape(current)}">'
+                )
+            resend = (f'<label class="check"><input type="checkbox" name="resend" value="1" checked>'
+                      f' {escape(self.t("resend_email"))}</label>'
+                      if self.service.config.email.ready else '')
+            parts.append(
+                f'<div class="card"><h2>{escape(self.t("speakers"))}</h2>'
+                f'<p class="muted">{escape(self.t("speakers_hint"))}</p>'
+                f'<form method="post" action="/meeting/{jid}/speakers">{"".join(rows)}{resend}'
+                f'<br><button class="small">{escape(self.t("remake_memo"))}</button></form></div>'
+            )
+
+        parts.append(
+            f'<p class="links"><a href="/file/{jid}/memo">{escape(self.t("download_memo"))}</a>'
+            f'<a href="/file/{jid}/transcript">{escape(self.t("transcript"))}</a>'
+            f'<a href="/file/{jid}/audio">{escape(self.t("audio"))}</a></p>'
+        )
+        refresh = 5 if job.status in (PENDING, PROCESSING) else None
+        self._html(job.title or self.t('memo'), ''.join(parts), refresh=refresh)
+
+    def _save_speakers(self, job_id: str, form: Dict[str, str]):
+        names = {}
+        i = 0
+        while f'id_{i}' in form:
+            names[form[f'id_{i}']] = form.get(f'name_{i}', '')[:80]
+            i += 1
+        resend = form.get('resend') == '1'
+        if self.service.remake_memo(job_id, names, resend_email=resend):
+            return self._meeting(job_id, self.t('remake_started'))
+        return self._meeting(job_id)
+
+    def _sticker(self):
+        from .network import device_urls
+        urls = device_urls(self.service.config.web.port)
+        codes = []
+        for url in urls:
+            svg = qr_svg(url)
+            codes.append(f'<div>{svg or ""}<br>{escape(url)}</div>')
+        steps = ''.join(f'<li>{escape(self.t(k))}</li>'
+                        for k in ('sticker_step1', 'sticker_step2', 'sticker_step3'))
+        body = (
+            f'<p class="noprint"><a href="/">{escape(self.t("back"))}</a> · '
+            f'{escape(self.t("sticker_print"))}</p>'
+            f'<div class="sticker"><h1>{escape(self.t("sticker_title"))}</h1><ol>{steps}</ol>'
+            f'<p>{escape(self.t("sticker_long_press"))}</p>'
+            f'<p>{escape(self.t("sticker_scan"))}</p><div class="qr">{"".join(codes)}</div></div>'
+        )
+        self._html(self.t('sticker'), body)
 
     def _file(self, job_id: str, kind: str):
         job = self.service.store.get(job_id)
@@ -286,61 +391,72 @@ class Handler(BaseHTTPRequestHandler):
         first_visit = not c.web.pin
         e = c.email
 
-        def field(name, label, value='', kind='text', hint=''):
+        def field(name, label_key, value='', kind='text', hint=''):
             hint_html = f'<div class="muted">{escape(hint)}</div>' if hint else ''
-            return (f'<label for="{name}">{escape(label)}</label>{hint_html}'
+            return (f'<label for="{name}">{escape(self.t(label_key))}</label>{hint_html}'
                     f'<input id="{name}" name="{name}" type="{kind}" value="{escape(str(value))}" '
                     f'autocomplete="off">')
 
-        def check(name, label, on):
+        def check(name, label_key, on, hint=''):
+            hint_html = f'<div class="muted">{escape(hint)}</div>' if hint else ''
             return (f'<label class="check"><input type="checkbox" name="{name}" value="1"'
-                    f'{" checked" if on else ""}> {escape(label)}</label>')
+                    f'{" checked" if on else ""}> {escape(self.t(label_key))}</label>{hint_html}')
 
-        lang_options = ''.join(
-            f'<option value="{v}"{" selected" if c.service.language == v else ""}>{escape(t)}</option>'
-            for v, t in LANGUAGES)
-        key_hint = "Saved. Leave empty to keep it." if c.voxtral.api_key else \
-            "From Mistral AI Studio (console.mistral.ai)."
-        pw_hint = "Saved. Leave empty to keep it." if e.smtp_password else ""
+        def select(name, label_key, options, current):
+            opts = ''.join(f'<option value="{escape(v)}"{" selected" if current == v else ""}>'
+                           f'{escape(text)}</option>' for v, text in options)
+            return (f'<label for="{name}">{escape(self.t(label_key))}</label>'
+                    f'<select id="{name}" name="{name}">{opts}</select>')
 
+        key_hint = self.t('api_key_saved') if c.voxtral.api_key else self.t('api_key_hint')
+        pw_hint = self.t('api_key_saved') if e.smtp_password else ''
         msg_html = ''
         if message:
             msg_html = f'<div class="card {"banner" if error else ""}">{escape(message)}</div>'
-        pin_html = (field('new_pin', 'Choose a PIN (at least 4 digits)', kind='password',
-                          hint='Needed to change these settings later. Write it down.')
-                    if first_visit else
-                    field('pin', 'PIN', kind='password', hint='Required to save.'))
+        if first_visit:
+            pin_html = field('new_pin', 'choose_pin', kind='password', hint=self.t('choose_pin_hint'))
+        else:
+            pin_html = (field('pin', 'pin', kind='password', hint=self.t('pin_hint')) +
+                        field('new_pin', 'new_pin', kind='password'))
+        meeting_langs = [(v, self.t(f'lang_{v}')) for v in MEETING_LANGUAGES]
+        ui_langs = [('de', 'Deutsch'), ('en', 'English')]
 
         body = f"""
-<p><a href="/">← Back</a></p><h1>Settings</h1>{msg_html}
+<p><a href="/">{escape(self.t('back'))}</a></p><h1>{escape(self.t('settings'))}</h1>{msg_html}
 <form method="post" action="/settings">
-<div class="card"><h2>Transcription</h2>
-{field('api_key', 'Mistral API key', '', 'password', key_hint)}
-<label for="language">Meeting language</label>
-<select id="language" name="language">{lang_options}</select>
-{field('max_minutes', 'Stop recording automatically after (minutes)', c.max_recording_minutes, 'number')}
+<div class="card"><h2>{escape(self.t('transcription'))}</h2>
+{field('api_key', 'api_key', '', 'password', key_hint)}
+{select('language', 'meeting_language', meeting_langs, c.service.language)}
+{select('ui_language', 'ui_language', ui_langs, normalize(c.service.ui_language))}
+{field('max_minutes', 'max_minutes', c.max_recording_minutes, 'number')}
+{field('keep_audio_days', 'keep_audio_days', c.service.keep_audio_days, 'number', self.t('keep_audio_hint'))}
 </div>
-<div class="card"><h2>Email the memo</h2>
-{check('email_enabled', 'Send the memo by email after each meeting', e.enabled)}
-<label for="to_emails">Send to</label><div class="muted">One address per line.</div>
+<div class="card"><h2>{escape(self.t('voice_section'))}</h2>
+{check('voice', 'voice_enabled', c.device.voice)}
+{check('live_commands', 'live_commands', c.service.live_commands,
+       self.t('live_commands_hint', seconds=c.service.live_interval_seconds))}
+</div>
+<div class="card"><h2>{escape(self.t('email_section'))}</h2>
+{check('email_enabled', 'email_enabled', e.enabled)}
+<label for="to_emails">{escape(self.t('send_to'))}</label>
+<div class="muted">{escape(self.t('one_per_line'))}</div>
 <textarea id="to_emails" name="to_emails" rows="3">{escape(chr(10).join(e.to_emails))}</textarea>
-{field('smtp_host', 'SMTP server', e.smtp_host, hint='e.g. smtp.gmail.com, smtp.office365.com')}
-{field('smtp_port', 'SMTP port', e.smtp_port, 'number', '587 (STARTTLS) or 465 (SSL)')}
-{field('smtp_user', 'SMTP user', e.smtp_user)}
-{field('smtp_password', 'SMTP password', '', 'password', pw_hint)}
-{field('from_email', 'From address', e.from_email)}
-{check('attach_transcript', 'Attach the transcript', e.attach_transcript)}
-{check('attach_audio', 'Attach the audio (large)', e.attach_audio)}
+{field('smtp_host', 'smtp_host', e.smtp_host, hint='smtp.gmail.com, smtp.office365.com, mail.infomaniak.com')}
+{field('smtp_port', 'smtp_port', e.smtp_port, 'number', self.t('smtp_port_hint'))}
+{field('smtp_user', 'smtp_user', e.smtp_user)}
+{field('smtp_password', 'email_password', '', 'password', pw_hint or self.t('email_password_hint'))}
+{field('from_email', 'email_account', e.from_email)}
+{check('attach_transcript', 'attach_transcript', e.attach_transcript)}
+{check('attach_audio', 'attach_audio', e.attach_audio)}
 </div>
-<div class="card"><h2>Wi-Fi</h2><div class="muted">Only to change the network. Leave empty otherwise.</div>
-{field('wifi_ssid', 'Network name')}
-{field('wifi_password', 'Wi-Fi password', '', 'password')}
+<div class="card"><h2>{escape(self.t('wifi'))}</h2><div class="muted">{escape(self.t('wifi_hint'))}</div>
+{field('wifi_ssid', 'wifi_ssid')}
+{field('wifi_password', 'wifi_password', '', 'password')}
 </div>
 <div class="card">{pin_html}
-{'' if first_visit else field('new_pin', 'New PIN (optional)', kind='password')}
-<br><button class="big">Save</button></div>
+<br><button class="big">{escape(self.t('save'))}</button></div>
 </form>"""
-        self._send(_page("Settings", body))
+        self._html(self.t('settings'), body)
 
     def _save_settings(self, form: Dict[str, str]):
         svc = self.service
@@ -349,31 +465,36 @@ class Handler(BaseHTTPRequestHandler):
         if current.web.pin:
             if not hmac.compare_digest(form.get('pin', ''), current.web.pin):
                 time.sleep(1)  # slow down guessing
-                return self._settings("Wrong PIN. Nothing was saved.", error=True)
+                return self._settings(self.t('wrong_pin'), error=True)
         elif len(form.get('new_pin', '')) < 4 or not form.get('new_pin', '').isdigit():
-            return self._settings("Please choose a PIN of at least 4 digits.", error=True)
+            return self._settings(self.t('pin_too_short'), error=True)
 
         config = NotetakerConfig.from_dict(current.to_dict())  # edit a copy
         if form.get('api_key', '').strip():
             config.voxtral.api_key = form['api_key'].strip()
-        language = form.get('language', 'auto')
-        if language in {v for v, _ in LANGUAGES}:
-            config.service.language = language
-        try:
-            minutes = int(form.get('max_minutes') or config.max_recording_minutes)
-            config.max_recording_minutes = max(5, min(minutes, 600))
-        except ValueError:
-            pass
+        if form.get('language') in MEETING_LANGUAGES:
+            config.service.language = form['language']
+        if form.get('ui_language') in ('de', 'en'):
+            config.service.ui_language = form['ui_language']
+
+        def number(name, low, high, default):
+            try:
+                return max(low, min(int(form.get(name) or default), high))
+            except ValueError:
+                return default
+
+        config.max_recording_minutes = number('max_minutes', 5, 600, config.max_recording_minutes)
+        config.service.keep_audio_days = number('keep_audio_days', 0, 3650,
+                                                config.service.keep_audio_days)
+        config.device.voice = form.get('voice') == '1'
+        config.service.live_commands = form.get('live_commands') == '1'
 
         e = config.email
         e.enabled = form.get('email_enabled') == '1'
         e.to_emails = [a.strip() for a in form.get('to_emails', '').replace(',', '\n').splitlines()
                        if a.strip()]
         e.smtp_host = form.get('smtp_host', '').strip()
-        try:
-            e.smtp_port = int(form.get('smtp_port') or 587)
-        except ValueError:
-            pass
+        e.smtp_port = number('smtp_port', 1, 65535, e.smtp_port)
         e.smtp_user = form.get('smtp_user', '').strip()
         if form.get('smtp_password'):
             e.smtp_password = form['smtp_password']
@@ -383,22 +504,21 @@ class Handler(BaseHTTPRequestHandler):
 
         if form.get('new_pin'):
             if len(form['new_pin']) < 4 or not form['new_pin'].isdigit():
-                return self._settings("The new PIN needs at least 4 digits.", error=True)
+                return self._settings(self.t('pin_too_short'), error=True)
             config.web.pin = form['new_pin']
 
         problems = []
         if e.enabled and (not e.to_emails or not e.smtp_host):
-            problems.append("Email is on, but the recipients or SMTP server are missing.")
+            problems.append(t('email_incomplete', config.service.ui_language))
 
         svc.update_config(config)
 
-        message = "Saved."
+        message = t('saved', config.service.ui_language)
         if form.get('wifi_ssid', '').strip():
             ssid, password = form['wifi_ssid'].strip(), form.get('wifi_password', '')
             from .network import connect_wifi
             threading.Thread(target=connect_wifi, args=(ssid, password), daemon=True).start()
-            message += (f" Connecting to Wi-Fi '{ssid}'. If this page stops loading, reconnect "
-                        f"your phone to that network and open the device's address again.")
+            message += " " + t('wifi_connecting', config.service.ui_language, ssid=ssid)
         if problems:
             message += " " + " ".join(problems)
         self._settings(message, error=bool(problems))

@@ -210,7 +210,9 @@ def run(config_path: str, no_web: bool, verbose: bool):
 @click.option('--speaker', 'speakers', multiple=True, metavar='ID=NAME',
               help='Name a speaker, e.g. --speaker speaker_0=Anna (repeatable)')
 @click.option('--no-upload', is_flag=True, help='Do not upload the results')
-def process(file: str, language: str, title: str, speakers, no_upload: bool):
+@click.option('--fresh', is_flag=True,
+              help='Transcribe again instead of reusing the saved transcription')
+def process(file: str, language: str, title: str, speakers, no_upload: bool, fresh: bool):
     """Create transcript and memo for an existing recording"""
     if not os.path.exists(file):
         console.log(f"File not found: {file}", style="red")
@@ -224,7 +226,8 @@ def process(file: str, language: str, title: str, speakers, no_upload: bool):
             if speaker_id and name:
                 notetaker.set_speaker_name(speaker_id.strip(), name.strip())
         result = notetaker.process_recording(file, language=lang, title=title,
-                                             upload=False if no_upload else None)
+                                             upload=False if no_upload else None,
+                                             use_cache=not fresh)
         console.print(result.memo.to_markdown())
         console.log(f"Memo saved: {result.memo_file}")
         console.log(f"Transcript saved: {result.transcript_file}")
