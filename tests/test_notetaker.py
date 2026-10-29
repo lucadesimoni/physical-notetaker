@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Unit tests for Voxtral Notetaker (no hardware, network or ML models required)
 """

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 # Installed by deploy/install.sh (placeholders @USER@ and @HOME@ are filled in)
 [Unit]
 Description=Meeting Notetaker (Voxtral)

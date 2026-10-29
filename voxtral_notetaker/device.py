@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Physical feedback and controls: beeps, status LED, start/stop buttons.
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Name speakers from how they introduce themselves ("Ich bin Anna", "My name is Marco")
 """

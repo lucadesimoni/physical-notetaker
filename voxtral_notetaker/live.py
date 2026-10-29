@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Voice commands during the meeting, confirmed out loud.
 

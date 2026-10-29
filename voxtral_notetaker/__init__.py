@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Voxtral Notetaker - Lean Raspberry Pi meeting transcription system
 Uses Mistral Voxtral for transcription and Mistral Small 4 for meeting summaries

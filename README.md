@@ -518,7 +518,8 @@ Swiss German is transcribed as German; test with your own recordings.
 
 ## 📜 License
 
-MIT License - see [LICENSE](LICENSE) for details
+MIT License © 2026 Outthinkx by Luca De Simoni - see [LICENSE](LICENSE) for details.
+Each source file carries an `SPDX-License-Identifier: MIT` header.
 
 ## 🧪 Tests
 

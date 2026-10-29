@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 # One-step setup on a Raspberry Pi (Raspberry Pi OS Bookworm or newer):
 #
 #   git clone https://github.com/lucadesimoni/physical-notetaker.git

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 # Start the Meeting Notetaker on Windows (test setup).
 #
 # Double-click start-notetaker.bat. The first start installs the Python

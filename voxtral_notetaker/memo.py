@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Meeting memo generation: notes, tasks and research collected during a meeting,
 plus an optional AI summary of the transcript
