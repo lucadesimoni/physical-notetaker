@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Tests for the always-on device: queue, retry, service, email, speakers, web page
 """

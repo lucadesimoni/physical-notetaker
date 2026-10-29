@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Voice Command System for Voxtral Notetaker
 Handles interruptions and voice commands in German and English

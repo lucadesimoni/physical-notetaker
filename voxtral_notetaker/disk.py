@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Keep the SD card from filling up: delete audio of finished meetings.
 

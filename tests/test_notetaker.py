@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Unit tests for Voxtral Notetaker (no hardware, network or ML models required)
 """

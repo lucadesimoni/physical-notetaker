@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Setup script for Voxtral Notetaker
 """
@@ -13,7 +15,7 @@ setup(
     version="1.0.0",
     description="Raspberry Pi based meeting notes recognition and transcription system using Voxtral 4",
     author="Outthinkx by Luca De Simoni",
-    license="MIT",
+    license="PolyForm-Noncommercial-1.0.0",
     packages=find_packages(),
     install_requires=requirements,
     extras_require={
@@ -31,7 +33,7 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: End Users/Desktop",
-        "License :: OSI Approved :: MIT License",
+        "License :: Other/Proprietary License",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
