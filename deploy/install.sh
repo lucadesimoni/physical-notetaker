@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Copyright (c) 2026 Outthinkx by Luca De Simoni
 # One-step setup on a Raspberry Pi (Raspberry Pi OS Bookworm or newer):
 #

@@ -5,7 +5,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Compatible-green.svg)](https://www.raspberrypi.org/)
 [![Mistral Voxtral](https://img.shields.io/badge/Mistral-Voxtral-orange.svg)](https://docs.mistral.ai/studio/audio/overview)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-yellow.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 
 ## ✨ Core Features
 
@@ -518,8 +518,19 @@ Swiss German is transcribed as German; test with your own recordings.
 
 ## 📜 License
 
-MIT License © 2026 Outthinkx by Luca De Simoni - see [LICENSE](LICENSE) for details.
-Each source file carries an `SPDX-License-Identifier: MIT` header.
+**Owner:** © 2026 Outthinkx by Luca De Simoni
+
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE):
+
+- ✅ Free for **non-commercial use**: personal use, study, research, hobby projects,
+  and use by non-profits, schools, public research and government institutions.
+  Changing and sharing is allowed for these purposes.
+- ❌ **Commercial use** (e.g. using it in or for a business, or selling it) needs
+  a separate license from the owner.
+- Anyone passing the software on must include the license and the
+  `Required Notice` line from [LICENSE](LICENSE).
+
+Each source file carries an `SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0` header.
 
 ## 🧪 Tests
 

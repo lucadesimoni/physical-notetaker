@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Voxtral Notetaker - Lean Raspberry Pi meeting transcription system

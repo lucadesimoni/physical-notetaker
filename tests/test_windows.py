@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Copyright (c) 2026 Outthinkx by Luca De Simoni
 """
 Tests for running on Windows: locked files, built-in voice, console start/stop
