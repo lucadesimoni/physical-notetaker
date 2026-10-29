@@ -125,6 +125,31 @@ journalctl -u notetaker -f                     # live log
 ~/notetaker/venv/bin/notetaker process FILE.wav --speaker speaker_0=Anna  # redo a memo (add --fresh to transcribe again)
 ```
 
+## 🪟 Testing on Windows
+
+Try everything with a laptop and the Jabra before setting up a Raspberry Pi:
+
+1. Install **Python 3.12** from [python.org](https://www.python.org/downloads/windows/)
+   (tick *Add python.exe to PATH*). Versions 3.10 - 3.13 work; 3.12 is safest for
+   the microphone package.
+2. Download the repository (*Code → Download ZIP*, then unzip) or `git clone` it.
+3. Plug in the Jabra and **double-click `windows\start-notetaker.bat`**.
+   The first start installs the packages (a few minutes), then the web page
+   opens at `http://localhost:8080`.
+4. In *Einstellungen*: choose a PIN and enter your Mistral API key.
+5. Press **Enter** in the black window (or *Besprechung starten* on the page),
+   talk, press **Enter** again. The page shows which microphone was used and,
+   shortly after, the memo.
+
+On Windows the announcements use the built-in Windows voice (for German, a
+German voice must be installed: *Settings → Time & language → Speech*), or
+eSpeak NG if installed. The Jabra's buttons, GPIO and the Wi-Fi hotspot are
+Raspberry Pi features and are switched off. If Windows asks about network
+access, allow it to open the page from your phone (`http://<PC address>:8080`).
+
+Starting again later takes seconds. To start fresh, delete `config.yaml`
+(settings) or the `venv` folder (installed packages).
+
 ## 🚀 Quick Start (developers)
 
 ### Prerequisites

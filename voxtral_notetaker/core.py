@@ -18,6 +18,7 @@ from .storage import CloudStorage, UploadResult
 from .commands import CommandParser, CommandExecutor, CommandResult
 from .memo import Memo, Summarizer
 from .speakers import detect_speaker_names
+from .fsutil import atomic_replace
 
 
 @dataclass
@@ -424,7 +425,7 @@ def _write_text(path: str, text: str):
     tmp = f"{path}.tmp"
     with open(tmp, 'w', encoding='utf-8') as f:
         f.write(text)
-    os.replace(tmp, path)
+    atomic_replace(tmp, path)
 
 
 def transcription_cache_path(audio_file: str) -> str:

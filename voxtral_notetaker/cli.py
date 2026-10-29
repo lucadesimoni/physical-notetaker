@@ -190,16 +190,26 @@ def notetaker_language_is_german(text: str) -> bool:
 @click.option('--config', 'config_path', default=None, help='Config file (default: config.yaml)')
 @click.option('--no-web', is_flag=True, help='Do not start the setup/status web page')
 @click.option('-v', '--verbose', is_flag=True, help='Debug logging')
-def run(config_path: str, no_web: bool, verbose: bool):
+@click.option('--open', 'open_browser', is_flag=True, help='Open the web page in the browser')
+def run(config_path: str, no_web: bool, verbose: bool, open_browser: bool):
     """Run the always-on notetaker (button start/stop, queue, web page)"""
     import logging
+    import threading
+    import webbrowser
     from .service import NotetakerService
+    from .network import device_urls
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO,
                         format='%(asctime)s %(levelname)s %(name)s: %(message)s')
     service = NotetakerService(config_path=config_path)
-    if not no_web and service.config.web.enabled:
-        console.log(f"Web page: http://<this-device>:{service.config.web.port}")
-    service.run_forever(web=not no_web)
+    web = not no_web and service.config.web.enabled
+    if web:
+        port = service.config.web.port
+        local = f"http://localhost{'' if port == 80 else f':{port}'}"
+        console.print(f"Web page: {local}  (phones in the same network: "
+                      f"{', '.join(device_urls(port))})")
+        if open_browser:
+            threading.Timer(1.5, webbrowser.open, args=(local,)).start()
+    service.run_forever(web=web)
 
 
 @cli.command()

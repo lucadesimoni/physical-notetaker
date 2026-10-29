@@ -6,6 +6,7 @@ PyAudio) only disable that piece; recording keeps working.
 """
 
 import os
+import sys
 import time
 import wave
 import shutil
@@ -20,6 +21,7 @@ import numpy as np
 
 from .config import DeviceConfig, AudioConfig
 from .i18n import t, normalize
+from .fsutil import atomic_replace
 
 log = logging.getLogger(__name__)
 
@@ -33,9 +35,42 @@ TONES = {
 }
 
 
+# Windows' built-in voices (System.Speech, as used by Narrator). The text comes in
+# through environment variables, so it is never parsed as PowerShell code.
+SAPI_SCRIPT = r"""
+Add-Type -AssemblyName System.Speech
+$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$v = $s.GetInstalledVoices() | Where-Object {
+    $_.Enabled -and $_.VoiceInfo.Culture.Name -like ($env:NOTETAKER_TTS_LANG + '*') } |
+    Select-Object -First 1
+if ($v) { $s.SelectVoice($v.VoiceInfo.Name) }
+$fmt = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(22050,
+    [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen,
+    [System.Speech.AudioFormat.AudioChannel]::Mono)
+$s.SetOutputToWaveFile($env:NOTETAKER_TTS_OUT, $fmt)
+$s.Speak($env:NOTETAKER_TTS_TEXT)
+$s.Dispose()
+"""
+
+WINDOWS_ESPEAK_PATHS = [
+    r"C:\Program Files\eSpeak NG\espeak-ng.exe",
+    r"C:\Program Files (x86)\eSpeak NG\espeak-ng.exe",
+]
+
+
+def find_espeak() -> Optional[str]:
+    found = shutil.which('espeak-ng')
+    if found:
+        return found
+    if sys.platform == 'win32':
+        return next((p for p in WINDOWS_ESPEAK_PATHS if os.path.exists(p)), None)
+    return None
+
+
 class Voice:
     """
-    Spoken announcements: Piper (natural voice, optional) or espeak-ng.
+    Spoken announcements: Piper (natural voice, optional), espeak-ng, or on
+    Windows the built-in system voice (no install needed).
 
     Each phrase is synthesized once and cached as a WAV file.
     """
@@ -44,10 +79,13 @@ class Voice:
         self.lang = normalize(lang)
         self.piper_model = piper_model
         self.cache_dir = cache_dir or os.path.join(os.path.expanduser('~'), '.cache', 'notetaker')
+        self.espeak = find_espeak()
         if piper_model and shutil.which('piper') and os.path.exists(piper_model):
             self.engine = 'piper'
-        elif shutil.which('espeak-ng'):
+        elif self.espeak:
             self.engine = 'espeak-ng'
+        elif sys.platform == 'win32' and shutil.which('powershell'):
+            self.engine = 'sapi'
         else:
             self.engine = None
 
@@ -69,10 +107,16 @@ class Voice:
             if self.engine == 'piper':
                 subprocess.run(['piper', '--model', self.piper_model, '--output_file', tmp],
                                input=text, text=True, capture_output=True, timeout=30, check=True)
+            elif self.engine == 'sapi':
+                env = dict(os.environ, NOTETAKER_TTS_TEXT=text, NOTETAKER_TTS_OUT=tmp,
+                           NOTETAKER_TTS_LANG=self.lang)
+                subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command',
+                                SAPI_SCRIPT], env=env, capture_output=True, timeout=60,
+                               check=True)
             else:
-                subprocess.run(['espeak-ng', '-v', self.lang, '-s', '150', '-w', tmp, text],
+                subprocess.run([self.espeak, '-v', self.lang, '-s', '150', '-w', tmp, text],
                                capture_output=True, timeout=30, check=True)
-            os.replace(tmp, path)
+            atomic_replace(tmp, path)
             return path
         except (OSError, subprocess.SubprocessError) as e:
             log.warning("Speech synthesis failed: %s", e)
