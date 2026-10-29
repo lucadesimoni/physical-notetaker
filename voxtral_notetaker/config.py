@@ -9,6 +9,8 @@ from enum import Enum
 
 import yaml
 
+from .fsutil import atomic_replace
+
 
 class Language(Enum):
     EN = "en"
@@ -201,7 +203,7 @@ class NotetakerConfig:
         tmp = f"{path}.tmp"
         with open(tmp, 'w', encoding='utf-8') as f:
             yaml.safe_dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)
-        os.replace(tmp, path)  # never leave a half-written config behind
+        atomic_replace(tmp, path)  # never leave a half-written config behind
 
     @classmethod
     def load(cls, path: str = "config.yaml") -> 'NotetakerConfig':

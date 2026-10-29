@@ -13,6 +13,7 @@ import httpx
 from httpx import AsyncClient, HTTPStatusError
 
 from .config import VoxtralConfig, Language
+from .fsutil import atomic_replace
 
 
 @dataclass
@@ -41,7 +42,7 @@ def save_transcription(result: TranscriptionResult, path: str):
     tmp = f"{path}.tmp"
     with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(asdict(result), f, ensure_ascii=False)
-    os.replace(tmp, path)
+    atomic_replace(tmp, path)
 
 
 def load_transcription(path: str) -> Optional[TranscriptionResult]:

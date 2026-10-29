@@ -22,6 +22,7 @@ from .audio import repair_wav, wav_duration
 from .config import NotetakerConfig, Language
 from .notify import build_memo_email, send_email, memo_subject
 from .i18n import t
+from .fsutil import atomic_replace
 
 RECORDING = 'recording'
 PENDING = 'pending'
@@ -129,7 +130,7 @@ class JobStore:
             json.dump(asdict(job), f, ensure_ascii=False, indent=2)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp, job.job_file)
+        atomic_replace(tmp, job.job_file)
 
     def load(self, path: str) -> Optional[Job]:
         try:

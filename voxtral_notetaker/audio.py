@@ -28,6 +28,7 @@ except ImportError:
     HAS_PYAUDIO = False
 
 from .config import AudioConfig
+from .fsutil import atomic_replace
 
 
 # Force buffered audio onto the SD card at least this often (seconds)
@@ -112,7 +113,7 @@ def reduce_noise_file(path: str) -> bool:
                     break
                 samples = np.frombuffer(data, dtype=np.int16)
                 dst.writeframes(reduce_noise(samples, rate).astype(np.int16).tobytes())
-        os.replace(tmp, path)  # the original stays untouched until this point
+        atomic_replace(tmp, path)  # the original stays untouched until this point
         return True
     except Exception as e:
         print(f"Noise reduction skipped: {e}")
@@ -136,6 +137,7 @@ class AudioRecorder:
         self._frames_written = 0
         self._last_sync = 0.0
         self._start_time: Optional[float] = None
+        self.device_name: Optional[str] = None
         
         if not HAS_PYAUDIO:
             print("⚠️  Audio recording disabled: PyAudio not available")
@@ -236,6 +238,8 @@ class AudioRecorder:
         
         try:
             device_index = self._get_device_index()
+            self.device_name = self.audio.get_device_info_by_index(device_index).get('name')
+            print(f"Recording from: {self.device_name}")
             self._open_file(output_file)
             self._output_file = output_file
             self._start_time = time.time()

@@ -12,6 +12,7 @@ The always-on notetaker: one button to start and stop, everything else automatic
 """
 
 import os
+import sys
 import time
 import signal
 import logging
@@ -98,12 +99,16 @@ class NotetakerService:
         self.feedback.ready()
         log.info("Notetaker ready")
 
-    def run_forever(self, web: bool = True):
+    def run_forever(self, web: bool = True, console: bool = True):
         """Run until stopped (Ctrl+C or systemd stop)"""
         # systemd stops services with SIGTERM: shut down cleanly so the
         # current recording is saved and queued
         signal.signal(signal.SIGTERM, lambda *_: self._stop.set())
         self.start(web=web)
+        if console and sys.stdin is not None and sys.stdin.isatty():
+            # In a terminal (Windows test, SSH): Enter starts and stops
+            print(t('console_hint', self.lang))
+            threading.Thread(target=self._read_console, daemon=True, name="console").start()
         try:
             while not self._stop.is_set():
                 self.tick()
@@ -112,6 +117,14 @@ class NotetakerService:
             pass
         finally:
             self.shutdown()
+
+    def _read_console(self, stream=None):
+        stream = stream or sys.stdin
+        while not self._stop.is_set():
+            line = stream.readline()
+            if not line:  # input closed
+                return
+            self.toggle()
 
     def shutdown(self):
         self._stop.set()
@@ -193,7 +206,11 @@ class NotetakerService:
             if free < self.config.service.min_free_mb * MB:
                 self.feedback.disk_low()
             self._start_live(path)
-            self._event('ev_started')
+            mic = getattr(getattr(recorder, 'audio', None), 'device_name', None)
+            if mic:
+                self._event('ev_started_mic', mic=mic)
+            else:
+                self._event('ev_started')
             return True
 
     def _start_live(self, path: str):
