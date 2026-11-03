@@ -304,3 +304,10 @@ def test_read_retries_while_file_is_locked(tmp_path, monkeypatch):
     from voxtral_notetaker.jobs import JobStore
     job = JobStore(str(tmp_path)).load(str(path))
     assert job is not None and job.id == "x" and len(attempts) == 2
+
+
+def test_key_page_still_shows_what_happened(local_web):
+    svc, port = local_web
+    svc.last_event = "Aufnahme konnte nicht starten: Ist das Mikrofon angeschlossen?"
+    status, html = _request(port, "/", host=f"localhost:{port}")
+    assert 'name="api_key"' in html and "Ist das Mikrofon angeschlossen" in html

@@ -261,6 +261,9 @@ class Handler(BaseHTTPRequestHandler):
                 f'aria-label="{escape(self.t("api_key"))}"><br><br>'
                 f'<button class="big">{escape(self.t("save_and_start"))}</button></form></div>'
             )
+            # e.g. the device button was pressed before the key was entered
+            if status['last_event'] and not message:
+                parts.append(f'<p class="muted">{escape(status["last_event"])}</p>')
             self._html(self.t('app_title'), ''.join(parts))
             return
         if not status['api_key_set']:
