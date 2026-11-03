@@ -26,6 +26,7 @@ from typing import Dict, Optional
 from .config import NotetakerConfig
 from .jobs import DONE, FAILED, PENDING, PROCESSING, RECORDING
 from .i18n import t, normalize
+from .fsutil import read_text
 
 log = logging.getLogger(__name__)
 
@@ -346,8 +347,7 @@ class Handler(BaseHTTPRequestHandler):
         if message:
             parts.append(f'<div class="card">{escape(message)}</div>')
         if job.memo_file and os.path.exists(job.memo_file):
-            with open(job.memo_file, encoding='utf-8') as f:
-                memo = f.read()
+            memo = read_text(job.memo_file)
             parts.append(f'<div class="card"><pre>{escape(memo)}</pre></div>')
         else:
             parts.append(f'<div class="card">{escape(self.t("status_" + job.status))}</div>')

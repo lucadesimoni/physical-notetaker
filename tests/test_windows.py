@@ -284,3 +284,23 @@ def test_check_api_key(monkeypatch):
     assert check_api_key(VoxtralConfig(api_key="bad")) == "invalid"
     monkeypatch.setattr(httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectError("x")))
     assert check_api_key(VoxtralConfig(api_key="good")) == "offline"
+
+
+def test_read_retries_while_file_is_locked(tmp_path, monkeypatch):
+    import builtins
+    path = tmp_path / "job.json"
+    path.write_text('{"id": "x", "audio_file": "x.wav"}', encoding="utf-8")
+    real_open = builtins.open
+    attempts = []
+
+    def locked_open(p, *args, **kwargs):
+        if str(p) == str(path) and len(attempts) < 2:
+            attempts.append(1)
+            raise PermissionError("[WinError 32] used by another process")
+        return real_open(p, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", locked_open)
+    monkeypatch.setattr(fsutil, "REPLACE_WAIT_SECONDS", 0)
+    from voxtral_notetaker.jobs import JobStore
+    job = JobStore(str(tmp_path)).load(str(path))
+    assert job is not None and job.id == "x" and len(attempts) == 2

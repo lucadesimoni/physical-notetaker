@@ -24,7 +24,7 @@ from .audio import repair_wav, wav_duration
 from .config import NotetakerConfig, Language
 from .notify import build_memo_email, send_email, memo_subject
 from .i18n import t
-from .fsutil import atomic_replace
+from .fsutil import atomic_replace, read_text
 
 RECORDING = 'recording'
 PENDING = 'pending'
@@ -136,8 +136,7 @@ class JobStore:
 
     def load(self, path: str) -> Optional[Job]:
         try:
-            with open(path, encoding='utf-8') as f:
-                data = json.load(f)
+            data = json.loads(read_text(path))
             known = Job.__dataclass_fields__
             return Job(**{k: v for k, v in data.items() if k in known})
         except (OSError, ValueError, TypeError):
