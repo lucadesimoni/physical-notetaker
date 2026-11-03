@@ -76,6 +76,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'lang_de': "Deutsch",
         'lang_en': "Englisch",
         'ui_language': "Sprache des Geräts",
+        'vocabulary': "Namen und Fachbegriffe",
+        'vocabulary_hint': "Einer pro Zeile, z. B. Teilnehmende, Firma, Produkte. Hilft, sie "
+                           "richtig zu erkennen und zu schreiben.",
+        'dialect_cleanup': "Schweizerdeutsch in Hochdeutsch umwandeln",
+        'dialect_cleanup_hint': "Mundart im Transkript wird zu Hochdeutsch (Mistral Small 4). "
+                                "Protokoll, Aufgaben und Termine werden dadurch genauer.",
         'max_minutes': "Aufnahme automatisch beenden nach (Minuten)",
         'keep_audio_days': "Audio löschen nach (Tagen, 0 = nie)",
         'keep_audio_hint': "Protokolle und Transkripte bleiben erhalten.",
@@ -228,6 +234,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'lang_de': "German",
         'lang_en': "English",
         'ui_language': "Device language",
+        'vocabulary': "Names and terms",
+        'vocabulary_hint': "One per line, e.g. participants, company, products. Helps to "
+                           "recognize and spell them correctly.",
+        'dialect_cleanup': "Turn Swiss German into Standard German",
+        'dialect_cleanup_hint': "Dialect in the transcript becomes Standard German (Mistral "
+                                "Small 4). Memos, tasks and dates get more accurate.",
         'max_minutes': "Stop recording automatically after (minutes)",
         'keep_audio_days': "Delete audio after (days, 0 = never)",
         'keep_audio_hint': "Memos and transcripts are kept.",

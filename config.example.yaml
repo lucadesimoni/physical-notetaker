@@ -19,6 +19,8 @@ voxtral:
   fast_model: "voxtral-mini-transcribe-3-0"  # Fast/cheap: interim transcripts ("Moment bitte")
   timeout: 30             # seconds per request
   max_retries: 3          # quick retries on rate limits / server errors
+  vocabulary: []          # names and terms, e.g. ["Anna Meier", "TWINT", "Outthinkx"]
+  dialect_cleanup: true   # Swiss German: dialect in the transcript -> Standard German
 
 # Speaker recognition
 diarization:
@@ -79,7 +81,7 @@ device:
 # Background service
 service:
   recordings_dir: "./recordings"
-  language: auto          # meeting language: auto, de-CH, de, en
+  language: de-CH         # meeting language: de-CH (Swiss German), de, en, auto
   ui_language: de         # web page and announcements: de or en
   retry_interval_seconds: 300  # first retry when offline; doubles up to 1 hour
   max_attempts: 0         # 0 = keep retrying network problems

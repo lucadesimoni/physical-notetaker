@@ -348,6 +348,29 @@ With an API key configured, the memo also gets an AI **Zusammenfassung**
 (summary) of the whole discussion. It uses an OpenAI-compatible
 `/chat/completions` endpoint, by default Mistral Small 4 (`mistral-small-2603`). Use `--no-summary` to skip it.
 
+## 🇨🇭 Swiss German
+
+Swiss German is the default meeting language. To get it as accurate as possible:
+
+1. **Transcription** with Voxtral Small Transcribe 3. Names and terms from
+   *Einstellungen → Namen und Fachbegriffe* are passed to it as hints, so
+   "TWINT" or "Anna Meier" are spelled right.
+2. **Dialect clean-up:** speech recognition writes Swiss German partly in
+   dialect. Mistral Small 4 rewrites each line in Standard German without
+   changing content, names or numbers:
+   *"Mir händ das gescht bschproche"* → *"Wir haben das gestern besprochen"*.
+   Lines are checked one by one; anything that looks wrong keeps its original
+   text. Turn it off with `voxtral.dialect_cleanup: false`.
+3. **Commands in dialect**, also during the meeting: *"Mach es Notiz: …"*,
+   *"Schriib das uf"*, *"Erstell en Task: …"*, *"Ufgab: …"*, *"Lueg mol nach: …"*,
+   *"Beend d'Ufnahm"*.
+4. **Swiss dates:** *"bis am Friitig"*, *"Zischtig"*, *"Ändi Novämber"*, *"morn"*,
+   *"Ändi vo de Wuche"*.
+5. **Introductions in dialect** name the speakers: *"I bi d'Sabine"*, *"Ich bi de Reto"*.
+
+The memo is always in Standard German. The raw transcription is kept next to
+the recording (`….segments.json`).
+
 ## 📋 Transcript Format
 
 With speaker recognition enabled, transcripts include speaker labels:

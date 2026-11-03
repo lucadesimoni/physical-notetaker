@@ -14,6 +14,8 @@ GERMAN_MONTHS = {
     'januar': 1, 'jänner': 1, 'februar': 2, 'märz': 3, 'maerz': 3, 'april': 4,
     'mai': 5, 'juni': 6, 'juli': 7, 'august': 8, 'september': 9, 'oktober': 10,
     'november': 11, 'dezember': 12,
+    # Swiss German spellings
+    'februär': 2, 'septämber': 9, 'oktöber': 10, 'novämber': 11, 'dezämber': 12,
 }
 
 ENGLISH_MONTHS = {name.lower(): i for i, name in enumerate(calendar.month_name) if name}
@@ -21,6 +23,16 @@ ENGLISH_MONTHS = {name.lower(): i for i, name in enumerate(calendar.month_name) 
 GERMAN_WEEKDAYS = {
     'montag': 0, 'dienstag': 1, 'mittwoch': 2, 'donnerstag': 3, 'freitag': 4,
     'samstag': 5, 'sonntag': 6,
+    # Swiss German: "bis am Friitig"
+    'mäntig': 0, 'mändig': 0, 'zischtig': 1, 'ziischtig': 1, 'mittwuch': 2, 'mittwoch': 2,
+    'donschtig': 3, 'dunschtig': 3, 'fritig': 4, 'friitig': 4, 'samschtig': 5, 'sunntig': 6,
+}
+
+# Swiss German date words -> Standard German, before a due date is resolved
+SWISS_DATE_WORDS = {
+    'ändi': 'ende', 'endi': 'ende', 'afang': 'anfang', 'aafang': 'anfang', 'mitti': 'mitte',
+    'morn': 'morgen', 'übermorn': 'übermorgen', 'hüt': 'heute', 'hütt': 'heute',
+    'nöchscht': 'nächste', 'nächscht': 'nächste', 'wuche': 'woche',
 }
 
 ENGLISH_WEEKDAYS = {name.lower(): i for i, name in enumerate(calendar.day_name)}
@@ -36,9 +48,10 @@ DUE_PATTERNS = [
         r'\bbis\s+(?:zum\s+|am\s+|spätestens\s+(?:am\s+)?)?(?P<due>'
         rf'\d{{1,2}}\.\s*(?:{_DE_MONTH})(?:\s+\d{{4}})?'
         r'|\d{1,2}\.\d{1,2}\.(?:\d{2,4})?'
-        rf'|(?:ende|anfang|mitte)\s+(?:{_DE_MONTH})'
-        r'|ende\s+(?:der|dieser|nächster|naechster)\s+woche'
-        r'|nächste\s+woche|naechste\s+woche|übermorgen|uebermorgen|morgen|heute'
+        rf'|(?:ende|ändi|endi|anfang|afang|aafang|mitte|mitti)\s+(?:{_DE_MONTH})'
+        r'|(?:ende|ändi|endi)\s+(?:der|dieser|nächster|naechster|de|vo\s+de)\s+(?:woche|wuche)'
+        r'|(?:nächste|naechste|nöchscht|nächscht)\s+(?:woche|wuche)'
+        r'|übermorgen|uebermorgen|übermorn|morgen|morn|heute|hüt'
         rf'|(?:nächsten\s+|naechsten\s+)?(?:{_DE_WEEKDAY})'
         r')(?!\w)',
         re.IGNORECASE,
@@ -93,6 +106,8 @@ def resolve_due_date(due_text: str, reference: Optional[date] = None) -> Optiona
     """Turn a spoken due date ("10. November", "Ende Oktober", "Friday") into a date"""
     reference = reference or date.today()
     text = due_text.lower().strip().rstrip('.')
+    text = ' '.join(SWISS_DATE_WORDS.get(word, word) for word in text.split())
+    text = re.sub(r'\b(de|vo de)\s+woche\b', 'der woche', text)
     text = re.sub(r'(\d)(st|nd|rd|th)\b', r'\1', text)
 
     match = re.fullmatch(r'(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?', text)
@@ -145,7 +160,7 @@ def resolve_due_date(due_text: str, reference: Optional[date] = None) -> Optiona
                     calendar.monthrange(reference.year, reference.month)[1])
 
     weekdays = {**GERMAN_WEEKDAYS, **ENGLISH_WEEKDAYS}
-    match = re.fullmatch(r'(?:nächsten\s+|naechsten\s+|next\s+)?([a-z]+)', text)
+    match = re.fullmatch(r'(?:nächsten\s+|naechsten\s+|next\s+)?([a-zäöü]+)', text)
     if match and match.group(1) in weekdays:
         return _next_weekday(weekdays[match.group(1)], reference)
 

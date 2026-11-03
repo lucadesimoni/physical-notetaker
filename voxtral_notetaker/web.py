@@ -30,7 +30,7 @@ from .i18n import t, normalize
 log = logging.getLogger(__name__)
 
 MAX_FORM_BYTES = 64 * 1024
-MEETING_LANGUAGES = ['auto', 'de-CH', 'de', 'en']
+MEETING_LANGUAGES = ['de-CH', 'de', 'en', 'auto']
 MISTRAL_KEYS_URL = "https://console.mistral.ai/api-keys"
 LOOPBACK = {'127.0.0.1', '::1', '::ffff:127.0.0.1'}
 LOCAL_HOSTS = {'localhost', '127.0.0.1', '::1'}
@@ -503,6 +503,10 @@ class Handler(BaseHTTPRequestHandler):
 {field('api_key', 'api_key', '', 'password', key_hint)}
 {select('language', 'meeting_language', meeting_langs, c.service.language)}
 {select('ui_language', 'ui_language', ui_langs, normalize(c.service.ui_language))}
+{check('dialect_cleanup', 'dialect_cleanup', c.voxtral.dialect_cleanup, self.t('dialect_cleanup_hint'))}
+<label for="vocabulary">{escape(self.t('vocabulary'))}</label>
+<div class="muted">{escape(self.t('vocabulary_hint'))}</div>
+<textarea id="vocabulary" name="vocabulary" rows="4">{escape(chr(10).join(c.voxtral.vocabulary))}</textarea>
 {field('max_minutes', 'max_minutes', c.max_recording_minutes, 'number')}
 {field('keep_audio_days', 'keep_audio_days', c.service.keep_audio_days, 'number', self.t('keep_audio_hint'))}
 </div>
@@ -553,6 +557,11 @@ class Handler(BaseHTTPRequestHandler):
             config.service.language = form['language']
         if form.get('ui_language') in ('de', 'en'):
             config.service.ui_language = form['ui_language']
+        config.voxtral.dialect_cleanup = form.get('dialect_cleanup') == '1'
+        if 'vocabulary' in form:
+            config.voxtral.vocabulary = [
+                line.strip()[:100] for line in form['vocabulary'].splitlines() if line.strip()
+            ][:100]
 
         def number(name, low, high, default):
             try:

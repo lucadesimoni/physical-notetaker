@@ -5,6 +5,7 @@ Core Notetaker - Lean implementation for conference transcription
 """
 
 import os
+import re
 import asyncio
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ from .storage import CloudStorage, UploadResult
 from .commands import CommandParser, CommandExecutor, CommandResult
 from .memo import Memo, Summarizer
 from .speakers import detect_speaker_names
+from .dialect import should_clean, clean_lines
 from .fsutil import atomic_replace
 
 
@@ -195,9 +197,12 @@ class Notetaker:
             self._name_speakers_from_introductions(speaker_segments)
         speakers = list(dict.fromkeys(seg['speaker_name'] for seg in speaker_segments))
         
-        formatted_transcript = self._format_transcript_with_speakers(
-            transcription.text, speaker_segments
-        )
+        # Swiss German: dialect left in the transcript becomes Standard German
+        text = transcription.text
+        if should_clean(self.config, transcription.language):
+            text = self._clean_dialect(text, speaker_segments)
+        
+        formatted_transcript = self._format_transcript_with_speakers(text, speaker_segments)
         if duration is None:
             duration = max((seg['end'] for seg in speaker_segments), default=0.0)
         
@@ -242,6 +247,17 @@ class Notetaker:
             memo_file=memo_file,
             transcript_file=transcript_file,
         )
+    
+    def _clean_dialect(self, text: str, segments: List[Dict[str, Any]]) -> str:
+        """Standard German for each segment (or sentence); the cached raw stays as is"""
+        with_text = [seg for seg in segments if seg.get('text')]
+        if with_text:
+            cleaned = clean_lines([seg['text'] for seg in with_text], self.config)
+            for seg, new in zip(with_text, cleaned):
+                seg['text'] = new
+            return ' '.join(cleaned)
+        sentences = [s for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+        return ' '.join(clean_lines(sentences, self.config)) if sentences else text
     
     def _name_speakers_from_introductions(self, segments: List[Dict[str, Any]]):
         """Replace speaker ids with names people introduced themselves with"""
