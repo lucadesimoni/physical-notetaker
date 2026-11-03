@@ -29,10 +29,12 @@ from .device import Feedback, Controls
 from .disk import (cleanup, free_bytes, format_size, MB, HARD_MIN_FREE_BYTES,
                    STOP_RECORDING_FREE_BYTES)
 from .i18n import t
+from .audio import SILENCE_PEAK
 
 log = logging.getLogger(__name__)
 
 WARN_BEFORE_LIMIT_SECONDS = 5 * 60
+SILENCE_CHECK_SECONDS = 15  # warn if the microphone delivered nothing by then
 DISK_CHECK_SECONDS = 30
 
 
@@ -62,6 +64,7 @@ class NotetakerService:
         self._current: Optional[Job] = None
         self._recording_since: Optional[float] = None
         self._warned = False
+        self._silence_checked = False
         self._last_disk_check = 0.0
         self._worker: Optional[threading.Thread] = None
         self._controls: Optional[Controls] = None
@@ -203,6 +206,7 @@ class NotetakerService:
             self._current = self.store.create(path, status=RECORDING)
             self._recording_since = time.time()
             self._warned = False
+            self._silence_checked = False
             self.live_items = []
             self.feedback.recording()
             if free < self.config.service.min_free_mb * MB:
@@ -263,6 +267,8 @@ class NotetakerService:
             self.store.save(job)
             self.feedback.stopped(email=self.config.email.ready)
             self._event('ev_saved')
+            if getattr(info, 'peak', SILENCE_PEAK) < SILENCE_PEAK:
+                self._warn_silent()  # last, so the page shows it
             self._wake.set()
             return job
 
@@ -281,6 +287,12 @@ class NotetakerService:
             self._event('ev_time_limit')
             return
 
+        if not self._silence_checked and elapsed >= SILENCE_CHECK_SECONDS:
+            self._silence_checked = True
+            audio = getattr(self._recorder, 'audio', None)
+            if audio is not None and getattr(audio, 'is_silent', False):
+                self._warn_silent()
+
         now = time.time()
         if now - self._last_disk_check >= DISK_CHECK_SECONDS:
             self._last_disk_check = now
@@ -289,6 +301,11 @@ class NotetakerService:
                 if free_bytes(self.store.directory) < STOP_RECORDING_FREE_BYTES:
                     self.stop_meeting()
                     self._event('ev_disk_full')
+
+    def _warn_silent(self):
+        """The microphone delivers no sound: say how to fix it"""
+        self.feedback.error('say_silent')
+        self._event('ev_silent_windows' if sys.platform == 'win32' else 'ev_silent')
 
     # --- processing --------------------------------------------------------
 

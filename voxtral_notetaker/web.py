@@ -30,7 +30,10 @@ from .i18n import t, normalize
 log = logging.getLogger(__name__)
 
 MAX_FORM_BYTES = 64 * 1024
-MEETING_LANGUAGES = ['auto', 'de-CH', 'de', 'en']
+MEETING_LANGUAGES = ['de-CH', 'de', 'en', 'auto']
+MISTRAL_KEYS_URL = "https://console.mistral.ai/api-keys"
+LOOPBACK = {'127.0.0.1', '::1', '::ffff:127.0.0.1'}
+LOCAL_HOSTS = {'localhost', '127.0.0.1', '::1'}
 STATUS_CSS = {RECORDING: 'rec', PENDING: 'wait', PROCESSING: 'wait', DONE: 'ok', FAILED: 'bad'}
 
 STYLE = """
@@ -106,6 +109,7 @@ def qr_svg(text: str) -> Optional[str]:
 
 class Handler(BaseHTTPRequestHandler):
     service = None  # set by start_web_server
+    trust_local = True  # the PC itself needs no PIN
 
     def log_message(self, fmt, *args):
         log.debug("web: " + fmt, *args)
@@ -156,6 +160,37 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode('utf-8', 'replace')
         return {k: v[-1] for k, v in parse_qs(raw, keep_blank_values=True).items()}
 
+    def _host_name(self) -> str:
+        host = (self.headers.get('Host') or '').strip().lower()
+        if host.startswith('['):  # [::1]:8080
+            return host[1:host.find(']')] if ']' in host else host
+        return host.rsplit(':', 1)[0] if host.count(':') == 1 else host
+
+    def _is_local(self) -> bool:
+        """
+        The PC itself: a loopback client that addressed us as localhost. Checking
+        the Host header too stops websites that resolve their name to 127.0.0.1.
+        """
+        if not self.trust_local:
+            return False
+        client = self.client_address[0] if self.client_address else ''
+        loopback = client in LOOPBACK or client.startswith('127.')
+        return loopback and self._host_name() in LOCAL_HOSTS
+
+    def _same_origin(self) -> bool:
+        """A form sent from this page, not from another website in the browser"""
+        origin = self.headers.get('Origin')
+        if not origin:
+            return True  # not sent by a browser form across sites (curl, old browsers)
+        if origin == 'null':
+            return False
+        host = (self.headers.get('Host') or '').lower()
+        return origin.lower().split('://', 1)[-1].rstrip('/') == host
+
+    def _forbidden(self):
+        self._send(_page(self.t('forbidden'), f"<h1>{escape(self.t('forbidden'))}</h1>"
+                         f"<p><a href='/'>{escape(self.t('back'))}</a></p>", self.lang), 403)
+
     def _not_found(self):
         self._send(_page(self.t('not_found'), f"<h1>{escape(self.t('not_found'))}</h1>"
                          f"<p><a href='/'>{escape(self.t('back'))}</a></p>", self.lang), 404)
@@ -183,6 +218,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = self.path.split('?', 1)[0]
         svc = self.service
+        if not self._same_origin():
+            return self._forbidden()
+        if path == '/api-key':
+            return self._save_api_key(self._form())
         if path == '/toggle':
             form = self._form()
             if form.get('action') == 'start':
@@ -203,10 +242,26 @@ class Handler(BaseHTTPRequestHandler):
 
     # --- pages -------------------------------------------------------------
 
-    def _home(self):
+    def _home(self, message: str = '', error: bool = False):
         status = self.service.status()
         parts = [f'<h1>{escape(self.t("app_title"))}</h1>']
+        if message:
+            parts.append(f'<div class="card {"banner" if error else ""}">{escape(message)}</div>')
 
+        if not status['api_key_set'] and self._is_local():
+            # On the PC itself: the key is the only thing to enter
+            parts.append(
+                f'<div class="card banner"><h2>{escape(self.t("first_step"))}</h2>'
+                f'<p class="muted">{escape(self.t("first_step_hint"))}</p>'
+                f'<p><a href="{MISTRAL_KEYS_URL}" target="_blank" rel="noopener noreferrer">'
+                f'{escape(self.t("get_key_link"))}</a></p>'
+                f'<form method="post" action="/api-key">'
+                f'<input name="api_key" type="password" autocomplete="off" autofocus '
+                f'aria-label="{escape(self.t("api_key"))}"><br><br>'
+                f'<button class="big">{escape(self.t("save_and_start"))}</button></form></div>'
+            )
+            self._html(self.t('app_title'), ''.join(parts))
+            return
         if not status['api_key_set']:
             parts.append(f'<div class="card banner"><b>{escape(self.t("setup_needed"))}</b> '
                          f'{escape(self.t("setup_needed_text"))} '
@@ -388,8 +443,24 @@ class Handler(BaseHTTPRequestHandler):
 
     # --- settings ----------------------------------------------------------
 
+    def _save_api_key(self, form: Dict[str, str]):
+        if not self._is_local():
+            return self._redirect('/settings')  # other devices use the PIN-protected settings
+        key = form.get('api_key', '').strip()
+        if not key:
+            return self._home(self.t('key_empty'), error=True)
+        config = NotetakerConfig.from_dict(self.service.config.to_dict())
+        config.voxtral.api_key = key
+        from .transcription import check_api_key
+        result = check_api_key(config.voxtral)
+        if result == 'invalid':
+            return self._home(self.t('key_invalid'), error=True)
+        self.service.update_config(config)
+        return self._home(self.t('key_ok' if result == 'ok' else 'key_unchecked'))
+
     def _settings(self, message: str = '', error: bool = False):
         c = self.service.config
+        local = self._is_local()
         first_visit = not c.web.pin
         e = c.email
 
@@ -415,7 +486,9 @@ class Handler(BaseHTTPRequestHandler):
         msg_html = ''
         if message:
             msg_html = f'<div class="card {"banner" if error else ""}">{escape(message)}</div>'
-        if first_visit:
+        if local:
+            pin_html = field('new_pin', 'new_pin', kind='password', hint=self.t('pin_local_hint'))
+        elif first_visit:
             pin_html = field('new_pin', 'choose_pin', kind='password', hint=self.t('choose_pin_hint'))
         else:
             pin_html = (field('pin', 'pin', kind='password', hint=self.t('pin_hint')) +
@@ -430,6 +503,10 @@ class Handler(BaseHTTPRequestHandler):
 {field('api_key', 'api_key', '', 'password', key_hint)}
 {select('language', 'meeting_language', meeting_langs, c.service.language)}
 {select('ui_language', 'ui_language', ui_langs, normalize(c.service.ui_language))}
+{check('dialect_cleanup', 'dialect_cleanup', c.voxtral.dialect_cleanup, self.t('dialect_cleanup_hint'))}
+<label for="vocabulary">{escape(self.t('vocabulary'))}</label>
+<div class="muted">{escape(self.t('vocabulary_hint'))}</div>
+<textarea id="vocabulary" name="vocabulary" rows="4">{escape(chr(10).join(c.voxtral.vocabulary))}</textarea>
 {field('max_minutes', 'max_minutes', c.max_recording_minutes, 'number')}
 {field('keep_audio_days', 'keep_audio_days', c.service.keep_audio_days, 'number', self.t('keep_audio_hint'))}
 </div>
@@ -464,7 +541,9 @@ class Handler(BaseHTTPRequestHandler):
         svc = self.service
         current = svc.config
 
-        if current.web.pin:
+        if self._is_local():
+            pass  # the PC itself needs no PIN
+        elif current.web.pin:
             if not hmac.compare_digest(form.get('pin', ''), current.web.pin):
                 time.sleep(1)  # slow down guessing
                 return self._settings(self.t('wrong_pin'), error=True)
@@ -478,6 +557,11 @@ class Handler(BaseHTTPRequestHandler):
             config.service.language = form['language']
         if form.get('ui_language') in ('de', 'en'):
             config.service.ui_language = form['ui_language']
+        config.voxtral.dialect_cleanup = form.get('dialect_cleanup') == '1'
+        if 'vocabulary' in form:
+            config.voxtral.vocabulary = [
+                line.strip()[:100] for line in form['vocabulary'].splitlines() if line.strip()
+            ][:100]
 
         def number(name, low, high, default):
             try:
@@ -526,9 +610,10 @@ class Handler(BaseHTTPRequestHandler):
         self._settings(message, error=bool(problems))
 
 
-def start_web_server(service, host: Optional[str] = None, port: Optional[int] = None):
+def start_web_server(service, host: Optional[str] = None, port: Optional[int] = None,
+                     trust_local: bool = True):
     """Start the web page in a background thread; returns the server"""
-    handler = type('BoundHandler', (Handler,), {'service': service})
+    handler = type('BoundHandler', (Handler,), {'service': service, 'trust_local': trust_local})
     server = ThreadingHTTPServer((host or service.config.web.host,
                                   service.config.web.port if port is None else port), handler)
     server.daemon_threads = True

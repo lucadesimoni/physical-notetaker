@@ -64,6 +64,11 @@ class CommandParser:
         r'schreib\s+(das|es)\s+auf',
         r'merke(n)?\b',
         r'notiz:',
+        # Swiss German: "Mach es Notiz", "Schriib das uf", "Merk dr das"
+        r'mach\s+(e|es|äs|ä|en)\s+notiz',
+        r'schri+b\s+(das|es|s|dä|de)?\s*uf\b',
+        r'notiz\s+(mache|machä|erstelle|erstellä)\b',
+        r'merk\s+(dir|dr|der)\b',
     ]
     
     GERMAN_TASK_PATTERNS = [
@@ -76,6 +81,10 @@ class CommandParser:
         r'task\s+hinzuf(ü|ue)gen',
         r'aufgabe:',
         r'task:',
+        # Swiss German: "Erstell en Task", "Mach e Ufgab", "Ufgab:"
+        r'(erstell|mach)\s+(en|e|es|ä|äs)\s+(task|ufgab|uufgab|ufgaab|aufgab)\b',
+        r'(ufgab|uufgab|ufgaab)\s*:',
+        r'(task|ufgab|uufgab)\s+(erstelle|erstellä|mache|machä|hinzuefüege|hinzufüege)\b',
     ]
     
     GERMAN_RESEARCH_PATTERNS = [
@@ -89,6 +98,11 @@ class CommandParser:
         r'findet\s+heraus',
         r'recherche:',
         r'suche:',
+        # Swiss German: "Lueg mol nach", "Recherchier", "Find mol use"
+        r'recherchier(ä)?\b',
+        r'lueg\s+(mal|mol|bitte)?\s*nach',
+        r'find\s+(mal|mol|bitte)?\s*use\b',
+        r'googl(e|ä)\b',
     ]
     
     GERMAN_RECORDING_PATTERNS = {
@@ -98,6 +112,8 @@ class CommandParser:
             r'aufnahme\s+starten',
             r'beginne\s+(die|eine)?\s*aufnahme',
             r'recording\s+starten',
+            r'(start|starte|startä)\s+(d\'|d’|di|die)?\s*(ufnahm|uufnahm|ufnahme|aufnahm)',
+            r'(ufnahm|uufnahm|ufnahme|aufnahm)\s+(starte|startä)\b',
         ],
         'stop': [
             r'stop\s+(die|eine)?\s*aufnahme',
@@ -105,6 +121,9 @@ class CommandParser:
             r'aufnahme\s+stoppen',
             r'beende\s+(die|eine)?\s*aufnahme',
             r'recording\s+stoppen',
+            r'(beend|beendi|stopp|stop)(e|ä)?\s+(d\'|d’|di|die)?\s*(ufnahm|uufnahm|ufnahme|aufnahm)',
+            r'(ufnahm|uufnahm|ufnahme|aufnahm)\s+(beende|beendä|stoppe|stoppä)\b',
+            r'hör\s+uf\s+(mit\s+)?(dä|de|der)?\s*(ufnahm|uufnahm|ufnahme|aufnahm)',
         ],
         'pause': [
             r'pause\s+(die|eine)?\s*aufnahme',
@@ -175,7 +194,8 @@ class CommandParser:
     
     # Words that may precede a command: "Okay, mach eine Notiz", "Please create a task"
     LEAD_IN = re.compile(
-        r'^(?:\s*(?:okay|ok|also|so|und|dann|jetzt|gut|bitte|please|and|then|now|alright)'
+        r'^(?:\s*(?:okay|ok|also|so|und|dann|jetzt|gut|bitte|please|and|then|now|alright|'
+        r'ja|jo|guet|äh|ähm|sali|hoi|grüezi)'
         r'[,:]?\s+)*',
         re.IGNORECASE,
     )
@@ -272,6 +292,9 @@ class CommandParser:
             'der', 'die', 'das', 'und', 'oder', 'für', 'mit', 'von', 'uns', 'bitte',
             'ein', 'eine', 'einen', 'mach', 'erstell', 'erstelle', 'notiz', 'aufgabe',
             'recherchiere', 'suche', 'aufnahme', 'warten', 'unterbrechen', 'abbrechen',
+            # Swiss German
+            'isch', 'nöd', 'nid', 'händ', 'hend', 'gsi', 'öppis', 'grüezi', 'sali', 'hoi',
+            'ufnahm', 'ufgab', 'es', 'mir', 'chunt', 'lueg', 'gäll',
         ]
         
         if self._contains_word(text, german_words):
@@ -284,6 +307,8 @@ class CommandParser:
         if language in ['de', 'de-CH']:
             interrupt_phrases = [
                 'moment',
+                'momänt',
+                'wart',
                 'warten',
                 'halten',
                 'stop',
@@ -305,7 +330,7 @@ class CommandParser:
     def _is_cancel(self, text: str, language: str) -> bool:
         """Check if text is a cancel command"""
         if language in ['de', 'de-CH']:
-            cancel_phrases = ['abbrechen', 'abbruch', 'stornieren', 'cancel']
+            cancel_phrases = ['abbrechen', 'abbräche', 'abbreche', 'abbruch', 'stornieren', 'cancel']
         else:
             cancel_phrases = ['cancel', 'abort', 'stop']
         

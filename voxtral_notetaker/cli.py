@@ -206,9 +206,15 @@ def run(config_path: str, no_web: bool, verbose: bool, open_browser: bool):
     web = not no_web and service.config.web.enabled
     if web:
         port = service.config.web.port
-        local = f"http://localhost{'' if port == 80 else f':{port}'}"
-        console.print(f"Web page: {local}  (phones in the same network: "
-                      f"{', '.join(device_urls(port))})")
+        host = service.config.web.host
+        # 127.0.0.1 rather than localhost: Windows may try IPv6 (::1) first
+        name = '127.0.0.1' if host in ('127.0.0.1', '0.0.0.0', '') else 'localhost'
+        local = f"http://{name}{'' if port == 80 else f':{port}'}"
+        if host == '127.0.0.1':
+            console.print(f"Web page: {local}")
+        else:
+            console.print(f"Web page: {local}  (phones in the same network: "
+                          f"{', '.join(device_urls(port))})")
         if open_browser:
             threading.Timer(1.5, webbrowser.open, args=(local,)).start()
     service.run_forever(web=web)

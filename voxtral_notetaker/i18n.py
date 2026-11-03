@@ -16,6 +16,19 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'setup_needed_text': "Bitte den Mistral-API-Schlüssel eintragen, damit aus Aufnahmen "
                              "Protokolle werden.",
         'open_settings': "Einstellungen öffnen",
+        'first_step': "Nur noch ein Schritt: Mistral-API-Schlüssel eintragen",
+        'first_step_hint': "Schlüssel erstellen unter console.mistral.ai → API Keys, kopieren "
+                           "und hier einfügen.",
+        'save_and_start': "Speichern und loslegen",
+        'get_key_link': "Schlüssel bei Mistral erstellen ↗",
+        'key_ok': "Schlüssel funktioniert. Los geht's: «Besprechung starten» drücken.",
+        'key_invalid': "Mistral hat diesen Schlüssel abgelehnt. Bitte nochmals kopieren und einfügen.",
+        'key_unchecked': "Schlüssel gespeichert. Er konnte gerade nicht geprüft werden "
+                         "(keine Internetverbindung?).",
+        'key_empty': "Bitte einen Schlüssel einfügen.",
+        'pin_local_hint': "Am PC selbst ist keine PIN nötig. Eine PIN schützt die Einstellungen "
+                          "vor Zugriff von anderen Geräten (z. B. Handy).",
+        'forbidden': "Nicht erlaubt. Bitte die Seite neu laden.",
         'start_meeting': "● Besprechung starten",
         'stop_meeting': "■ Besprechung beenden · {elapsed}",
         'recording_hint': "Aufnahme läuft. Stoppt automatisch nach {minutes} Minuten.",
@@ -63,6 +76,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'lang_de': "Deutsch",
         'lang_en': "Englisch",
         'ui_language': "Sprache des Geräts",
+        'vocabulary': "Namen und Fachbegriffe",
+        'vocabulary_hint': "Einer pro Zeile, z. B. Teilnehmende, Firma, Produkte. Hilft, sie "
+                           "richtig zu erkennen und zu schreiben.",
+        'dialect_cleanup': "Schweizerdeutsch in Hochdeutsch umwandeln",
+        'dialect_cleanup_hint': "Mundart im Transkript wird zu Hochdeutsch (Mistral Small 4). "
+                                "Protokoll, Aufgaben und Termine werden dadurch genauer.",
         'max_minutes': "Aufnahme automatisch beenden nach (Minuten)",
         'keep_audio_days': "Audio löschen nach (Tagen, 0 = nie)",
         'keep_audio_hint': "Protokolle und Transkripte bleiben erhalten.",
@@ -124,6 +143,10 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_space': "Zu wenig Speicher für eine Aufnahme",
         'ev_live_item': "Erkannt: {item}",
         'ev_voice_stop': "Per Sprachbefehl beendet",
+        'ev_silent': "Das Mikrofon liefert keinen Ton. Ist es angeschlossen und nicht stummgeschaltet?",
+        'ev_silent_windows': "Das Mikrofon liefert keinen Ton. Windows-Einstellungen → Datenschutz "
+                             "und Sicherheit → Mikrofon: «Desktop-Apps den Zugriff auf das "
+                             "Mikrofon erlauben» einschalten. Mikrofon nicht stummgeschaltet?",
         # errors
         'err_no_api_key': "Kein Mistral-API-Schlüssel. Bitte in den Einstellungen eintragen.",
         'err_api_key_rejected': "Mistral-API-Schlüssel abgelehnt ({code}). Bitte in den "
@@ -143,6 +166,7 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'say_no_mic': "Mikrofon nicht gefunden.",
         'say_error': "Es gibt ein Problem. Bitte die Webseite prüfen.",
         'say_disk_low': "Der Speicher ist fast voll.",
+        'say_silent': "Kein Ton vom Mikrofon. Bitte die Webseite prüfen.",
         'say_note': "Notiz notiert.",
         'say_task': "Aufgabe notiert.",
         'say_research': "Recherche notiert.",
@@ -154,6 +178,17 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'setup_needed': "Setup needed.",
         'setup_needed_text': "Add your Mistral API key so recordings can be turned into memos.",
         'open_settings': "Open settings",
+        'first_step': "One step left: enter your Mistral API key",
+        'first_step_hint': "Create a key at console.mistral.ai → API Keys, copy it and paste it here.",
+        'save_and_start': "Save and start",
+        'get_key_link': "Create a key at Mistral ↗",
+        'key_ok': "The key works. Ready: press 'Start meeting'.",
+        'key_invalid': "Mistral rejected this key. Please copy and paste it again.",
+        'key_unchecked': "Key saved. It could not be checked right now (no internet connection?).",
+        'key_empty': "Please paste a key.",
+        'pin_local_hint': "No PIN is needed on the PC itself. A PIN protects the settings from "
+                          "other devices (e.g. a phone).",
+        'forbidden': "Not allowed. Please reload the page.",
         'start_meeting': "● Start meeting",
         'stop_meeting': "■ Stop meeting · {elapsed}",
         'recording_hint': "Recording. Stops automatically after {minutes} minutes.",
@@ -199,6 +234,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'lang_de': "German",
         'lang_en': "English",
         'ui_language': "Device language",
+        'vocabulary': "Names and terms",
+        'vocabulary_hint': "One per line, e.g. participants, company, products. Helps to "
+                           "recognize and spell them correctly.",
+        'dialect_cleanup': "Turn Swiss German into Standard German",
+        'dialect_cleanup_hint': "Dialect in the transcript becomes Standard German (Mistral "
+                                "Small 4). Memos, tasks and dates get more accurate.",
         'max_minutes': "Stop recording automatically after (minutes)",
         'keep_audio_days': "Delete audio after (days, 0 = never)",
         'keep_audio_hint': "Memos and transcripts are kept.",
@@ -258,6 +299,10 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_space': "Not enough storage for a recording",
         'ev_live_item': "Captured: {item}",
         'ev_voice_stop': "Stopped by voice command",
+        'ev_silent': "The microphone delivers no sound. Is it connected and not muted?",
+        'ev_silent_windows': "The microphone delivers no sound. Windows Settings → Privacy & "
+                             "security → Microphone: turn on 'Let desktop apps access your "
+                             "microphone'. Is the microphone muted?",
         'err_no_api_key': "No Mistral API key. Add it in the settings.",
         'err_api_key_rejected': "Mistral API key rejected ({code}). Check it in the settings.",
         'err_model_not_found': "Model not found ({code}). Check the model names.",
@@ -274,6 +319,7 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'say_no_mic': "Microphone not found.",
         'say_error': "There is a problem. Please check the web page.",
         'say_disk_low': "Storage is almost full.",
+        'say_silent': "No sound from the microphone. Please check the web page.",
         'say_note': "Note taken.",
         'say_task': "Task noted.",
         'say_research': "Research noted.",

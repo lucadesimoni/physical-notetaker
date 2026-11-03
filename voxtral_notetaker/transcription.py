@@ -6,6 +6,7 @@ Voxtral transcription via the Mistral API, with optional speaker diarization
 
 import os
 import json
+import logging
 import time
 import asyncio
 from typing import Optional, List
@@ -16,6 +17,8 @@ from httpx import AsyncClient, HTTPStatusError
 
 from .config import VoxtralConfig, Language
 from .fsutil import atomic_replace
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -57,6 +60,22 @@ def load_transcription(path: str) -> Optional[TranscriptionResult]:
         return None
 
 
+MAX_CONTEXT_TERMS = 100
+MAX_TERM_LENGTH = 100
+
+
+def context_terms(*lists: Optional[List[str]]) -> List[str]:
+    """Clean, de-duplicated terms for context_bias"""
+    terms, seen = [], set()
+    for items in lists:
+        for term in items or []:
+            term = ' '.join(str(term).split())[:MAX_TERM_LENGTH]
+            if term and term.lower() not in seen:
+                seen.add(term.lower())
+                terms.append(term)
+    return terms[:MAX_CONTEXT_TERMS]
+
+
 # Mistral expects ISO 639-1 codes; Swiss German is transcribed as German
 API_LANGUAGE = {Language.EN: 'en', Language.DE: 'de', Language.DE_CH: 'de'}
 
@@ -66,6 +85,7 @@ class VoxtralTranscriber:
     
     def __init__(self, config: VoxtralConfig):
         self.config = config
+        self._bias_rejected = False
     
     def _make_client(self) -> AsyncClient:
         # A fresh client per call: callers may run each transcription in its own event loop
@@ -76,9 +96,14 @@ class VoxtralTranscriber:
             headers={'Authorization': f'Bearer {api_key}', 'x-api-key': api_key}
         )
     
-    def _form(self, language: Language, diarize: bool, fast: bool = False) -> dict:
+    def _form(self, language: Language, diarize: bool, fast: bool = False,
+              hints: Optional[List[str]] = None) -> dict:
         model = self.config.fast_model if fast and self.config.fast_model else self.config.model
         form = {'model': model}
+        terms = context_terms(self.config.vocabulary, hints)
+        if terms and not self._bias_rejected:
+            # One form field per term: names and jargon are spelled as given
+            form['context_bias'] = terms
         if diarize:
             # Speaker labels come with segment timestamps, which the API does
             # not combine with a fixed language, so the language is auto-detected
@@ -89,12 +114,13 @@ class VoxtralTranscriber:
         return form
     
     async def transcribe(self, audio_file: str, language: Language = Language.AUTO,
-                         diarize: bool = False, fast: bool = False) -> TranscriptionResult:
+                         diarize: bool = False, fast: bool = False,
+                         hints: Optional[List[str]] = None) -> TranscriptionResult:
         """Transcribe audio file (fast=True uses the cheaper fast_model)"""
         with open(audio_file, 'rb') as f:
             audio_data = f.read()
-        
-        form = self._form(language, diarize, fast)
+
+        form = self._form(language, diarize, fast, hints)
         retries = max(1, self.config.max_retries)
         async with self._make_client() as client:
             for attempt in range(retries):
@@ -109,6 +135,13 @@ class VoxtralTranscriber:
                     response.raise_for_status()
                     return self._parse(response.json(), language, time.time() - start)
                 except HTTPStatusError as e:
+                    if e.response.status_code in (400, 422) and 'context_bias' in form:
+                        # The vocabulary must never cost a transcription: retry without it
+                        log.warning("Transcription rejected the vocabulary (%s), retrying "
+                                    "without it", e.response.status_code)
+                        self._bias_rejected = True
+                        form = {k: v for k, v in form.items() if k != 'context_bias'}
+                        continue
                     if e.response.status_code != 429 and e.response.status_code < 500:
                         raise
                     if last_attempt:
@@ -143,3 +176,21 @@ class VoxtralTranscriber:
     
     async def close(self):
         pass
+
+
+def check_api_key(config: VoxtralConfig, timeout: float = 10) -> str:
+    """
+    Ask the API whether the key works: 'ok', 'invalid' (rejected) or
+    'offline' (could not be checked right now).
+    """
+    key = config.resolved_api_key()
+    if not key:
+        return 'invalid'
+    try:
+        response = httpx.get(f"{config.base_url.rstrip('/')}/models",
+                             headers={'Authorization': f'Bearer {key}'}, timeout=timeout)
+    except httpx.HTTPError:
+        return 'offline'
+    if response.status_code in (401, 403):
+        return 'invalid'
+    return 'ok' if response.is_success else 'offline'

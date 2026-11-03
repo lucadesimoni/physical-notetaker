@@ -47,6 +47,10 @@ class VoxtralConfig:
     fast_model: str = "voxtral-mini-transcribe-3-0"  # Voxtral Mini Transcribe 3
     timeout: int = 30
     max_retries: int = 3
+    # Names, company terms, products: helps the transcription spell them right
+    vocabulary: List[str] = field(default_factory=list)
+    # Swiss German: turn dialect left in the transcript into Standard German
+    dialect_cleanup: bool = True
 
     def resolved_api_key(self) -> str:
         """API key from config, or the MISTRAL_API_KEY environment variable"""
@@ -130,7 +134,7 @@ class DeviceConfig:
 class ServiceConfig:
     """Background service: autostart, crash recovery and the processing queue"""
     recordings_dir: str = "./recordings"
-    language: str = "auto"              # meeting language: auto, de, de-CH, en
+    language: str = "de-CH"             # meeting language: de-CH, de, en, auto
     ui_language: str = "de"             # web page and announcements: de or en
     retry_interval_seconds: int = 300   # first retry after a failure; doubles up to 1 hour
     max_attempts: int = 0               # 0 = keep retrying network errors

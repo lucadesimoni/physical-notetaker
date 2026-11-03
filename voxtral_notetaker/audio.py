@@ -35,6 +35,8 @@ from .fsutil import atomic_replace
 
 # Force buffered audio onto the SD card at least this often (seconds)
 FSYNC_INTERVAL = 2.0
+# Below this peak level the microphone delivers silence (16-bit samples)
+SILENCE_PEAK = 200
 # Noise reduction works on chunks of this length (seconds) to bound memory use
 NOISE_CHUNK_SECONDS = 60
 
@@ -44,6 +46,7 @@ class RecordingInfo:
     file_path: str
     duration: float
     sample_rate: int
+    peak: int = 0  # loudest sample (0..32767); ~0 means the microphone sent silence
 
 
 def repair_wav(path: str) -> bool:
@@ -137,6 +140,7 @@ class AudioRecorder:
         self._wav = None
         self._lock = threading.Lock()
         self._frames_written = 0
+        self.peak = 0
         self._last_sync = 0.0
         self._start_time: Optional[float] = None
         self.device_name: Optional[str] = None
@@ -188,6 +192,7 @@ class AudioRecorder:
         self._wav.setsampwidth(2)
         self._wav.setframerate(self.config.sample_rate)
         self._frames_written = 0
+        self.peak = 0
         self._last_sync = time.time()
     
     def _write(self, data: bytes, frame_count: int):
@@ -200,6 +205,10 @@ class AudioRecorder:
                 # valid on disk at all times
                 self._wav.writeframes(data)
                 self._frames_written += frame_count
+                if self.peak < SILENCE_PEAK and data:
+                    # Cheap check, only until real sound arrived
+                    self.peak = max(self.peak, int(np.abs(
+                        np.frombuffer(data, dtype=np.int16).astype(np.int32)).max()))
                 now = time.time()
                 if now - self._last_sync >= FSYNC_INTERVAL:
                     self._file.flush()
@@ -279,7 +288,12 @@ class AudioRecorder:
             reduce_noise_file(self._output_file)
         
         return RecordingInfo(file_path=self._output_file, duration=self.recorded_seconds,
-                             sample_rate=self.config.sample_rate)
+                             sample_rate=self.config.sample_rate, peak=self.peak)
+    
+    @property
+    def is_silent(self) -> bool:
+        """No sound so far (e.g. Windows blocks microphone access for desktop apps)"""
+        return self.peak < SILENCE_PEAK
     
     def _reduce_noise(self, audio_data: np.ndarray, sample_rate: int) -> np.ndarray:
         return reduce_noise(audio_data, sample_rate)
