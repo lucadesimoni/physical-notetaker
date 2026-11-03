@@ -125,30 +125,35 @@ journalctl -u notetaker -f                     # live log
 ~/notetaker/venv/bin/notetaker process FILE.wav --speaker speaker_0=Anna  # redo a memo (add --fresh to transcribe again)
 ```
 
-## 🪟 Testing on Windows
+## 🪟 Running on Windows
 
-Try everything with a laptop and the Jabra before setting up a Raspberry Pi:
+Use it on a Windows 10/11 PC with the Jabra (or any microphone), nothing to set up
+except your Mistral API key:
 
-1. Install **Python 3.12** from [python.org](https://www.python.org/downloads/windows/)
-   (tick *Add python.exe to PATH*). Versions 3.10 - 3.13 work; 3.12 is safest for
-   the microphone package.
-2. Download the repository (*Code → Download ZIP*, then unzip) or `git clone` it.
-3. Plug in the Jabra and **double-click `windows\start-notetaker.bat`**.
-   The first start installs the packages (a few minutes), then the web page
-   opens at `http://localhost:8080`.
-4. In *Einstellungen*: choose a PIN and enter your Mistral API key.
-5. Press **Enter** in the black window (or *Besprechung starten* on the page),
-   talk, press **Enter** again. The page shows which microphone was used and,
-   shortly after, the memo.
+1. Download the repository (*Code → Download ZIP*, unzip) or `git clone` it.
+2. Plug in the Jabra and **double-click `windows\start-notetaker.bat`**.
+   The first start installs Python 3.12 and the packages by itself (a few minutes)
+   and puts a **Notetaker** shortcut on the desktop.
+3. The browser opens. **Paste your Mistral API key** (link to Mistral on the page)
+   and press *Speichern und loslegen*. The key is checked right away.
+4. Press **Besprechung starten** (or Enter in the black window), talk, press it
+   again. The memo appears on the page shortly after.
 
-On Windows the announcements use the built-in Windows voice (for German, a
-German voice must be installed: *Settings → Time & language → Speech*), or
-eSpeak NG if installed. The Jabra's buttons, GPIO and the Wi-Fi hotspot are
-Raspberry Pi features and are switched off. If Windows asks about network
-access, allow it to open the page from your phone (`http://<PC address>:8080`).
+Next time: double-click **Notetaker** on the desktop. Keep the black window
+open while you use it.
 
-Starting again later takes seconds. To start fresh, delete `config.yaml`
-(settings) or the `venv` folder (installed packages).
+Good to know:
+
+- No PIN on the PC itself. The page is only reachable from this PC, so Windows
+  asks no firewall question. To use it from your phone, set `web.host: "0.0.0.0"`
+  in `config.yaml` (the phone then needs the PIN set in *Einstellungen*).
+- **No sound recorded?** The page says so after 15 seconds. Usually Windows
+  blocks microphones for desktop apps: *Settings → Privacy & security →
+  Microphone → Let desktop apps access your microphone*.
+- Announcements use the built-in Windows voice (German needs a German voice:
+  *Settings → Time & language → Speech*), or eSpeak NG if installed.
+- The Jabra's buttons, GPIO and the Wi-Fi hotspot are Raspberry Pi features.
+- To start fresh, delete `config.yaml` (settings) or the `venv` folder (packages).
 
 ## 🚀 Quick Start (developers)
 

@@ -143,3 +143,21 @@ class VoxtralTranscriber:
     
     async def close(self):
         pass
+
+
+def check_api_key(config: VoxtralConfig, timeout: float = 10) -> str:
+    """
+    Ask the API whether the key works: 'ok', 'invalid' (rejected) or
+    'offline' (could not be checked right now).
+    """
+    key = config.resolved_api_key()
+    if not key:
+        return 'invalid'
+    try:
+        response = httpx.get(f"{config.base_url.rstrip('/')}/models",
+                             headers={'Authorization': f'Bearer {key}'}, timeout=timeout)
+    except httpx.HTTPError:
+        return 'offline'
+    if response.status_code in (401, 403):
+        return 'invalid'
+    return 'ok' if response.is_success else 'offline'

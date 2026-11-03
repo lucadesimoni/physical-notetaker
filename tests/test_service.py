@@ -60,7 +60,7 @@ class FakeNotetaker:
         return True
 
     def stop_recording(self):
-        return RecordingInfo(file_path=self.path, duration=0.5, sample_rate=16000)
+        return RecordingInfo(file_path=self.path, duration=0.5, sample_rate=16000, peak=8000)
 
     def process_recording(self, audio_file, **kwargs):
         if FakeNotetaker.fail_with:
@@ -408,7 +408,8 @@ def test_config_new_sections_roundtrip(tmp_path):
 def web(config, tmp_path):
     config.voxtral.api_key = ""
     svc = make_service(config, tmp_path)
-    server = start_web_server(svc, host="127.0.0.1", port=0)
+    # Behave like a phone in the network (the PC itself needs no PIN)
+    server = start_web_server(svc, host="127.0.0.1", port=0, trust_local=False)
     base = f"http://127.0.0.1:{server.server_address[1]}"
     yield svc, base
     server.shutdown()
