@@ -21,8 +21,16 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "==> Installing system packages"
 apt-get update -qq
-apt-get install -y -qq python3-venv python3-dev portaudio19-dev espeak-ng avahi-daemon \
-  python3-gpiozero python3-lgpio python3-evdev network-manager >/dev/null
+# Required: Python, and a compiler for PyAudio (no ready-made package on ARM)
+apt-get install -y -qq python3-venv python3-dev build-essential portaudio19-dev >/dev/null
+# Optional: voice, .local name, buttons/LED, Wi-Fi setup. A missing one only
+# disables that feature (e.g. python3-lgpio exists on Raspberry Pi OS only).
+OPTIONAL_PACKAGES="espeak-ng avahi-daemon libnss-mdns python3-gpiozero python3-lgpio python3-evdev"
+# NetworkManager runs the setup hotspot; skip it where another tool manages the network
+[[ "${NOTETAKER_SKIP_NETWORK_MANAGER:-}" == "1" ]] || OPTIONAL_PACKAGES="$OPTIONAL_PACKAGES network-manager"
+for package in $OPTIONAL_PACKAGES; do
+  apt-get install -y -qq "$package" >/dev/null 2>&1 || echo "    (skipped $package: not available)"
+done
 
 # A dedicated device gets a memorable name: http://notetaker.local
 # (keeps a name you chose yourself; override with NOTETAKER_HOSTNAME=...)

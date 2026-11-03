@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
+#
+# Closest thing to a Raspberry Pi in CI: a Linux ARM machine runs the real
+# installer (packages, compiling PyAudio, systemd service on port 80, device
+# name), checks the device like a person would, then runs all tests.
+# Not covered here: the Jabra, buttons, sound output and the Wi-Fi hotspot.
+name: Raspberry Pi (Linux ARM)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pi:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer, exactly as on the Pi (sudo ./deploy/install.sh)
+        env:
+          NOTETAKER_HOSTNAME: notetaker
+          # Installing NetworkManager could take the runner's network down;
+          # Raspberry Pi OS already has it
+          NOTETAKER_SKIP_NETWORK_MANAGER: "1"
+        run: sudo -E ./deploy/install.sh
+
+      - name: Device checks (service, web page, PIN rules, no microphone, restart)
+        run: ./deploy/smoke_test.sh
+
+      - name: All tests on ARM with the installed environment
+        run: |
+          ~/notetaker/venv/bin/python -m pip install --quiet pytest
+          ~/notetaker/venv/bin/python -m pytest tests -q

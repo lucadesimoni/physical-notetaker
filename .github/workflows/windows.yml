@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
+#
+# Proof that the notetaker runs on Windows: a fresh Windows machine sets it up
+# with the same starter a user double-clicks, runs all tests, then starts the
+# real service and uses it like a person would.
+name: Windows
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Exactly what start-notetaker.bat runs, in Windows PowerShell 5.1
+      - name: Starter (install, config, desktop shortcut)
+        shell: cmd
+        env:
+          NOTETAKER_SETUP_ONLY: "1"
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File windows\start-notetaker.ps1
+
+      - name: All tests on Windows
+        shell: cmd
+        run: |
+          venv\Scripts\python -m pip install --quiet pytest
+          venv\Scripts\python -m pytest tests -q
+
+      - name: Smoke test (real service, web page, Windows voice)
+        shell: cmd
+        run: venv\Scripts\python windows\smoke_test.py

@@ -26,6 +26,7 @@ from typing import Dict, Optional
 from .config import NotetakerConfig
 from .jobs import DONE, FAILED, PENDING, PROCESSING, RECORDING
 from .i18n import t, normalize
+from .fsutil import read_text
 
 log = logging.getLogger(__name__)
 
@@ -260,6 +261,9 @@ class Handler(BaseHTTPRequestHandler):
                 f'aria-label="{escape(self.t("api_key"))}"><br><br>'
                 f'<button class="big">{escape(self.t("save_and_start"))}</button></form></div>'
             )
+            # e.g. the device button was pressed before the key was entered
+            if status['last_event'] and not message:
+                parts.append(f'<p class="muted">{escape(status["last_event"])}</p>')
             self._html(self.t('app_title'), ''.join(parts))
             return
         if not status['api_key_set']:
@@ -346,8 +350,7 @@ class Handler(BaseHTTPRequestHandler):
         if message:
             parts.append(f'<div class="card">{escape(message)}</div>')
         if job.memo_file and os.path.exists(job.memo_file):
-            with open(job.memo_file, encoding='utf-8') as f:
-                memo = f.read()
+            memo = read_text(job.memo_file)
             parts.append(f'<div class="card"><pre>{escape(memo)}</pre></div>')
         else:
             parts.append(f'<div class="card">{escape(self.t("status_" + job.status))}</div>')

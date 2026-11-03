@@ -23,3 +23,19 @@ def atomic_replace(src: str, dst: str):
             if attempt == REPLACE_ATTEMPTS - 1:
                 raise
             time.sleep(REPLACE_WAIT_SECONDS)
+
+
+def read_text(path: str) -> str:
+    """
+    Read a text file, retrying while Windows briefly locks it: a reader that
+    opens a file while another thread replaces it gets PermissionError.
+    """
+    for attempt in range(REPLACE_ATTEMPTS):
+        try:
+            with open(path, encoding='utf-8') as f:
+                return f.read()
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS - 1:
+                raise
+            time.sleep(REPLACE_WAIT_SECONDS)
+    return ''  # not reached
