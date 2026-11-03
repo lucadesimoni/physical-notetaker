@@ -122,6 +122,12 @@ if ($Desktop -and -not (Test-Path $Shortcut)) {
     }
 }
 
+# Automated test (GitHub Actions on Windows): set up, but do not start
+if ($env:NOTETAKER_SETUP_ONLY -eq "1") {
+    Write-Step "Setup done"
+    exit 0
+}
+
 Write-Step "Starting (the web page opens in the browser)"
 Write-Host "    First time: paste your Mistral API key on the page. That's all."
 Write-Host "    Keep this window open while you use the notetaker."
