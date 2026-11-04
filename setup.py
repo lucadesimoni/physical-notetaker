@@ -5,15 +5,21 @@
 Setup script for Voxtral Notetaker
 """
 
+import re
+
 from setuptools import setup, find_packages
+
+# The version lives in one place: voxtral_notetaker/__init__.py
+with open("voxtral_notetaker/__init__.py", encoding="utf-8") as f:
+    VERSION = re.search(r'^__version__ = "([^"]+)"', f.read(), re.M).group(1)
 
 with open("requirements.txt", "r") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 setup(
     name="voxtral-notetaker",
-    version="1.0.0",
-    description="Raspberry Pi based meeting notes recognition and transcription system using Voxtral 4",
+    version=VERSION,
+    description="Meeting notetaker for Raspberry Pi and Windows: Mistral Voxtral transcription, Swiss German, memos and tasks",
     author="Outthinkx by Luca De Simoni",
     license="PolyForm-Noncommercial-1.0.0",
     packages=find_packages(),

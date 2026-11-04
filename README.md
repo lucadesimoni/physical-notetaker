@@ -41,6 +41,19 @@
 - Duration tracking
 - Multiple format support (WAV, MP3, etc.)
 
+## ⬇️ Download
+
+Get the latest version from **[Releases](https://github.com/lucadesimoni/physical-notetaker/releases/latest)**:
+
+| File | For |
+|---|---|
+| `notetaker-windows-v….zip` | Windows 10/11: unzip, double-click **Notetaker starten.bat** |
+| `notetaker-raspberry-pi-v….tar.gz` | Raspberry Pi: unpack, `sudo ./install.sh` |
+| `voxtral_notetaker-….whl` | Developers: `pip install` |
+
+Every release is tested automatically on Windows and Linux ARM before it is
+published. What changed: [CHANGELOG.md](CHANGELOG.md).
+
 ## 🟢 Using the Device
 
 Nothing to install or type for meeting participants:
@@ -80,13 +93,16 @@ in Settings (*Sprache des Geräts*).
 
 ## 🔌 Device Setup (one time)
 
-On the Raspberry Pi (Raspberry Pi OS Bookworm or newer):
+On the Raspberry Pi (Raspberry Pi OS Bookworm or newer), with the latest
+[release](https://github.com/lucadesimoni/physical-notetaker/releases/latest):
 
 ```bash
-git clone https://github.com/lucadesimoni/physical-notetaker.git
-cd physical-notetaker
-sudo ./deploy/install.sh
+tar xzf notetaker-raspberry-pi-v*.tar.gz
+cd notetaker-v*/
+sudo ./install.sh
 ```
+
+(From a git clone instead: `sudo ./deploy/install.sh`.)
 
 The installer names the device `notetaker` and starts it on every boot. Then on
 your phone (**same Wi-Fi as the device**), open **`http://notetaker.local`**, or scan
@@ -130,8 +146,10 @@ journalctl -u notetaker -f                     # live log
 Use it on a Windows 10/11 PC with the Jabra (or any microphone), nothing to set up
 except your Mistral API key:
 
-1. Download the repository (*Code → Download ZIP*, unzip) or `git clone` it.
-2. Plug in the Jabra and **double-click `windows\start-notetaker.bat`**.
+1. Download `notetaker-windows-v….zip` from the latest
+   [release](https://github.com/lucadesimoni/physical-notetaker/releases/latest) and unzip it.
+2. Plug in the Jabra and **double-click `Notetaker starten.bat`**
+   (in a git clone: `windows\start-notetaker.bat`).
    The first start installs Python 3.12 and the packages by itself (a few minutes)
    and puts a **Notetaker** shortcut on the desktop.
 3. The browser opens. **Paste your Mistral API key** (link to Mistral on the page)

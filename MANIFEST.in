@@ -1,0 +1,7 @@
+# Files the source package needs besides the Python code
+include requirements.txt
+include README.md
+include LICENSE
+include CHANGELOG.md
+include config.example.yaml
+recursive-include examples *.txt
