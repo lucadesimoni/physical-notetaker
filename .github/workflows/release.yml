@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Copyright (c) 2026 Outthinkx by Luca De Simoni
 #
-# Publish a release when a version tag (v1.1.0, ...) is pushed:
+# Publish a release, either by pushing a version tag (v1.1.0, ...) or with
+# "Run workflow" on GitHub (Actions -> Release), which releases the version in
+# voxtral_notetaker/__init__.py and creates its tag:
 #   1. build the downloads (Windows ZIP, Raspberry Pi archive, Python package)
 #   2. test the actual Windows ZIP on Windows and the actual Pi archive on ARM
 #   3. publish the GitHub release only if both pass
@@ -10,6 +12,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,12 +20,27 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build downloads (fails if the tag does not match the version)
+      - name: Version to release
+        id: version
+        run: |
+          VERSION="$(python -c 'import re; print(re.search(r"^__version__ = \"([^\"]+)\"", open("voxtral_notetaker/__init__.py").read(), re.M).group(1))')"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then TAG="$GITHUB_REF_NAME"; else TAG="v$VERSION"; fi
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "Tag $TAG does not match the version $VERSION in the code" >&2; exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null && [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "$TAG already exists: raise the version in voxtral_notetaker/__init__.py" >&2; exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Releasing $TAG"
+      - name: Build downloads
         run: |
           python -m pip install --quiet build
           python scripts/package_release.py
@@ -46,18 +64,23 @@ jobs:
           python-version: "3.12"
       - name: Unzip like a user would
         shell: powershell
-        run: Expand-Archive -Path "notetaker-windows-$env:GITHUB_REF_NAME.zip" -DestinationPath user
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+        run: Expand-Archive -Path "notetaker-windows-$env:TAG.zip" -DestinationPath user
       - name: Set up from the ZIP (the starter behind "Notetaker starten.bat")
         shell: cmd
         env:
           NOTETAKER_SETUP_ONLY: "1"
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          cd user\notetaker-%GITHUB_REF_NAME%
+          cd user\notetaker-%TAG%
           powershell -NoProfile -ExecutionPolicy Bypass -File windows\start-notetaker.ps1
       - name: Use it (real service, web page, Windows voice)
         shell: cmd
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          cd user\notetaker-%GITHUB_REF_NAME%
+          cd user\notetaker-%TAG%
           venv\Scripts\python windows\smoke_test.py
 
   test-pi-archive:
@@ -72,17 +95,20 @@ jobs:
         env:
           NOTETAKER_HOSTNAME: notetaker
           NOTETAKER_SKIP_NETWORK_MANAGER: "1"
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          tar xzf "notetaker-raspberry-pi-${GITHUB_REF_NAME}.tar.gz"
-          cd "notetaker-${GITHUB_REF_NAME}"
+          tar xzf "notetaker-raspberry-pi-${TAG}.tar.gz"
+          cd "notetaker-${TAG}"
           sudo -E ./install.sh
       - name: Use it (service, web page, PIN rules, restart)
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          cd "notetaker-${GITHUB_REF_NAME}"
+          cd "notetaker-${TAG}"
           ./deploy/smoke_test.sh
 
   publish:
-    needs: [test-windows-zip, test-pi-archive]
+    needs: [build, test-windows-zip, test-pi-archive]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -93,14 +119,17 @@ jobs:
           name: dist
           path: dist
       - name: Release notes from CHANGELOG.md
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TAG#v}"
           awk -v v="## $VERSION" '$0 ~ "^"v {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
-          test -s notes.md || echo "Release $GITHUB_REF_NAME" > notes.md
+          test -s notes.md || echo "Release $TAG" > notes.md
           cat notes.md
-      - name: Publish the GitHub release
+      - name: Publish the GitHub release (creates the tag if it does not exist yet)
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "Notetaker $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
+            --title "Notetaker $TAG" --notes-file notes.md
