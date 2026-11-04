@@ -1,0 +1,106 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Copyright (c) 2026 Outthinkx by Luca De Simoni
+#
+# Publish a release when a version tag (v1.1.0, ...) is pushed:
+#   1. build the downloads (Windows ZIP, Raspberry Pi archive, Python package)
+#   2. test the actual Windows ZIP on Windows and the actual Pi archive on ARM
+#   3. publish the GitHub release only if both pass
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build downloads (fails if the tag does not match the version)
+        run: |
+          python -m pip install --quiet build
+          python scripts/package_release.py
+          python -m build --outdir dist .
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  test-windows-zip:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unzip like a user would
+        shell: powershell
+        run: Expand-Archive -Path "notetaker-windows-$env:GITHUB_REF_NAME.zip" -DestinationPath user
+      - name: Set up from the ZIP (the starter behind "Notetaker starten.bat")
+        shell: cmd
+        env:
+          NOTETAKER_SETUP_ONLY: "1"
+        run: |
+          cd user\notetaker-%GITHUB_REF_NAME%
+          powershell -NoProfile -ExecutionPolicy Bypass -File windows\start-notetaker.ps1
+      - name: Use it (real service, web page, Windows voice)
+        shell: cmd
+        run: |
+          cd user\notetaker-%GITHUB_REF_NAME%
+          venv\Scripts\python windows\smoke_test.py
+
+  test-pi-archive:
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - name: Unpack and install like a user would
+        env:
+          NOTETAKER_HOSTNAME: notetaker
+          NOTETAKER_SKIP_NETWORK_MANAGER: "1"
+        run: |
+          tar xzf "notetaker-raspberry-pi-${GITHUB_REF_NAME}.tar.gz"
+          cd "notetaker-${GITHUB_REF_NAME}"
+          sudo -E ./install.sh
+      - name: Use it (service, web page, PIN rules, restart)
+        run: |
+          cd "notetaker-${GITHUB_REF_NAME}"
+          ./deploy/smoke_test.sh
+
+  publish:
+    needs: [test-windows-zip, test-pi-archive]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Release notes from CHANGELOG.md
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="## $VERSION" '$0 ~ "^"v {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          test -s notes.md || echo "Release $GITHUB_REF_NAME" > notes.md
+          cat notes.md
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Notetaker $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
