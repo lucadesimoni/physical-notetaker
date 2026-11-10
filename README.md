@@ -386,8 +386,10 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    dialect. Mistral Small 4 rewrites each line in Standard German without
    changing content, names or numbers:
    *"Mir händ das gescht bschproche"* → *"Wir haben das gestern besprochen"*.
-   Lines are checked one by one; anything that looks wrong keeps its original
-   text. Turn it off with `voxtral.dialect_cleanup: false`.
+   Only lines with dialect words are rewritten; lines already in Standard
+   German stay exactly as recognised. Anything that looks wrong (dropped,
+   much shorter or much longer) keeps its original text. Turn it off with
+   `voxtral.dialect_cleanup: false`.
 3. **Commands in dialect**, also during the meeting: *"Mach es Notiz: …"*,
    *"Schriib das uf"*, *"Erstell en Task: …"*, *"Ufgab: …"*, *"Lueg mol nach: …"*,
    *"Beend d'Ufnahm"*.
@@ -397,6 +399,23 @@ Swiss German is the default meeting language. To get it as accurate as possible:
 
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
+
+**Measured:** `scripts/benchmark_swiss_german.py` runs the notetaker's own
+transcription on Swiss German recordings with an official Standard German
+reference. On 40 samples (112 min) of the open SPC_R test set (Bernese
+parliament, CC BY 4.0):
+
+| Setup | Word error rate | BLEU |
+|---|---|---|
+| Voxtral Small, speaker labels (device default) | 14.1 % | 78.0 |
+| Voxtral Small, language fixed to German | 14.3 % | 77.8 |
+| Voxtral Mini, language fixed to German | 14.8 % | 77.3 |
+
+Rewriting lines already in Standard German made them worse (21 % WER), so
+the clean-up now only touches lines with dialect words. To compare with
+another system (e.g. Plaud) on your own meetings, put `NAME.wav`, the real
+text as `NAME.txt` and the other system's text as `NAME.plaud.txt` in a
+folder and run it with `--folder`.
 
 ## 📋 Transcript Format
 

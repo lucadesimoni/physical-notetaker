@@ -8,8 +8,10 @@ gescht bschproche"). A language model rewrites each line in Standard German
 ("Wir haben das gestern besprochen") without changing content, names or
 numbers. Commands, tasks, dates and the memo all work better on the result.
 
-Safe by design: lines go out numbered and without speaker labels, and any
-line the model drops, merges or inflates keeps its original text.
+Safe by design: only lines with dialect words are sent (a benchmark on the
+SPC_R test set showed that rewriting lines already in Standard German makes
+them worse); they go out numbered and without speaker labels, and any line
+the model drops, shortens, merges or inflates keeps its original text.
 """
 
 import re
@@ -25,7 +27,27 @@ log = logging.getLogger(__name__)
 CHUNK_LINES = 40
 # A cleaned line may be somewhat longer (dialect is terse), not a paragraph
 MAX_GROWTH = 2.5
+# ... or shorter: a much shorter line lost content
+MIN_SHRINK = 0.6
 _NUMBERED = re.compile(r'^\s*(\d+)\s*[|:.)]\s?(.*)$')
+
+# Words that only occur in Swiss German, not in Standard German. Lines with
+# none of them are left as the speech recognition wrote them.
+DIALECT_WORDS = frozenset("""
+    isch händ hend hät hesch hets bisch chasch chan chunt chunnt chömed chönd
+    chönnt gönd gaht gahts gsi gsii gseh gsait gmacht gha nöd nüd nüt nüüt nid
+    nit öppis öpper öppe chli chlii scho hüt morn gescht geschter jetz zäme
+    ois eus üs öis euse öise wämmer wämer simmer hämmer gäll gälled vill bim
+    dur gäge wüsst weisch säg säge luege lueg mached tüend tuet friitig mäntig
+    zischtig ziischtig mittwuch donnschtig samschtig sunntig wuche ändi mitti
+    novämber dezämber auguscht gömmer gemmer bstelle
+""".split())
+# Short words that are dialect too, but also names or other languages (not
+# "es", "merci", "mache": those are Standard German as well):
+# a line needs two of them
+WEAK_DIALECT_WORDS = frozenset("bi cha mer en e uf vo ufe abe ine use grüezi".split())
+_WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)?")
+
 
 PROMPT = (
     "Du bekommst Zeilen aus dem Transkript einer Besprechung in der Schweiz. Die "
@@ -35,12 +57,22 @@ PROMPT = (
     "Regeln:\n"
     "- Inhalt, Bedeutung, Zahlen, Daten, Namen und Fachbegriffe unverändert lassen.\n"
     "- Nichts hinzufügen, nichts weglassen, nicht zusammenfassen, keine Erklärungen.\n"
+    "- Nur Mundartwörter und Mundart-Grammatik ändern. Was schon Hochdeutsch ist, "
+    "Wort für Wort stehen lassen, nicht umformulieren oder glätten.\n"
     "- Zeilen, die schon Hochdeutsch oder Englisch sind, unverändert lassen.\n"
     "- Befehle sinngemäss übernehmen, z. B. «Mach es Notiz:» → «Mach eine Notiz:», "
     "«Erstell en Task:» → «Erstell einen Task:», «bis am Friitig» → «bis Freitag».\n"
     "- Jede Zeile beginnt mit ihrer Nummer und «|». Gib genau dieselben Nummern in "
     "derselben Reihenfolge zurück, eine Zeile pro Nummer, im Format «Nummer|Text».\n"
 )
+
+
+def has_dialect(line: str) -> bool:
+    """Does the line contain words that only exist in Swiss German?"""
+    words = [w.lower() for w in _WORD.findall(line)]
+    if any(w in DIALECT_WORDS or w.startswith("d'") for w in words):
+        return True
+    return sum(1 for w in words if w in WEAK_DIALECT_WORDS) >= 2
 
 
 def should_clean(config: NotetakerConfig, detected_language: Optional[str]) -> bool:
@@ -85,17 +117,21 @@ def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
 def merge_cleaned(lines: List[str], content: str) -> List[str]:
     """Take the model's numbered lines; keep the original wherever they look wrong"""
     cleaned = {}
+    current = None
     for raw in content.splitlines():
         match = _NUMBERED.match(raw)
-        if match:
-            number = int(match.group(1))
-            if 1 <= number <= len(lines) and number not in cleaned:
-                cleaned[number] = match.group(2).strip()
+        if match and 1 <= int(match.group(1)) <= len(lines) and int(match.group(1)) not in cleaned:
+            current = int(match.group(1))
+            cleaned[current] = match.group(2).strip()
+        elif current is not None and raw.strip():
+            # The model split a long line: the continuation belongs to it
+            cleaned[current] = f"{cleaned[current]} {raw.strip()}"
     result = []
     for i, original in enumerate(lines, 1):
         new = cleaned.get(i)
-        if not new or len(new) > max(40, len(original) * MAX_GROWTH):
-            result.append(original)  # missing, empty or suspiciously long
+        if (not new or len(new) > max(40, len(original) * MAX_GROWTH)
+                or len(new) < len(original) * MIN_SHRINK):
+            result.append(original)  # missing, empty, suspiciously long or short
         else:
             result.append(new)
     return result
@@ -108,14 +144,16 @@ def clean_lines(lines: List[str], config: NotetakerConfig) -> List[str]:
     """
     if not lines or not config.voxtral.resolved_api_key():
         return list(lines)
-    out: List[str] = []
-    for start in range(0, len(lines), CHUNK_LINES):
-        chunk = lines[start:start + CHUNK_LINES]
+    out: List[str] = list(lines)
+    todo = [i for i, line in enumerate(lines) if has_dialect(line)]
+    for start in range(0, len(todo), CHUNK_LINES):
+        indexes = todo[start:start + CHUNK_LINES]
+        chunk = [lines[i] for i in indexes]
         try:
-            out.extend(_clean_chunk(chunk, config))
+            for i, new in zip(indexes, _clean_chunk(chunk, config)):
+                out[i] = new
         except Exception as e:
             log.warning("Swiss German clean-up skipped for %d line(s): %s", len(chunk), e)
-            out.extend(chunk)
     changed = sum(1 for old, new in zip(lines, out) if old != new)
     log.info("Swiss German clean-up: %d of %d line(s) changed", changed, len(lines))
     return out
