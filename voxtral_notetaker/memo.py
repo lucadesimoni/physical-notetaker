@@ -5,6 +5,7 @@ Meeting memo generation: notes, tasks and research collected during a meeting,
 plus an optional AI summary of the transcript
 """
 
+import logging
 import re
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
@@ -13,6 +14,8 @@ from dataclasses import dataclass, field
 import httpx
 
 from .config import SummaryConfig, VoxtralConfig
+
+log = logging.getLogger(__name__)
 
 
 LABELS = {
@@ -204,7 +207,7 @@ class Summarizer:
             response.raise_for_status()
             content = response.json()['choices'][0]['message']['content']
         except Exception as e:
-            print(f"Summary failed: {e}")
+            log.warning("AI summary skipped: %s", e)
             return []
 
         bullet = re.compile(r'^\s*(?:[-*•]|\d+[.)])\s+')

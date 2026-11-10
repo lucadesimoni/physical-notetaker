@@ -132,7 +132,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_mic': "Aufnahme konnte nicht starten: Ist das Mikrofon angeschlossen?",
         'ev_started': "Aufnahme gestartet",
         'ev_started_mic': "Aufnahme gestartet (Mikrofon: {mic})",
-        'console_hint': "Enter drücken = Aufnahme starten/beenden, Ctrl+C = Programm beenden",
+        'banner_title': "Notetaker {version} läuft",
+        'banner_web': "Webseite",
+        'banner_phone': "Vom Handy",
+        'banner_enter': "Aufnahme starten / beenden",
+        'banner_quit': "Programm beenden",
+        'banner_log': "Logdatei",
         'ev_no_audio': "Es wurde kein Ton aufgenommen. Ist das Mikrofon angeschlossen?",
         'ev_saved': "Aufnahme gespeichert, Protokoll wird erstellt",
         'ev_time_limit': "Bei der maximalen Aufnahmedauer gestoppt",
@@ -143,6 +148,19 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_space': "Zu wenig Speicher für eine Aufnahme",
         'ev_live_item': "Erkannt: {item}",
         'ev_voice_stop': "Per Sprachbefehl beendet",
+        'ev_quiet': "Das Mikrofon ist sehr leise: Die Erkennung leidet. Lauter stellen oder "
+                    "näher an die Sprechenden stellen.",
+        'ev_quiet_windows': "Das Mikrofon ist sehr leise: Die Erkennung leidet. Windows-"
+                            "Einstellungen → System → Sound → Eingabe → Mikrofon wählen → "
+                            "Eingangslautstärke auf 100 stellen.",
+        'support_section': "Fehlersuche",
+        'download_log': "Logdatei herunterladen",
+        'log_hint': "Enthält Abläufe und Fehlermeldungen, keine Gesprächsinhalte, Schlüssel "
+                    "oder Passwörter.",
+        'retranscribe': "Neu transkribieren",
+        'retranscribe_hint': "Die Aufnahme nochmals transkribieren, z. B. mit neuen Namen und "
+                             "Fachbegriffen.",
+        'retranscribe_started': "Wird neu transkribiert.",
         'ev_silent': "Das Mikrofon liefert keinen Ton. Ist es angeschlossen und nicht stummgeschaltet?",
         'ev_silent_windows': "Das Mikrofon liefert keinen Ton. Windows-Einstellungen → Datenschutz "
                              "und Sicherheit → Mikrofon: «Desktop-Apps den Zugriff auf das "
@@ -288,7 +306,12 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_mic': "Could not start recording: is the microphone connected?",
         'ev_started': "Recording started",
         'ev_started_mic': "Recording started (microphone: {mic})",
-        'console_hint': "Press Enter = start/stop recording, Ctrl+C = quit",
+        'banner_title': "Notetaker {version} is running",
+        'banner_web': "Web page",
+        'banner_phone': "From a phone",
+        'banner_enter': "Start / stop recording",
+        'banner_quit': "Quit",
+        'banner_log': "Log file",
         'ev_no_audio': "No audio was recorded. Is the microphone connected?",
         'ev_saved': "Recording saved, creating memo",
         'ev_time_limit': "Stopped at the maximum recording time",
@@ -299,6 +322,17 @@ TEXTS: Dict[str, Dict[str, str]] = {
         'ev_no_space': "Not enough storage for a recording",
         'ev_live_item': "Captured: {item}",
         'ev_voice_stop': "Stopped by voice command",
+        'ev_quiet': "The microphone is very quiet: recognition suffers. Turn it up or move "
+                    "it closer to the speakers.",
+        'ev_quiet_windows': "The microphone is very quiet: recognition suffers. Windows "
+                            "Settings → System → Sound → Input → choose the microphone → set "
+                            "the input volume to 100.",
+        'support_section': "Troubleshooting",
+        'download_log': "Download log file",
+        'log_hint': "Contains steps and error messages, no meeting content, keys or passwords.",
+        'retranscribe': "Transcribe again",
+        'retranscribe_hint': "Transcribe the recording again, e.g. with new names and terms.",
+        'retranscribe_started': "Transcribing again.",
         'ev_silent': "The microphone delivers no sound. Is it connected and not muted?",
         'ev_silent_windows': "The microphone delivers no sound. Windows Settings → Privacy & "
                              "security → Microphone: turn on 'Let desktop apps access your "
@@ -339,3 +373,17 @@ def t(key: str, lang: str = 'de', **kwargs) -> str:
     """Translated text; falls back to German, then to the key itself"""
     text = TEXTS[normalize(lang)].get(key) or TEXTS['de'].get(key) or key
     return text.format(**kwargs) if kwargs else text
+
+
+def device_phrases() -> list:
+    """Every sentence the device itself says out loud, in both languages"""
+    import re
+    phrases = set()
+    for texts in TEXTS.values():
+        for key, text in texts.items():
+            if key.startswith('say_') and '{' not in text:
+                phrases.add(text.strip())  # the whole announcement, sentences may merge
+                for sentence in re.split(r'(?<=[.!?])\s+', text):
+                    if sentence.strip():
+                        phrases.add(sentence.strip())
+    return sorted(phrases)

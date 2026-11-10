@@ -22,6 +22,7 @@ from .commands import CommandParser, CommandExecutor, CommandResult
 from .memo import Memo, Summarizer
 from .speakers import detect_speaker_names
 from .dialect import should_clean, clean_lines
+from .announcements import strip_announcements
 from .fsutil import atomic_replace
 
 
@@ -190,6 +191,9 @@ class Notetaker:
             else:
                 transcription = self.transcribe(audio_file, language)
             save_transcription(transcription, cache_file)
+        
+        # The speakerphone also records the device's own announcements
+        transcription = _without_announcements(transcription)
         
         # Speaker recognition, named from introductions ("Ich bin Anna")
         speaker_segments = self._speaker_segments(audio_file, transcription, diarize)
@@ -448,3 +452,16 @@ def _write_text(path: str, text: str):
 
 def transcription_cache_path(audio_file: str) -> str:
     return str(Path(audio_file).with_suffix('.segments.json'))
+
+
+def _without_announcements(transcription: TranscriptionResult) -> TranscriptionResult:
+    """A copy without "Aufnahme gestartet ..." and the like (the cache keeps the raw text)"""
+    from dataclasses import replace
+    segments = []
+    for seg in transcription.segments:
+        text = strip_announcements(seg.text) if seg.text else seg.text
+        if seg.text and not text:
+            continue  # the whole segment was the device talking
+        segments.append(replace(seg, text=text))
+    return replace(transcription, text=strip_announcements(transcription.text),
+                   segments=segments)

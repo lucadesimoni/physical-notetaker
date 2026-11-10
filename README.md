@@ -47,7 +47,8 @@ Get the latest version from **[Releases](https://github.com/lucadesimoni/physica
 
 | File | For |
 |---|---|
-| `notetaker-windows-v….zip` | Windows 10/11: unzip, double-click **Notetaker starten.bat** |
+| `Notetaker-Setup-….exe` | Windows 10/11: run the installer (no administrator rights needed) |
+| `notetaker-windows-v….zip` | Windows without installing: unzip, double-click **Notetaker starten.bat** |
 | `notetaker-raspberry-pi-v….tar.gz` | Raspberry Pi: unpack, `sudo ./install.sh` |
 | `voxtral_notetaker-….whl` | Developers: `pip install` |
 
@@ -146,10 +147,13 @@ journalctl -u notetaker -f                     # live log
 Use it on a Windows 10/11 PC with the Jabra (or any microphone), nothing to set up
 except your Mistral API key:
 
-1. Download `notetaker-windows-v….zip` from the latest
-   [release](https://github.com/lucadesimoni/physical-notetaker/releases/latest) and unzip it.
-2. Plug in the Jabra and **double-click `Notetaker starten.bat`**
-   (in a git clone: `windows\start-notetaker.bat`).
+1. Download **`Notetaker-Setup-….exe`** from the latest
+   [release](https://github.com/lucadesimoni/physical-notetaker/releases/latest) and run it.
+   No administrator rights needed; it adds **Notetaker** to the Start menu and the
+   desktop, and can be removed in *Settings → Apps*. Your settings and recordings stay.
+   (Without installing: unzip `notetaker-windows-v….zip` and double-click
+   `Notetaker starten.bat`; in a git clone: `windows\start-notetaker.bat`.)
+2. Plug in the Jabra and start **Notetaker**.
    The first start installs Python 3.12 and the packages by itself (a few minutes)
    and puts a **Notetaker** shortcut on the desktop.
 3. The browser opens. **Paste your Mistral API key** (link to Mistral on the page)
@@ -161,6 +165,11 @@ Next time: double-click **Notetaker** on the desktop. Keep the black window
 open while you use it.
 
 Good to know:
+
+- Until the installer is code-signed, Windows says *"Unknown publisher"* /
+  *"Windows protected your PC"*: click *More info → Run anyway*. The release
+  workflow signs it automatically once a certificate is stored in the repository
+  secrets `WINDOWS_SIGN_PFX_BASE64` and `WINDOWS_SIGN_PFX_PASSWORD`.
 
 - No PIN on the PC itself. The page is only reachable from this PC, so Windows
   asks no firewall question. To use it from your phone, set `web.host: "0.0.0.0"`
@@ -377,8 +386,10 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    dialect. Mistral Small 4 rewrites each line in Standard German without
    changing content, names or numbers:
    *"Mir händ das gescht bschproche"* → *"Wir haben das gestern besprochen"*.
-   Lines are checked one by one; anything that looks wrong keeps its original
-   text. Turn it off with `voxtral.dialect_cleanup: false`.
+   Only lines with dialect words are rewritten; lines already in Standard
+   German stay exactly as recognised. Anything that looks wrong (dropped,
+   much shorter or much longer) keeps its original text. Turn it off with
+   `voxtral.dialect_cleanup: false`.
 3. **Commands in dialect**, also during the meeting: *"Mach es Notiz: …"*,
    *"Schriib das uf"*, *"Erstell en Task: …"*, *"Ufgab: …"*, *"Lueg mol nach: …"*,
    *"Beend d'Ufnahm"*.
@@ -388,6 +399,23 @@ Swiss German is the default meeting language. To get it as accurate as possible:
 
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
+
+**Measured:** `scripts/benchmark_swiss_german.py` runs the notetaker's own
+transcription on Swiss German recordings with an official Standard German
+reference. On 40 samples (112 min) of the open SPC_R test set (Bernese
+parliament, CC BY 4.0):
+
+| Setup | Word error rate | BLEU |
+|---|---|---|
+| Voxtral Small, speaker labels (device default) | 14.1 % | 78.0 |
+| Voxtral Small, language fixed to German | 14.3 % | 77.8 |
+| Voxtral Mini, language fixed to German | 14.8 % | 77.3 |
+
+Rewriting lines already in Standard German made them worse (21 % WER), so
+the clean-up now only touches lines with dialect words. To compare with
+another system (e.g. Plaud) on your own meetings, put `NAME.wav`, the real
+text as `NAME.txt` and the other system's text as `NAME.plaud.txt` in a
+folder and run it with `--folder`.
 
 ## 📋 Transcript Format
 

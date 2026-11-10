@@ -195,28 +195,23 @@ def notetaker_language_is_german(text: str) -> bool:
 @click.option('--open', 'open_browser', is_flag=True, help='Open the web page in the browser')
 def run(config_path: str, no_web: bool, verbose: bool, open_browser: bool):
     """Run the always-on notetaker (button start/stop, queue, web page)"""
-    import logging
     import threading
     import webbrowser
+    from . import __version__
     from .service import NotetakerService
-    from .network import device_urls
-    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO,
-                        format='%(asctime)s %(levelname)s %(name)s: %(message)s')
-    service = NotetakerService(config_path=config_path)
+    from .network import local_page_url
+    from .config import find_config_path, load_config
+    from .logsetup import setup_logging, log_startup
+
+    path = find_config_path(config_path)
+    config = load_config(path)
+    setup_logging(config, verbose=verbose)
+    log_startup(config, path, __version__)
+
+    service = NotetakerService(config=config, config_path=path)
     web = not no_web and service.config.web.enabled
-    if web:
-        port = service.config.web.port
-        host = service.config.web.host
-        # 127.0.0.1 rather than localhost: Windows may try IPv6 (::1) first
-        name = '127.0.0.1' if host in ('127.0.0.1', '0.0.0.0', '') else 'localhost'
-        local = f"http://{name}{'' if port == 80 else f':{port}'}"
-        if host == '127.0.0.1':
-            console.print(f"Web page: {local}")
-        else:
-            console.print(f"Web page: {local}  (phones in the same network: "
-                          f"{', '.join(device_urls(port))})")
-        if open_browser:
-            threading.Timer(1.5, webbrowser.open, args=(local,)).start()
+    if web and open_browser:
+        threading.Timer(1.5, webbrowser.open, args=(local_page_url(service.config.web),)).start()
     service.run_forever(web=web)
 
 

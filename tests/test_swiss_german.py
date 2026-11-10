@@ -14,7 +14,7 @@ import pytest
 from voxtral_notetaker import CommandParser, Notetaker, NotetakerConfig
 from voxtral_notetaker.actions import parse_task_details
 from voxtral_notetaker.config import Language, VoxtralConfig
-from voxtral_notetaker.dialect import clean_lines, merge_cleaned, should_clean
+from voxtral_notetaker.dialect import clean_lines, has_dialect, merge_cleaned, should_clean
 from voxtral_notetaker.transcription import (TranscriptionResult, TranscriptSegment,
                                              VoxtralTranscriber, context_terms)
 
@@ -95,6 +95,27 @@ def test_merge_keeps_original_when_model_misbehaves():
     ]
 
 
+def test_merge_keeps_continuation_lines_and_rejects_lost_content():
+    long = "Das isch so. " * 20
+    # The model split line 1 over several lines: still one line, nothing lost
+    content = "1|Das ist so.\n" + "\n".join(["Das ist so."] * 19)
+    assert merge_cleaned([long], content) == [" ".join(["Das ist so."] * 20)]
+    # Only the first sentence came back: keep the original
+    assert merge_cleaned([long], "1|Das ist so.") == [long]
+
+
+@pytest.mark.parametrize("text,dialect", [
+    ("Mir händ das gescht bschproche.", True),
+    ("Grüezi zäme, ich bi d'Anna.", True),
+    ("Offerte schicke bis am Friitig.", True),
+    ("Das ist so nicht der Fall.", False),
+    ("Herr Präsident, liebe Kolleginnen und Kollegen. Es ist so.", False),
+    ("Let us meet on Monday.", False),
+])
+def test_has_dialect(text, dialect):
+    assert has_dialect(text) is dialect
+
+
 def _fake_llm(monkeypatch, translate, calls=None):
     def fake_post(url, headers, json, timeout):
         if calls is not None:
@@ -121,9 +142,9 @@ def test_clean_lines_in_chunks_with_vocabulary(monkeypatch):
     config.voxtral.vocabulary = ["TWINT"]
     calls = []
     _fake_llm(monkeypatch, lambda s: s.upper(), calls)
-    lines = [f"zeile {i}" for i in range(85)]
-    assert clean_lines(lines, config) == [l.upper() for l in lines]
-    assert len(calls) == 3  # chunks of 40
+    lines = [f"zeile {i} isch fix" for i in range(85)] + ["Das ist schon Hochdeutsch."]
+    assert clean_lines(lines, config) == [l.upper() for l in lines[:85]] + [lines[85]]
+    assert len(calls) == 3  # chunks of 40, only lines with dialect
     assert calls[0]["model"] == "mistral-small-2603"
     assert "TWINT" in calls[0]["messages"][0]["content"]
 
@@ -226,3 +247,25 @@ def test_ordinary_swiss_german_is_not_a_command(text):
 ])
 def test_swiss_due_dates(text, due):
     assert parse_task_details(text, [], REF)["due_date"] == due
+
+
+def test_device_announcements_removed_from_transcript(tmp_path, monkeypatch):
+    config = NotetakerConfig()
+    config.storage.auto_upload = False
+    config.voxtral.dialect_cleanup = False
+    config.summary.enabled = False
+    nt = Notetaker(config)
+    audio = tmp_path / "m.wav"
+    audio.write_bytes(b"RIFF")
+    monkeypatch.setattr(nt, "transcribe", lambda f, lang, diarize=False, fast=False:
+                        TranscriptionResult(text="", language="de", confidence=None, duration=3,
+                                            segments=[
+                                                TranscriptSegment(0, 1, "Aufnahme gestartet, diese Besprechung wird aufgezeichnet.", "speaker_0"),
+                                                TranscriptSegment(1, 2, "Kannst du mit mir reden?", "speaker_1"),
+                                                TranscriptSegment(2, 3, "Notiz notiert. Gut, weiter.", "speaker_0"),
+                                            ]))
+    result = nt.process_recording(str(audio), start_time=REF)
+    assert "Aufnahme gestartet" not in result.transcript
+    assert "Notiz notiert" not in result.transcript
+    assert "Kannst du mit mir reden?" in result.transcript and "Gut, weiter." in result.transcript
+    nt.close()
