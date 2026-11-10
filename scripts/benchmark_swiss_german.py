@@ -79,7 +79,7 @@ def load_parquet(path: str, count: int, seed: int):
     random.Random(seed).shuffle(rows)
     samples = []
     for i, row in enumerate(rows[:count]):
-        samples.append({"id": f"spc_{i:03d}", "wav": row["audio"]["bytes"],
+        samples.append({"id": f"spc_{i:03d}", "wav": to_wav(row["audio"]["bytes"]),
                         "reference": row["text"], "others": {}})
     return samples
 
@@ -99,9 +99,23 @@ def load_folder(path: str):
             match = re.fullmatch(re.escape(stem) + r"\.(\w+)\.txt", other)
             if match:
                 others[match.group(1)] = open(os.path.join(path, other), encoding="utf-8").read()
-        samples.append({"id": stem, "wav": open(os.path.join(path, name), "rb").read(),
+        samples.append({"id": stem, "wav": to_wav(open(os.path.join(path, name), "rb").read()),
                         "reference": open(reference, encoding="utf-8").read(), "others": others})
     return samples
+
+
+def to_wav(data: bytes) -> bytes:
+    """Samples come as MP3/FLAC too: convert to 16 kHz mono WAV, as the device records"""
+    if data[:4] == b"RIFF":
+        return data
+    import subprocess
+    # Into a real file: a WAV piped to stdout has no valid length in its header
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "s.wav")
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-ac", "1",
+                        "-ar", "16000", out], input=data, capture_output=True, check=True)
+        with open(out, "rb") as f:
+            return f.read()
 
 
 def wav_seconds(data: bytes) -> float:

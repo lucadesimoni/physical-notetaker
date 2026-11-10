@@ -62,7 +62,8 @@ jobs:
           $app = "$env:LOCALAPPDATA\Programs\Notetaker"
           if (-not (Test-Path "$app\unins000.exe")) { throw "not installed to $app" }
           $info = (Get-Item $setup).VersionInfo
-          if ($info.CompanyName -ne "Outthinkx by Luca De Simoni") { throw "publisher in file: $($info.CompanyName)" }
+          $company = "$($info.CompanyName)".Trim([char]0, " ")
+          if ($company -ne "Outthinkx by Luca De Simoni") { throw "publisher in file: [$company] ($($company.Length) chars)" }
           "Installer details: $($info.CompanyName), $($info.ProductVersion)"
           $env:NOTETAKER_SETUP_ONLY = "1"
           powershell -NoProfile -ExecutionPolicy Bypass -File "$app\windows\start-notetaker.ps1"
