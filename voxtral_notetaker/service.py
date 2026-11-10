@@ -22,6 +22,7 @@ import threading
 from datetime import datetime
 from typing import Optional, Dict, Any, Callable
 
+from .swiss import is_swiss, swiss_spelling
 from .config import NotetakerConfig, find_config_path, load_config
 from .jobs import (JobStore, JobProcessor, Job, PENDING, PROCESSING, RECORDING, FAILED,
                    summarize_jobs)
@@ -254,6 +255,8 @@ class NotetakerService:
         self._live.start()
 
     def _live_item(self, kind: str, text: str):
+        if is_swiss(self.config.service.language):
+            text = swiss_spelling(text)
         self.live_items.append((kind, text))
         self.feedback.confirm(kind)
         # The web page shows what was said; window and log only the kind

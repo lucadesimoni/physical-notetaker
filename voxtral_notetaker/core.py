@@ -22,6 +22,7 @@ from .commands import CommandParser, CommandExecutor, CommandResult
 from .memo import Memo, Summarizer
 from .speakers import detect_speaker_names
 from .dialect import should_clean, clean_lines
+from .swiss import is_swiss, swiss_spelling
 from .announcements import strip_announcements
 from .fsutil import atomic_replace
 
@@ -194,6 +195,7 @@ class Notetaker:
         
         # The speakerphone also records the device's own announcements
         transcription = _without_announcements(transcription)
+        swiss = is_swiss(self.config.service.language)
         
         # Speaker recognition, named from introductions ("Ich bin Anna")
         speaker_segments = self._speaker_segments(audio_file, transcription, diarize)
@@ -206,6 +208,13 @@ class Notetaker:
         if should_clean(self.config, transcription.language):
             text = self._clean_dialect(text, speaker_segments)
         
+        # Swiss meetings: Swiss spelling (ss for ß, «quotes»)
+        if swiss and (transcription.language or 'de').lower().startswith('de'):
+            text = swiss_spelling(text)
+            for seg in speaker_segments:
+                if seg.get('text'):
+                    seg['text'] = swiss_spelling(seg['text'])
+        
         formatted_transcript = self._format_transcript_with_speakers(text, speaker_segments)
         if duration is None:
             duration = max((seg['end'] for seg in speaker_segments), default=0.0)
@@ -214,9 +223,12 @@ class Notetaker:
         self._command_executor.extract_from_transcript(
             formatted_transcript, transcription.language, start_time
         )
+        memo_language = transcription.language
+        if swiss and (memo_language or 'de').lower().startswith('de'):
+            memo_language = 'de-CH'
         memo = self.build_memo(
             transcript=formatted_transcript,
-            language=transcription.language,
+            language=memo_language,
             title=title,
             participants=speakers,
             date=start_time,
