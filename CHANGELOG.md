@@ -1,5 +1,54 @@
 # Changelog
 
+## 1.2.0 (2026-11-10)
+
+Windows installer, much better results with quiet microphones, Swiss
+Standard German, and log files for troubleshooting.
+
+### Downloads
+
+- **Windows (new, recommended):** `Notetaker-Setup-1.2.0.exe`. Double-click,
+  follow the installer, paste your Mistral API key. Start menu and desktop
+  shortcuts, uninstall via Windows settings (your settings and recordings
+  are kept). Windows may still show "Unknown publisher" until the installer
+  is code-signed.
+- **Windows (ZIP):** `notetaker-windows-v1.2.0.zip`, as before.
+- **Raspberry Pi:** `notetaker-raspberry-pi-v1.2.0.tar.gz`. Unpack, run
+  `sudo ./install.sh`.
+- **Python package:** `voxtral_notetaker-1.2.0-py3-none-any.whl`.
+
+### New
+
+- **Windows installer** with icon and publisher name; per user, no admin
+  rights needed.
+- **Swiss Standard German:** for Swiss meetings (de-CH, the default) the
+  transcript, memo and emails are written the Swiss way: "ss" instead of
+  "ß" ("Massnahme", "gross"), quotes «so»; Swiss words such as Traktandum,
+  Pendenz or Velo are kept.
+- **Quiet microphones:** recordings are raised to a good level before
+  transcription (a recording that was recognised badly was 30 dB too quiet);
+  the device warns after 30 seconds when the microphone is very quiet.
+- **Transcribe again:** a button on each meeting page redoes the
+  transcription from the audio.
+- **Log file for troubleshooting:** `logs/notetaker.log` with details of
+  every step, never with passwords, keys or meeting content; download it
+  under Einstellungen → Fehlersuche.
+- **Cleaner window:** a short start banner and status lines only.
+- **Benchmark:** `scripts/benchmark_swiss_german.py` measures Swiss German
+  accuracy on recordings with an official Standard German text, and can
+  compare with other systems (e.g. Plaud) on your own recordings.
+
+### Fixed
+
+- **Dialect clean-up lost text:** with long lines only the first part was
+  kept. It also reworded correct Standard German. It now keeps every line
+  whole and only touches lines with dialect words (measured on 40 official
+  Swiss German samples: word error rate 21 % → 14 %).
+- The device's own announcements ("Aufnahme gestartet ...") no longer
+  appear in the transcript.
+- Noise reduction is off by default; it made recognition worse.
+- No more technical setuptools messages when starting on Windows.
+
 ## 1.1.0 (2026-11-04)
 
 First release. Turns the original prototype into a device anyone can use:
