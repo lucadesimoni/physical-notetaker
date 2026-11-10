@@ -397,6 +397,12 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    *"Ändi vo de Wuche"*.
 5. **Introductions in dialect** name the speakers: *"I bi d'Sabine"*, *"Ich bi de Reto"*.
 
+6. **Swiss Standard German:** transcript, memo and emails are written the
+   Swiss way: *"ss"* instead of *"ß"* (*"Massnahme"*, *"gross"*), quotes
+   *«so»*, and Swiss words such as *Traktandum*, *Pendenz* or *Velo* are kept.
+   Applies when the meeting language is `de-CH` (the default); with `de`
+   the German spelling is kept.
+
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
 

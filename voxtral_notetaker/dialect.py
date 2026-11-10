@@ -21,6 +21,7 @@ from typing import List, Optional
 import httpx
 
 from .config import NotetakerConfig
+from .swiss import SWISS_STYLE
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +63,7 @@ PROMPT = (
     "- Zeilen, die schon Hochdeutsch oder Englisch sind, unverändert lassen.\n"
     "- Befehle sinngemäss übernehmen, z. B. «Mach es Notiz:» → «Mach eine Notiz:», "
     "«Erstell en Task:» → «Erstell einen Task:», «bis am Friitig» → «bis Freitag».\n"
+    f"- {SWISS_STYLE}\n"
     "- Jede Zeile beginnt mit ihrer Nummer und «|». Gib genau dieselben Nummern in "
     "derselben Reihenfolge zurück, eine Zeile pro Nummer, im Format «Nummer|Text».\n"
 )

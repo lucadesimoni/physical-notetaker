@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 import httpx
 
 from .config import SummaryConfig, VoxtralConfig
+from .swiss import SWISS_STYLE, is_swiss, swiss_spelling
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +85,16 @@ class Memo:
         return task.get('due') or '–'
 
     def to_markdown(self) -> str:
+        return self._swiss(self._markdown())
+
+    def to_text(self) -> str:
+        """Plain-text version, e.g. for an email body"""
+        return self._swiss(self._text())
+
+    def _swiss(self, text: str) -> str:
+        return swiss_spelling(text) if is_swiss(self.language) else text
+
+    def _markdown(self) -> str:
         lang = _lang_key(self.language)
         L = LABELS[lang]
         lines = [f"# {L['title']}: {self.title}", ""]
@@ -124,8 +135,7 @@ class Memo:
 
         return '\n'.join(lines)
 
-    def to_text(self) -> str:
-        """Plain-text version, e.g. for an email body"""
+    def _text(self) -> str:
         lang = _lang_key(self.language)
         L = LABELS[lang]
         lines = [f"{L['title']}: {self.title}",
@@ -190,6 +200,8 @@ class Summarizer:
 
         lang = _lang_key(language)
         system = SUMMARY_PROMPTS[lang].format(max_points=self.config.max_points)
+        if is_swiss(language):
+            system += " " + SWISS_STYLE
         try:
             response = httpx.post(
                 f"{self.base_url.rstrip('/')}/chat/completions",

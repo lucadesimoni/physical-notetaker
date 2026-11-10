@@ -269,3 +269,63 @@ def test_device_announcements_removed_from_transcript(tmp_path, monkeypatch):
     assert "Notiz notiert" not in result.transcript
     assert "Kannst du mit mir reden?" in result.transcript and "Gut, weiter." in result.transcript
     nt.close()
+
+
+# --- Swiss Standard German spelling ---------------------------------------------------
+
+def test_swiss_spelling():
+    from voxtral_notetaker.swiss import swiss_spelling
+    assert swiss_spelling("Das Maßnahmenprogramm ist groß, siehe „Traktandum 3“. STRAẞE") == \
+        "Das Massnahmenprogramm ist gross, siehe «Traktandum 3». STRASSE"
+    assert swiss_spelling("") == ""
+
+
+def _pipeline(tmp_path, monkeypatch, language):
+    config = NotetakerConfig()
+    config.service.language = language
+    config.storage.auto_upload = False
+    config.voxtral.dialect_cleanup = False
+    config.summary.enabled = False
+    nt = Notetaker(config)
+    audio = tmp_path / "m.wav"
+    audio.write_bytes(b"RIFF")
+    monkeypatch.setattr(nt, "transcribe", lambda f, lang, diarize=False, fast=False:
+                        TranscriptionResult(text="", language="de", confidence=None, duration=2,
+                                            segments=[
+                                                TranscriptSegment(0, 1, "Das Maßnahmenpaket ist groß.", "speaker_0"),
+                                                TranscriptSegment(1, 2, "Mach eine Notiz: Straße sperren.", "speaker_1"),
+                                            ]))
+    result = nt.process_recording(str(audio), start_time=REF)
+    nt.close()
+    return result
+
+
+def test_swiss_meeting_uses_swiss_spelling(tmp_path, monkeypatch):
+    result = _pipeline(tmp_path, monkeypatch, "de-CH")
+    assert "Massnahmenpaket ist gross" in result.transcript and "ß" not in result.transcript
+    assert result.memo.notes[0]["content"] == "Strasse sperren"
+    assert "ß" not in result.memo.to_markdown() and "ß" not in result.memo.to_text()
+    assert open(result.transcript_file, encoding="utf-8").read().count("ß") == 0
+
+
+def test_german_meeting_keeps_german_spelling(tmp_path, monkeypatch):
+    result = _pipeline(tmp_path, monkeypatch, "de")
+    assert "Maßnahmenpaket ist groß" in result.transcript
+
+
+def test_swiss_summary_prompt(monkeypatch):
+    from voxtral_notetaker.memo import Summarizer
+    config = NotetakerConfig()
+    config.voxtral.api_key = "k"
+    sent = []
+
+    def fake_post(url, headers, json, timeout):
+        sent.append(json["messages"][0]["content"])
+        return httpx.Response(200, json={"choices": [{"message": {"content": "- Budget groß"}}]},
+                              request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    summarizer = Summarizer(config.summary, config.voxtral)
+    summarizer.summarize("Text", "de-CH")
+    summarizer.summarize("Text", "de")
+    assert "Schweizer Hochdeutsch" in sent[0] and "Schweizer Hochdeutsch" not in sent[1]
