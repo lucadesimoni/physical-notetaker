@@ -226,3 +226,25 @@ def test_ordinary_swiss_german_is_not_a_command(text):
 ])
 def test_swiss_due_dates(text, due):
     assert parse_task_details(text, [], REF)["due_date"] == due
+
+
+def test_device_announcements_removed_from_transcript(tmp_path, monkeypatch):
+    config = NotetakerConfig()
+    config.storage.auto_upload = False
+    config.voxtral.dialect_cleanup = False
+    config.summary.enabled = False
+    nt = Notetaker(config)
+    audio = tmp_path / "m.wav"
+    audio.write_bytes(b"RIFF")
+    monkeypatch.setattr(nt, "transcribe", lambda f, lang, diarize=False, fast=False:
+                        TranscriptionResult(text="", language="de", confidence=None, duration=3,
+                                            segments=[
+                                                TranscriptSegment(0, 1, "Aufnahme gestartet, diese Besprechung wird aufgezeichnet.", "speaker_0"),
+                                                TranscriptSegment(1, 2, "Kannst du mit mir reden?", "speaker_1"),
+                                                TranscriptSegment(2, 3, "Notiz notiert. Gut, weiter.", "speaker_0"),
+                                            ]))
+    result = nt.process_recording(str(audio), start_time=REF)
+    assert "Aufnahme gestartet" not in result.transcript
+    assert "Notiz notiert" not in result.transcript
+    assert "Kannst du mit mir reden?" in result.transcript and "Gut, weiter." in result.transcript
+    nt.close()

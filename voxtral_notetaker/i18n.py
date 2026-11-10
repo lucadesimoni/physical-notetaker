@@ -373,3 +373,17 @@ def t(key: str, lang: str = 'de', **kwargs) -> str:
     """Translated text; falls back to German, then to the key itself"""
     text = TEXTS[normalize(lang)].get(key) or TEXTS['de'].get(key) or key
     return text.format(**kwargs) if kwargs else text
+
+
+def device_phrases() -> list:
+    """Every sentence the device itself says out loud, in both languages"""
+    import re
+    phrases = set()
+    for texts in TEXTS.values():
+        for key, text in texts.items():
+            if key.startswith('say_') and '{' not in text:
+                phrases.add(text.strip())  # the whole announcement, sentences may merge
+                for sentence in re.split(r'(?<=[.!?])\s+', text):
+                    if sentence.strip():
+                        phrases.add(sentence.strip())
+    return sorted(phrases)
