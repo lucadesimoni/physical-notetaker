@@ -208,6 +208,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._sticker()
         if path == '/api/status':
             return self._api_status()
+        if path == '/logs':
+            if self._is_local():
+                return self._send_log()
+            return self._redirect('/settings')
         if path.startswith('/meeting/'):
             return self._meeting(unquote(path[len('/meeting/'):]))
         if path.startswith('/file/'):
@@ -236,6 +240,18 @@ class Handler(BaseHTTPRequestHandler):
             return self._redirect('/')
         if path == '/settings':
             return self._save_settings(self._form())
+        if path == '/logs':
+            form = self._form()
+            pin = svc.config.web.pin
+            if self._is_local() or (pin and hmac.compare_digest(form.get('pin', ''), pin)):
+                return self._send_log()
+            time.sleep(1)
+            return self._settings(self.t('wrong_pin'), error=True)
+        if path.startswith('/meeting/') and path.endswith('/retranscribe'):
+            job_id = unquote(path[len('/meeting/'):-len('/retranscribe')])
+            if svc.retranscribe(job_id):
+                return self._meeting(job_id, self.t('retranscribe_started'))
+            return self._meeting(job_id)
         if path.startswith('/meeting/') and path.endswith('/speakers'):
             job_id = unquote(path[len('/meeting/'):-len('/speakers')])
             return self._save_speakers(job_id, self._form())
@@ -374,6 +390,13 @@ class Handler(BaseHTTPRequestHandler):
                 f'<br><button class="small">{escape(self.t("remake_memo"))}</button></form></div>'
             )
 
+        if os.path.exists(job.audio_file) and job.status not in (RECORDING, PROCESSING):
+            parts.append(
+                f'<div class="card"><p class="muted">{escape(self.t("retranscribe_hint"))}</p>'
+                f'<form method="post" action="/meeting/{jid}/retranscribe">'
+                f'<button class="small">{escape(self.t("retranscribe"))}</button></form></div>'
+            )
+
         parts.append(
             f'<p class="links"><a href="/file/{jid}/memo">{escape(self.t("download_memo"))}</a>'
             f'<a href="/file/{jid}/transcript">{escape(self.t("transcript"))}</a>'
@@ -428,6 +451,25 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(os.path.getsize(path)))
         self.send_header('Content-Disposition',
                          f'attachment; filename="{os.path.basename(path)}"')
+        self.end_headers()
+        with open(path, 'rb') as f:
+            while True:
+                chunk = f.read(256 * 1024)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+
+    def _send_log(self):
+        from .logsetup import log_file_path
+        path = log_file_path()
+        if not path or not os.path.exists(path):
+            return self._not_found()
+        log.info("Log file downloaded from the web page")
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain; charset=utf-8')
+        self.send_header('Content-Length', str(os.path.getsize(path)))
+        self.send_header('Content-Disposition', 'attachment; filename="notetaker.log"')
+        self.send_header('Cache-Control', 'no-store')
         self.end_headers()
         with open(path, 'rb') as f:
             while True:
@@ -496,6 +538,12 @@ class Handler(BaseHTTPRequestHandler):
         else:
             pin_html = (field('pin', 'pin', kind='password', hint=self.t('pin_hint')) +
                         field('new_pin', 'new_pin', kind='password'))
+        if local:
+            log_html = f'<a href="/logs">{escape(self.t("download_log"))}</a>'
+        else:
+            log_html = (f'<form method="post" action="/logs">{field("log_pin", "pin", kind="password")}'
+                        f'<br><button class="small">{escape(self.t("download_log"))}</button></form>')
+            log_html = log_html.replace('name="log_pin"', 'name="pin"')
         meeting_langs = [(v, self.t(f'lang_{v}')) for v in MEETING_LANGUAGES]
         ui_langs = [('de', 'Deutsch'), ('en', 'English')]
 
@@ -537,7 +585,9 @@ class Handler(BaseHTTPRequestHandler):
 </div>
 <div class="card">{pin_html}
 <br><button class="big">{escape(self.t('save'))}</button></div>
-</form>"""
+</form>
+<div class="card"><h2>{escape(self.t('support_section'))}</h2>
+<p class="muted">{escape(self.t('log_hint'))}</p>{log_html}</div>"""
         self._html(self.t('settings'), body)
 
     def _save_settings(self, form: Dict[str, str]):

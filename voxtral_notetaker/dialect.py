@@ -116,4 +116,6 @@ def clean_lines(lines: List[str], config: NotetakerConfig) -> List[str]:
         except Exception as e:
             log.warning("Swiss German clean-up skipped for %d line(s): %s", len(chunk), e)
             out.extend(chunk)
+    changed = sum(1 for old, new in zip(lines, out) if old != new)
+    log.info("Swiss German clean-up: %d of %d line(s) changed", changed, len(lines))
     return out

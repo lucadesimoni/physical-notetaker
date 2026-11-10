@@ -34,7 +34,9 @@ class AudioConfig:
     sample_rate: int = 16000
     channels: int = 1
     device_index: Optional[int] = None
-    noise_reduction: bool = True
+    # Off by default: speech recognition copes better with the raw audio than with
+    # noise-reduced audio (artifacts). Quiet recordings are raised instead.
+    noise_reduction: bool = False
 
 
 @dataclass
@@ -134,6 +136,7 @@ class DeviceConfig:
 class ServiceConfig:
     """Background service: autostart, crash recovery and the processing queue"""
     recordings_dir: str = "./recordings"
+    log_dir: str = "./logs"             # notetaker.log for debugging (rotated, 5 x 5 MB)
     language: str = "de-CH"             # meeting language: de-CH, de, en, auto
     ui_language: str = "de"             # web page and announcements: de or en
     retry_interval_seconds: int = 300   # first retry after a failure; doubles up to 1 hour

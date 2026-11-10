@@ -13,6 +13,7 @@ import json
 import time
 import glob
 import socket
+import logging
 import smtplib
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Callable
@@ -25,6 +26,8 @@ from .config import NotetakerConfig, Language
 from .notify import build_memo_email, send_email, memo_subject
 from .i18n import t
 from .fsutil import atomic_replace, read_text
+
+log = logging.getLogger(__name__)
 
 RECORDING = 'recording'
 PENDING = 'pending'
@@ -57,6 +60,7 @@ class Job:
     upload_urls: List[str] = field(default_factory=list)
     emailed: bool = False
     noise_reduced: bool = False
+    level_checked: bool = False
     audio_deleted: bool = False
     speakers: Dict[str, str] = field(default_factory=dict)           # id -> name in the memo
     speaker_overrides: Dict[str, str] = field(default_factory=dict)  # names set by the user
@@ -226,10 +230,14 @@ class JobProcessor:
         job.status = PROCESSING
         job.attempts += 1
         self.store.save(job)
+        started = time.time()
+        log.info("%s: processing (attempt %d, %s of audio)", job.id, job.attempts,
+                 f"{job.duration:.0f} s" if job.duration else "unknown length")
         try:
             self._run_stages(job)
             job.status = DONE
             job.last_error = None
+            log.info("%s: done in %.1f s", job.id, time.time() - started)
         except Exception as e:
             job.last_error = describe_error(e, self.lang)
             limit = self.config.service.max_attempts
@@ -237,10 +245,20 @@ class JobProcessor:
                 job.status = PENDING
                 delay = self.config.service.retry_interval_seconds * 2 ** (job.attempts - 1)
                 job.next_attempt_at = time.time() + min(delay, MAX_RETRY_SECONDS)
+                log.warning("%s: %s; retry in %d min", job.id, type(e).__name__,
+                            min(delay, MAX_RETRY_SECONDS) // 60, exc_info=True)
             else:
                 job.status = FAILED
+                log.error("%s: failed, needs attention: %s", job.id, job.last_error, exc_info=True)
         self.store.save(job)
         return job
+
+    def _stage(self, job: Job, name: str, action):
+        """Run one stage and log how long it took"""
+        started = time.time()
+        log.info("%s: %s ...", job.id, name)
+        action()
+        log.info("%s: %s finished in %.1f s", job.id, name, time.time() - started)
 
     def _run_stages(self, job: Job):
         from .core import transcription_cache_path
@@ -250,20 +268,29 @@ class JobProcessor:
 
         if has_audio and self.config.audio.noise_reduction and not job.noise_reduced:
             from .audio import reduce_noise_file
-            reduce_noise_file(job.audio_file)
+            self._stage(job, "noise reduction", lambda: reduce_noise_file(job.audio_file))
             job.noise_reduced = True  # once only, even if noisereduce is missing
+            self.store.save(job)
+
+        if has_audio and not job.level_checked:
+            # Too-quiet microphones are the most common cause of poor recognition
+            from .audio import normalize_file
+            self._stage(job, "level check", lambda: normalize_file(job.audio_file))
+            job.level_checked = True
             self.store.save(job)
         
         if not job.memo_file or not os.path.exists(job.memo_file):
-            self._make_memo(job)
+            self._stage(job, "transcript and memo", lambda: self._make_memo(job))
             self.store.save(job)  # memo is safe even if upload/email fail later
 
         if self.config.storage.auto_upload and not job.uploaded:
-            self._upload(job)
+            self._stage(job, f"upload ({self.config.storage.provider.value})",
+                        lambda: self._upload(job))
             self.store.save(job)
 
         if self.config.email.ready and not job.emailed:
-            self._email(job)
+            self._stage(job, f"email to {len(self.config.email.to_emails)} recipient(s)",
+                        lambda: self._email(job))
 
     def _make_memo(self, job: Job):
         if not self.config.voxtral.resolved_api_key():

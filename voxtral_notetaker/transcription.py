@@ -121,6 +121,10 @@ class VoxtralTranscriber:
             audio_data = f.read()
 
         form = self._form(language, diarize, fast, hints)
+        log.info("Transcribing %s (%.1f MB) with %s%s%s", os.path.basename(audio_file),
+                 len(audio_data) / 1e6, form['model'], ", speaker labels" if diarize else "",
+                 f", {len(form.get('context_bias', []))} vocabulary term(s)"
+                 if form.get('context_bias') else "")
         retries = max(1, self.config.max_retries)
         async with self._make_client() as client:
             for attempt in range(retries):
@@ -133,7 +137,14 @@ class VoxtralTranscriber:
                         files={'file': (os.path.basename(audio_file), audio_data)}
                     )
                     response.raise_for_status()
-                    return self._parse(response.json(), language, time.time() - start)
+                    result = self._parse(response.json(), language, time.time() - start)
+                    # Sizes and counts only: what was said never goes into the log
+                    log.info("Transcribed in %.1f s: language %s, %d segment(s), %d speaker(s), "
+                             "%d characters", result.duration, result.language,
+                             len(result.segments),
+                             len({s.speaker_id for s in result.segments if s.speaker_id}),
+                             len(result.text))
+                    return result
                 except HTTPStatusError as e:
                     if e.response.status_code in (400, 422) and 'context_bias' in form:
                         # The vocabulary must never cost a transcription: retry without it

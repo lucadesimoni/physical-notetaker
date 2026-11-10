@@ -9,7 +9,7 @@ audio:
   sample_rate: 16000      # Hz; 16000 is ideal for speech
   channels: 1             # 1 = mono
   device_index: null      # null = auto-detect (prefers Jabra / conference mics)
-  noise_reduction: true   # applied after the meeting, needs the noisereduce package
+  noise_reduction: false  # off: speech recognition prefers the raw audio; quiet audio is raised instead
 
 # Mistral Voxtral transcription (https://docs.mistral.ai/studio/audio/overview)
 voxtral:
@@ -81,6 +81,7 @@ device:
 # Background service
 service:
   recordings_dir: "./recordings"
+  log_dir: "./logs"       # notetaker.log for debugging (rotated, 5 x 5 MB)
   language: de-CH         # meeting language: de-CH (Swiss German), de, en, auto
   ui_language: de         # web page and announcements: de or en
   retry_interval_seconds: 300  # first retry when offline; doubles up to 1 hour

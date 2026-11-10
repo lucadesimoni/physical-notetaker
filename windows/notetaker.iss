@@ -24,7 +24,6 @@
 #define AppPublisher "Outthinkx by Luca De Simoni"
 #define AppUrl "https://github.com/lucadesimoni/physical-notetaker"
 #define PowerShell "{sys}\WindowsPowerShell\v1.0\powershell.exe"
-#define StartArgs "-NoProfile -ExecutionPolicy Bypass -File ""{app}\windows\start-notetaker.ps1"""
 
 [Setup]
 AppId={{7E3C6E2A-5B7D-4C9E-9A63-0B1F2D8C4A11}
@@ -88,12 +87,12 @@ Source: "{#SourceRoot}\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\config.example.yaml"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{#PowerShell}"; Parameters: "{#StartArgs}"; WorkingDir: "{app}"; IconFilename: "{app}\windows\notetaker.ico"
+Name: "{group}\{#AppName}"; Filename: "{#PowerShell}"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\windows\start-notetaker.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\windows\notetaker.ico"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\{#AppName}"; Filename: "{#PowerShell}"; Parameters: "{#StartArgs}"; WorkingDir: "{app}"; IconFilename: "{app}\windows\notetaker.ico"; Tasks: desktopicon
+Name: "{userdesktop}\{#AppName}"; Filename: "{#PowerShell}"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\windows\start-notetaker.ps1"""; WorkingDir: "{app}"; IconFilename: "{app}\windows\notetaker.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{#PowerShell}"; Parameters: "{#StartArgs}"; WorkingDir: "{app}"; Description: "{cm:LaunchNow}"; Flags: postinstall nowait skipifsilent
+Filename: "{#PowerShell}"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\windows\start-notetaker.ps1"""; WorkingDir: "{app}"; Description: "{cm:LaunchNow}"; Flags: postinstall nowait skipifsilent
 
 [UninstallDelete]
 ; The Python environment and caches are created by the first start.

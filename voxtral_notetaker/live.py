@@ -18,6 +18,7 @@ from typing import Callable, Optional
 
 from .config import NotetakerConfig, Language
 from .commands import CommandType, split_transcript
+from .audio import normalize_file
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class LiveListener:
         self._thread: Optional[threading.Thread] = None
         self._position = 0          # frames already checked
         self._notetaker = None
+        self._skip_logged = False
 
     def start(self):
         self._thread = threading.Thread(target=self._run, daemon=True, name="live")
@@ -79,7 +81,14 @@ class LiveListener:
                 self.check_once()
             except Exception as e:
                 # Never disturb the meeting: the memo is made from the full recording anyway
-                log.info("Live check skipped: %s", e)
+                # Offline for a while: say so once, not every 30 seconds
+                if not self._skip_logged:
+                    self._skip_logged = True
+                    log.info("Live voice check skipped (will keep trying): %s", e)
+                else:
+                    log.debug("Live voice check skipped: %s", e)
+            else:
+                self._skip_logged = False
 
     def _language(self) -> Language:
         try:
@@ -103,6 +112,7 @@ class LiveListener:
             self._position = end
             if self._notetaker is None:
                 self._notetaker = self.notetaker_factory(self.config)
+            normalize_file(chunk)  # a quiet microphone would hide the command
             result = self._notetaker.transcribe(chunk, self._language(), fast=True)
         finally:
             os.remove(chunk)

@@ -29,12 +29,14 @@ from .device import Feedback, Controls
 from .disk import (cleanup, free_bytes, format_size, MB, HARD_MIN_FREE_BYTES,
                    STOP_RECORDING_FREE_BYTES)
 from .i18n import t
+from .logsetup import status, SECRETS, secrets_from_config
 from .audio import SILENCE_PEAK
 
 log = logging.getLogger(__name__)
 
 WARN_BEFORE_LIMIT_SECONDS = 5 * 60
 SILENCE_CHECK_SECONDS = 15  # warn if the microphone delivered nothing by then
+QUIET_CHECK_SECONDS = 30    # warn if speech is still far too quiet by then
 DISK_CHECK_SECONDS = 30
 
 
@@ -65,6 +67,7 @@ class NotetakerService:
         self._recording_since: Optional[float] = None
         self._warned = False
         self._silence_checked = False
+        self._quiet_checked = False
         self._last_disk_check = 0.0
         self._worker: Optional[threading.Thread] = None
         self._controls: Optional[Controls] = None
@@ -77,8 +80,9 @@ class NotetakerService:
         return self.config.service.ui_language
 
     def _event(self, key: str, **kwargs):
+        """Show an event on the web page and as a status line in the window and log"""
         self.last_event = t(key, self.lang, **kwargs)
-        log.info(self.last_event)
+        status(self.last_event)
 
     # --- lifecycle ---------------------------------------------------------
 
@@ -110,9 +114,10 @@ class NotetakerService:
         # current recording is saved and queued
         signal.signal(signal.SIGTERM, lambda *_: self._stop.set())
         self.start(web=web)
-        if console and sys.stdin is not None and sys.stdin.isatty():
-            # In a terminal (Windows test, SSH): Enter starts and stops
-            print(t('console_hint', self.lang))
+        interactive = console and sys.stdin is not None and sys.stdin.isatty()
+        self._print_banner(web, interactive)
+        if interactive:
+            # In a terminal (Windows, SSH): Enter starts and stops
             threading.Thread(target=self._read_console, daemon=True, name="console").start()
         try:
             while not self._stop.is_set():
@@ -122,6 +127,26 @@ class NotetakerService:
             pass
         finally:
             self.shutdown()
+
+    def _print_banner(self, web: bool, interactive: bool):
+        """A few clear lines when the window opens; details go to the log file"""
+        if not (sys.stdout and sys.stdout.isatty()):
+            return  # e.g. running as a service: the journal gets the log lines
+        from . import __version__
+        from .network import local_page_url, device_urls
+        from .logsetup import log_file_path
+        lines = ["", f"  {t('banner_title', self.lang, version=__version__)}", ""]
+        if web and self.config.web.enabled:
+            lines.append(f"  {t('banner_web', self.lang):<14}{local_page_url(self.config.web)}")
+            if self.config.web.host != '127.0.0.1':
+                lines.append(f"  {t('banner_phone', self.lang):<14}"
+                             f"{', '.join(device_urls(self.config.web.port))}")
+        if interactive:
+            lines.append(f"  {'Enter':<14}{t('banner_enter', self.lang)}")
+        lines.append(f"  {'Ctrl+C':<14}{t('banner_quit', self.lang)}")
+        if log_file_path():
+            lines.append(f"  {t('banner_log', self.lang):<14}{log_file_path()}")
+        print("\n".join(lines + [""]), flush=True)
 
     def _read_console(self, stream=None):
         stream = stream or sys.stdin
@@ -207,6 +232,7 @@ class NotetakerService:
             self._recording_since = time.time()
             self._warned = False
             self._silence_checked = False
+            self._quiet_checked = False
             self.live_items = []
             self.feedback.recording()
             if free < self.config.service.min_free_mb * MB:
@@ -230,7 +256,9 @@ class NotetakerService:
     def _live_item(self, kind: str, text: str):
         self.live_items.append((kind, text))
         self.feedback.confirm(kind)
-        self._event('ev_live_item', item=text)
+        # The web page shows what was said; window and log only the kind
+        self.last_event = t('ev_live_item', self.lang, item=text)
+        status(t(f'say_{kind}', self.lang))
 
     def _voice_stop(self):
         # Called from the live thread: stop in another thread, which joins the live one
@@ -287,11 +315,17 @@ class NotetakerService:
             self._event('ev_time_limit')
             return
 
+        audio = getattr(self._recorder, 'audio', None)
         if not self._silence_checked and elapsed >= SILENCE_CHECK_SECONDS:
             self._silence_checked = True
-            audio = getattr(self._recorder, 'audio', None)
             if audio is not None and getattr(audio, 'is_silent', False):
                 self._warn_silent()
+        if not self._quiet_checked and elapsed >= QUIET_CHECK_SECONDS:
+            self._quiet_checked = True
+            if audio is not None and getattr(audio, 'is_quiet', False):
+                # Still recorded and raised later, but recognition suffers
+                self.feedback.warning()
+                self._event('ev_quiet_windows' if sys.platform == 'win32' else 'ev_quiet')
 
         now = time.time()
         if now - self._last_disk_check >= DISK_CHECK_SECONDS:
@@ -351,6 +385,21 @@ class NotetakerService:
         self._wake.set()
         return count
 
+    def retranscribe(self, job_id: str) -> bool:
+        """
+        Transcribe a recording again from the audio (e.g. after the level fix or
+        with new vocabulary): the saved transcription and the memo are dropped.
+        """
+        from .core import transcription_cache_path
+        job = self.store.get(job_id)
+        if not job or job.status in (RECORDING, PROCESSING) or not os.path.exists(job.audio_file):
+            return False
+        cache = transcription_cache_path(job.audio_file)
+        if os.path.exists(cache):
+            os.remove(cache)
+        log.info("%s: transcribing again on request", job_id)
+        return self.remake_memo(job_id, job.speaker_overrides, resend_email=True)
+
     def remake_memo(self, job_id: str, names: Dict[str, str], resend_email: bool = True) -> bool:
         """
         Create the memo again with corrected speaker names. Uses the cached
@@ -386,6 +435,7 @@ class NotetakerService:
             except OSError:
                 pass
             self.config = config
+            SECRETS.set_secrets(secrets_from_config(config))
             self.store = JobStore(config.service.recordings_dir)
             self.feedback.lang = config.service.ui_language
             if getattr(self.feedback, 'voice', None):

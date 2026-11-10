@@ -4,9 +4,12 @@
 Lean speaker diarization for voice recognition
 """
 
+import logging
 import os
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,7 +41,7 @@ class SpeakerDiarizer:
                 use_auth_token=self._auth_token
             )
         except Exception as e:
-            print(f"Diarization disabled: {e}")
+            log.warning("Local speaker detection (pyannote) unavailable: %s", e)
             self._pipeline = None
     
     def diarize(self, audio_file: str, max_speakers: int = 10) -> List[SpeakerSegment]:
@@ -62,7 +65,7 @@ class SpeakerDiarizer:
             
             return segments
         except Exception as e:
-            print(f"Diarization failed: {e}")
+            log.warning("Local speaker detection failed: %s", e, exc_info=True)
             return []
     
     def set_speaker_name(self, speaker_id: str, name: str):

@@ -78,3 +78,10 @@ def speakable_address(ip: str, port: int, lang: str = 'de') -> str:
     if port != 80:
         text += (', Port ' if lang.startswith('de') else ', port ') + ' '.join(str(port))
     return text
+
+
+def local_page_url(web) -> str:
+    """The address of the web page on this machine"""
+    # 127.0.0.1 rather than localhost: Windows may try IPv6 (::1) first
+    host = '127.0.0.1' if web.host in ('127.0.0.1', '0.0.0.0', '') else 'localhost'
+    return f"http://{host}{'' if web.port == 80 else f':{web.port}'}"

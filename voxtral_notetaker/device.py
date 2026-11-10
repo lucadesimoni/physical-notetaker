@@ -139,6 +139,7 @@ class Feedback:
         self._pyaudio = None
         self._output_index = None
         self._lock = threading.Lock()
+        self._sound_warned = False
         self.voice = Voice(lang, config.piper_model, cache_dir) if config.voice else None
         if self.voice and not self.voice.available:
             log.info("No speech engine (install espeak-ng): using tones only")
@@ -153,9 +154,14 @@ class Feedback:
 
         if config.beeps or self.voice:
             try:
-                import pyaudio
-                self._pyaudio = pyaudio.PyAudio()
-                self._output_index = self._find_output()
+                from .audio import open_pyaudio
+                self._pyaudio = open_pyaudio()
+                if self._pyaudio is None:
+                    log.warning("Sound output disabled: PyAudio is not installed")
+                else:
+                    self._output_index = self._find_output()
+                    log.info("Sound output: %s", "speakerphone (index %s)" % self._output_index
+                             if self._output_index is not None else "default device")
             except Exception as e:
                 log.warning("Sound output disabled: %s", e)
                 self._pyaudio = None
@@ -216,7 +222,12 @@ class Feedback:
             stream.stop_stream()
             stream.close()
         except Exception as e:
-            log.warning("Sound output failed: %s", e)
+            # No speaker is not worth a warning every time: once per run
+            if not self._sound_warned:
+                self._sound_warned = True
+                log.warning("Sound output failed (beeps/voice off until restart?): %s", e)
+            else:
+                log.debug("Sound output failed: %s", e)
 
     def _play_wav(self, path: str):
         try:
