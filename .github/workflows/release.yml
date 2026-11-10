@@ -83,6 +83,65 @@ jobs:
           cd user\notetaker-%TAG%
           venv\Scripts\python windows\smoke_test.py
 
+  windows-installer:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Notetaker-Setup.exe from the release ZIP (signed when a certificate is set)
+        shell: pwsh
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+          # Optional repository secrets for code signing (Settings -> Secrets -> Actions):
+          #   WINDOWS_SIGN_PFX_BASE64  the .pfx certificate, base64 encoded
+          #   WINDOWS_SIGN_PFX_PASSWORD  its password
+          SIGN_PFX: ${{ secrets.WINDOWS_SIGN_PFX_BASE64 }}
+          SIGN_PASSWORD: ${{ secrets.WINDOWS_SIGN_PFX_PASSWORD }}
+        run: |
+          Expand-Archive -Path "notetaker-windows-$env:TAG.zip" -DestinationPath staging
+          $src = "$PWD\staging\notetaker-$env:TAG"
+          $version = $env:TAG.TrimStart('v')
+          $inno = "${env:ProgramFiles(x86)}\Inno Setup 6"
+          if (-not (Test-Path "$inno\ISCC.exe")) { choco install innosetup -y --no-progress | Out-Null }
+          $isccArgs = @("/Q", "/DAppVersion=$version", "/DSourceRoot=$src", "/DOutputDir=$PWD\installer")
+          if ($env:SIGN_PFX) {
+            $pfx = "$env:RUNNER_TEMP\sign.pfx"
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_PFX))
+            $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+                         Sort-Object FullName | Select-Object -Last 1).FullName
+            $isccArgs += "/DSign"
+            $isccArgs += "/Ssigntool=`"$signtool`" sign /f `$q$pfx`$q /p `$q$env:SIGN_PASSWORD`$q /fd sha256 /tr http://timestamp.digicert.com /td sha256 `$f"
+            "Signing with the certificate from the repository secrets"
+          } else {
+            "No signing certificate set: the installer is unsigned (Windows shows 'Unknown publisher')"
+          }
+          & "$inno\ISCC.exe" @isccArgs "$src\windows\notetaker.iss"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Get-ChildItem installer | Format-Table Name, Length
+      - name: Install silently, use it, uninstall
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem installer\Notetaker-Setup-*.exe).FullName
+          Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          $app = "$env:LOCALAPPDATA\Programs\Notetaker"
+          $env:NOTETAKER_SETUP_ONLY = "1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$app\windows\start-notetaker.ps1"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Remove-Item env:NOTETAKER_SETUP_ONLY
+          & "$app\venv\Scripts\python.exe" "$app\windows\smoke_test.py"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Start-Process "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES' -Wait
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: installer/
+
   test-pi-archive:
     needs: build
     runs-on: ubuntu-24.04-arm
@@ -108,7 +167,7 @@ jobs:
           ./deploy/smoke_test.sh
 
   publish:
-    needs: [build, test-windows-zip, test-pi-archive]
+    needs: [build, test-windows-zip, windows-installer, test-pi-archive]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -117,6 +176,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer
           path: dist
       - name: Release notes from CHANGELOG.md
         env:

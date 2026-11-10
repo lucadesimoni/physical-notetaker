@@ -75,13 +75,19 @@ $Marker = Join-Path $Venv ".installed"
 $Hash = (Get-FileHash (Join-Path $Root "requirements.txt")).Hash + (Get-FileHash (Join-Path $Root "setup.py")).Hash
 if (-not (Test-Path $Marker) -or (Get-Content $Marker -Raw).Trim() -ne $Hash) {
     Write-Step "Installing packages (first start: a few minutes, please wait)"
-    & $VenvPython -m pip install --quiet --upgrade pip
+    # pip and its build tools print harmless warnings that look alarming:
+    # keep their output in a log and show it only if installing fails
+    $Log = Join-Path $Venv "install.log"
+    & $VenvPython -m pip install --quiet --upgrade pip *> $Log
     # Editable install: 'git pull' updates the program without reinstalling
-    & $VenvPython -m pip install --quiet -e $Root
+    & $VenvPython -m pip install --quiet -e $Root *>> $Log
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
-        Write-Host "Installing failed. If the error mentions PyAudio, install Python 3.12" -ForegroundColor Red
-        Write-Host "and delete the 'venv' folder, then start again."
+        Get-Content $Log -Tail 30
+        Write-Host ""
+        Write-Host "Installing failed (full log: $Log)." -ForegroundColor Red
+        Write-Host "If the error mentions PyAudio, install Python 3.12, delete the 'venv' folder"
+        Write-Host "and start again."
         exit 1
     }
     Set-Content -Path $Marker -Value $Hash
@@ -107,7 +113,9 @@ c.save('config.yaml')
 # Desktop shortcut, so next time it is one double-click from the desktop
 $Desktop = [Environment]::GetFolderPath("Desktop")
 $Shortcut = Join-Path $Desktop "Notetaker.lnk"
-if ($Desktop -and -not (Test-Path $Shortcut)) {
+# Installed with Notetaker-Setup.exe: the installer manages the shortcuts
+$Installed = Test-Path (Join-Path $Root "unins000.exe")
+if ($Desktop -and -not $Installed -and -not (Test-Path $Shortcut)) {
     try {
         $shell = New-Object -ComObject WScript.Shell
         $link = $shell.CreateShortcut($Shortcut)

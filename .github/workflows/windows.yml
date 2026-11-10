@@ -41,3 +41,44 @@ jobs:
       - name: Smoke test (real service, web page, Windows voice)
         shell: cmd
         run: venv\Scripts\python windows\smoke_test.py
+
+      # The Windows installer (Notetaker-Setup.exe), installed like a user would
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $inno = "${env:ProgramFiles(x86)}\Inno Setup 6"
+          if (-not (Test-Path "$inno\ISCC.exe")) { choco install innosetup -y --no-progress | Out-Null }
+          $version = (Select-String -Path voxtral_notetaker\__init__.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
+          & "$inno\ISCC.exe" /Q "/DAppVersion=$version" "/DSourceRoot=$PWD" "/DOutputDir=$PWD\dist" windows\notetaker.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Get-ChildItem dist\Notetaker-Setup-*.exe | Format-Table Name, Length
+
+      - name: Install silently, set up and use it from the installed folder
+        shell: pwsh
+        run: |
+          Remove-Item "$env:USERPROFILE\Desktop\Notetaker.lnk" -ErrorAction SilentlyContinue
+          $setup = (Get-ChildItem dist\Notetaker-Setup-*.exe).FullName
+          Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          $app = "$env:LOCALAPPDATA\Programs\Notetaker"
+          if (-not (Test-Path "$app\unins000.exe")) { throw "not installed to $app" }
+          $info = (Get-Item $setup).VersionInfo
+          if ($info.CompanyName -ne "Outthinkx by Luca De Simoni") { throw "publisher in file: $($info.CompanyName)" }
+          "Installer details: $($info.CompanyName), $($info.ProductVersion)"
+          $env:NOTETAKER_SETUP_ONLY = "1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$app\windows\start-notetaker.ps1"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Remove-Item env:NOTETAKER_SETUP_ONLY
+          & "$app\venv\Scripts\python.exe" "$app\windows\smoke_test.py"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Uninstall removes the program, keeps settings
+        shell: pwsh
+        run: |
+          $app = "$env:LOCALAPPDATA\Programs\Notetaker"
+          Start-Process "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES' -Wait
+          Start-Sleep -Seconds 3
+          foreach ($gone in @("$app\venv", "$app\voxtral_notetaker", "$env:USERPROFILE\Desktop\Notetaker.lnk")) {
+            if (Test-Path $gone) { throw "still there after uninstall: $gone" }
+          }
+          if (-not (Test-Path "$app\config.yaml")) { throw "settings were deleted" }
+          "Uninstall OK (settings kept)"
