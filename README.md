@@ -403,15 +403,14 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    Applies when the meeting language is `de-CH` (the default); with `de`
    the German spelling is kept.
 
-7. **Places that are certain are marked:** *"nach 📍Hindelbank"*, and listed
-   under *Orte* in the memo. Certain means: exactly an official Swiss
-   municipality or locality name (about 4,400, from the Federal Statistical
-   Office and GeoNames), after a place word (*in, nach, aus, bei, durch …*),
-   in a list after one, or a multi-word official name (*Küssnacht am Rigi*).
-   Only names the speech recognition itself heard are marked, never names a
-   language model put in; ordinary words (*Dorf, Wald*) and surnames
-   (*Frau von Gunten*) are not. Measured: 31 of 32 marks correct. Turn it off
-   with `voxtral.mark_places: false`.
+7. **Swiss place names and dialect words help the transcription:** speech
+   recognition often mishears small places (*"Meltigen"*, *"Genpe"*). The
+   most similar official names (about 4,400 municipalities and localities,
+   from the Federal Statistical Office and GeoNames) are given to the
+   clean-up as hints, so it writes *Meltingen* or *Gempen* where that clearly
+   fits, and never guesses another place. A list of 2,700 dialect words from
+   the Swiss German Wikipedia (CC BY-SA 4.0) helps it find dialect lines.
+   Turn the place hints off with `voxtral.place_hints: false`.
 
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
@@ -420,12 +419,12 @@ the recording (`….segments.json`).
 transcription on Swiss German recordings with an official Standard German
 reference. Word error rate (lower is better):
 
-| Setup | Parliament speeches¹ | Dialect sentences² |
-|---|---|---|
-| Voxtral Small, speaker labels, no clean-up | 14.1 % | 51.9 % |
-| **+ dialect clean-up (device default)** | **14.0 %** | **44.2 %** |
-| Voxtral Small, language fixed to German | 14.3 % | – |
-| Voxtral Mini, language fixed to German | 14.8 % | – |
+| Setup | Parliament speeches¹ | Dialect sentences² | Place names right² |
+|---|---|---|---|
+| Voxtral Small, speaker labels, no clean-up | 14.0 % | 53.2 % | 13 % |
+| **+ clean-up with place hints (device default)** | **14.3 %** | **41.4 %** | **27 %** |
+| Voxtral Small, language fixed to German | 14.3 % | – | – |
+| Voxtral Mini, language fixed to German | 14.8 % | – | – |
 
 ¹ 40 samples (112 min) of the open SPC_R test set (Bernese parliament,
 CC BY 4.0): clear speech, Voxtral already writes Standard German.
