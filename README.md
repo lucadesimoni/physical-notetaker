@@ -408,8 +408,11 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    most similar official names (about 4,400 municipalities and localities,
    from the Federal Statistical Office and GeoNames) are given to the
    clean-up as hints, so it writes *Meltingen* or *Gempen* where that clearly
-   fits, and never guesses another place. A list of 2,700 dialect words from
-   the Swiss German Wikipedia (CC BY-SA 4.0) helps it find dialect lines.
+   fits, and never guesses another place. About 4,500 dialect words and
+   1,300 dialect nouns from the Swiss German Wikipedia and the Alemannic
+   entries of Wiktionary (both CC BY-SA 4.0, files in
+   `voxtral_notetaker/data/`) help it find dialect lines, without taking
+   Standard German or English for dialect.
    Turn the place hints off with `voxtral.place_hints: false`.
 
 8. **Names learned from past meetings:** speaker names you corrected on a
