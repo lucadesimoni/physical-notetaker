@@ -22,6 +22,7 @@ voxtral:
   vocabulary: []          # names and terms, e.g. ["Anna Meier", "TWINT", "Outthinkx"]
   dialect_cleanup: true   # Swiss German: dialect in the transcript -> Standard German
   dialect_model: mistral-medium-3-5  # model for the clean-up (Mistral Medium 3.5)
+  mark_places: true       # mark Swiss places that are certain: "nach 📍Hindelbank"
 
 # Speaker recognition
 diarization:

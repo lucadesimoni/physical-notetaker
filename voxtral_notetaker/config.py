@@ -55,6 +55,8 @@ class VoxtralConfig:
     dialect_cleanup: bool = True
     # Language model for that clean-up (Mistral Medium 3.5: measured best for dialect)
     dialect_model: str = "mistral-medium-3-5"
+    # Mark Swiss places that are certain in the transcript ("nach 📍Hindelbank")
+    mark_places: bool = True
 
     def resolved_api_key(self) -> str:
         """API key from config, or the MISTRAL_API_KEY environment variable"""
