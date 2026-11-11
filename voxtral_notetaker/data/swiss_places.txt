@@ -264,8 +264,6 @@ Bas-Intyamon
 Basadingen
 Basadingen-Schlattingen
 Basel
-Basel PF OC
-Basel SPI GLS
 Basse-Allaine
 Basse-Nendaz
 Bassecourt
@@ -326,10 +324,6 @@ Berken
 Berlens
 Berlingen
 Bern
-Bern PF OC
-Bern PostFinance
-Bern Swisscom
-Bern UBS
 Bern Verarb.zentr.
 Berneck
 Bernex
@@ -2680,7 +2674,6 @@ Nesslau
 Netstal
 Neu St. Johann
 Neuchâtel
-Neuchâtel OFS
 Neudorf
 Neuendorf
 Neuenegg
@@ -2916,7 +2909,6 @@ Ospizio Bernina
 Ossingen
 Osterfingen
 Ostermundigen
-Ostermundigen KATA
 Otelfingen
 Othmarsingen
 Ottenbach
@@ -3533,7 +3525,6 @@ Schwändi b. Schwanden
 Schänis
 Schöfflisdorf
 Schöftland
-Schönbühl EKZ
 Schönenbaumgarten
 Schönenberg (ZH)
 Schönenberg ZH
@@ -4158,7 +4149,6 @@ Villeret
 Villette (Lavaux)
 Villiers
 Villigen
-Villigen PSI
 Villmergen
 Villnachern
 Villorsonnens
@@ -4423,8 +4413,6 @@ Zimmerwald
 Zinal
 Zizers
 Zofingen
-Zofingen PF
-Zofingen PF UBS
 Zollbrück
 Zollikerberg
 Zollikofen
@@ -4457,8 +4445,6 @@ Zäziwil
 Zénauva
 Züberwangen
 Zürich
-Zürich CS PZ
-Zürich IBRS local
 Zürich R Digest
 Zürich Versich.
 Zürich Voice Pub

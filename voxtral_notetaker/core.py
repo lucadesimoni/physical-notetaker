@@ -23,7 +23,6 @@ from .memo import Memo, Summarizer
 from .speakers import detect_speaker_names
 from .dialect import should_clean, clean_lines
 from .swiss import is_swiss, swiss_spelling
-from .places import mark_places, places_in
 from .announcements import strip_announcements
 from .fsutil import atomic_replace
 
@@ -204,10 +203,6 @@ class Notetaker:
             self._name_speakers_from_introductions(speaker_segments)
         speakers = list(dict.fromkeys(seg['speaker_name'] for seg in speaker_segments))
         
-        # What the speech recognition itself wrote (before any language model)
-        heard = ' '.join(seg['text'] for seg in speaker_segments if seg.get('text')) \
-            or transcription.text
-        
         # Swiss German: dialect left in the transcript becomes Standard German
         text = transcription.text
         if should_clean(self.config, transcription.language):
@@ -228,15 +223,6 @@ class Notetaker:
         self._command_executor.extract_from_transcript(
             formatted_transcript, transcription.language, start_time
         )
-        # Places that are certain (official name, place context) get a 📍;
-        # only names the speech recognition heard, never ones the clean-up put in
-        places: List[str] = []
-        if self.config.voxtral.mark_places:
-            heard_places = places_in(swiss_spelling(heard) if swiss else heard)
-            formatted_transcript = mark_places(formatted_transcript, heard_places)
-            places = [p for p in places_in(formatted_transcript.replace('📍', ''))
-                      if p in heard_places]
-        
         memo_language = transcription.language
         if swiss and (memo_language or 'de').lower().startswith('de'):
             memo_language = 'de-CH'
@@ -247,7 +233,6 @@ class Notetaker:
             participants=speakers,
             date=start_time,
             duration_seconds=duration,
-            places=places,
         )
         
         # Save transcript and memo next to the recording
@@ -401,7 +386,7 @@ class Notetaker:
     def build_memo(self, transcript: Optional[str] = None, language: str = "de-CH",
                    title: Optional[str] = None, participants: Optional[List[str]] = None,
                    date: Optional[datetime] = None, duration_seconds: Optional[float] = None,
-                   summarize: bool = True, places: Optional[List[str]] = None) -> Memo:
+                   summarize: bool = True) -> Memo:
         """Build a meeting memo from everything captured so far"""
         date = date or self._start_time or datetime.now()
         if not title:
@@ -421,7 +406,6 @@ class Notetaker:
             date=date,
             participants=participants,
             duration_seconds=duration_seconds,
-            places=list(places or []),
             summary=summary,
             notes=list(self.get_notes()),
             tasks=list(self.get_tasks()),

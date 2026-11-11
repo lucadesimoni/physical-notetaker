@@ -26,7 +26,6 @@ LABELS = {
         'date': 'Datum',
         'duration': 'Dauer',
         'participants': 'Teilnehmende',
-        'places': 'Orte',
         'summary': 'Zusammenfassung',
         'notes': 'Notizen',
         'research': 'Offene Fragen / Recherche',
@@ -42,7 +41,6 @@ LABELS = {
         'date': 'Date',
         'duration': 'Duration',
         'participants': 'Participants',
-        'places': 'Places',
         'summary': 'Summary',
         'notes': 'Notes',
         'research': 'Open Questions / Research',
@@ -77,7 +75,6 @@ class Memo:
     date: datetime
     participants: List[str] = field(default_factory=list)
     duration_seconds: Optional[float] = None
-    places: List[str] = field(default_factory=list)
     summary: List[str] = field(default_factory=list)
     notes: List[Dict[str, Any]] = field(default_factory=list)
     tasks: List[Dict[str, Any]] = field(default_factory=list)
@@ -108,8 +105,6 @@ class Memo:
             meta.append(f"**{L['duration']}:** {round(self.duration_seconds / 60)} {L['minutes']}")
         if self.participants:
             meta.append(f"**{L['participants']}:** {', '.join(self.participants)}")
-        if self.places:
-            meta.append(f"**{L['places']}:** {', '.join(self.places)}")
         lines += ['  \n'.join(meta), ""]
 
         if self.summary:
@@ -148,8 +143,6 @@ class Memo:
                  f"{L['date']}: {_format_date(self.date.date(), lang)}"]
         if self.participants:
             lines.append(f"{L['participants']}: {', '.join(self.participants)}")
-        if self.places:
-            lines.append(f"{L['places']}: {', '.join(self.places)}")
         lines.append("")
 
         if self.summary:
