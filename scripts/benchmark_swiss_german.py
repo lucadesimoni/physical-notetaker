@@ -72,15 +72,29 @@ def normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def load_parquet(path: str, count: int, seed: int):
+def load_parquet(path: str, count: int, seed: int, text_column: str = "text",
+                 group_column: str = "", names_column: str = ""):
+    """count samples at random; with group_column, count per group (e.g. per dialect)"""
     import pyarrow.parquet as pq
-    table = pq.read_table(path, columns=["audio", "text"])
-    rows = table.to_pylist()
+    columns = ["audio", text_column] + [c for c in (group_column, names_column) if c]
+    rows = pq.read_table(path, columns=columns).to_pylist()
     random.Random(seed).shuffle(rows)
+    if group_column:
+        picked, per_group = [], {}
+        for row in rows:
+            group = row[group_column]
+            if per_group.get(group, 0) < count:
+                per_group[group] = per_group.get(group, 0) + 1
+                picked.append(row)
+        rows = sorted(picked, key=lambda r: r[group_column])
+    else:
+        rows = rows[:count]
     samples = []
-    for i, row in enumerate(rows[:count]):
-        samples.append({"id": f"spc_{i:03d}", "wav": to_wav(row["audio"]["bytes"]),
-                        "reference": row["text"], "others": {}})
+    for i, row in enumerate(rows):
+        samples.append({"id": f"s{i:03d}", "wav": to_wav(row["audio"]["bytes"]),
+                        "reference": row[text_column], "others": {},
+                        "group": row[group_column] if group_column else "",
+                        "names": list(row[names_column] or []) if names_column else []})
     return samples
 
 
@@ -142,6 +156,17 @@ def run_setup(setup: Setup, sample: dict, config: NotetakerConfig) -> str:
     return " ".join(lines).strip()
 
 
+def names_found(hypotheses, samples):
+    """Share of expected names (e.g. place names) that appear in the output"""
+    total = found = 0
+    for hyp, sample in zip(hypotheses, samples):
+        words = f" {normalize(hyp)} "
+        for name in sample.get("names", []):
+            total += 1
+            found += f" {normalize(name)} " in words
+    return 100.0 * found / total if total else None
+
+
 def score(hypotheses, references):
     import jiwer
     import sacrebleu
@@ -155,6 +180,12 @@ def score(hypotheses, references):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--parquet")
+    parser.add_argument("--text-column", default="text",
+                        help="column with the Standard German reference")
+    parser.add_argument("--group-column", default="",
+                        help="score per group (e.g. dialect_code); --samples is then per group")
+    parser.add_argument("--names-column", default="",
+                        help="column with names that must appear (e.g. cities_filled_de)")
     parser.add_argument("--folder")
     parser.add_argument("--samples", type=int, default=40)
     parser.add_argument("--seed", type=int, default=7)
@@ -170,7 +201,8 @@ def main() -> int:
     if bool(args.parquet) == bool(args.folder):
         print("Give either --parquet or --folder", file=sys.stderr)
         return 1
-    samples = (load_parquet(args.parquet, args.samples, args.seed) if args.parquet
+    samples = (load_parquet(args.parquet, args.samples, args.seed, args.text_column,
+                            args.group_column, args.names_column) if args.parquet
                else load_folder(args.folder))
     if not samples:
         print("No samples", file=sys.stderr)
@@ -196,9 +228,18 @@ def main() -> int:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             hypotheses = list(pool.map(one, samples))
         wer, bleu = score(hypotheses, [s["reference"] for s in samples])
-        results[setup.name] = {"wer": wer, "bleu": bleu, "seconds": time.time() - started,
-                               "hypotheses": hypotheses}
-        print(f"{setup.name:32s} WER {wer:5.1f} %   BLEU {bleu:5.1f}   ({time.time() - started:.0f} s)")
+        names = names_found(hypotheses, samples)
+        groups = {}
+        for group in sorted({s["group"] for s in samples if s["group"]}):
+            idx = [i for i, s in enumerate(samples) if s["group"] == group]
+            groups[group] = score([hypotheses[i] for i in idx], [samples[i]["reference"] for i in idx])
+        results[setup.name] = {"wer": wer, "bleu": bleu, "names": names, "groups": groups,
+                               "seconds": time.time() - started, "hypotheses": hypotheses}
+        extra = f"   names {names:5.1f} %" if names is not None else ""
+        print(f"{setup.name:32s} WER {wer:5.1f} %   BLEU {bleu:5.1f}{extra}   "
+              f"({time.time() - started:.0f} s)")
+        if groups:
+            print("    " + "  ".join(f"{g} {w:.0f}%" for g, (w, _) in groups.items()))
 
     other_names = sorted({name for s in samples for name in s["others"]})
     for name in other_names:
@@ -208,7 +249,8 @@ def main() -> int:
         print(f"{'other: ' + name:32s} WER {wer:5.1f} %   BLEU {bleu:5.1f}   ({len(picked)} samples)")
 
     with open(os.path.join(args.out, "results.json"), "w", encoding="utf-8") as f:
-        json.dump({"samples": [{"id": s["id"], "reference": s["reference"]} for s in samples],
+        json.dump({"samples": [{"id": s["id"], "reference": s["reference"], "group": s["group"],
+                                "names": s["names"]} for s in samples],
                    "results": results}, f, ensure_ascii=False, indent=1)
     print(f"\nDetails: {os.path.join(args.out, 'results.json')}")
     return 0

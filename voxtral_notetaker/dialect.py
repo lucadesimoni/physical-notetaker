@@ -108,6 +108,7 @@ def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
             'messages': [{'role': 'system', 'content': system},
                          {'role': 'user', 'content': numbered}],
             'temperature': 0.0,
+            'top_p': 1,  # some models (Mistral Large 4) refuse greedy sampling otherwise
         },
         timeout=config.summary.timeout,
     )
