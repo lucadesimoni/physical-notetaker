@@ -5,3 +5,4 @@ include LICENSE
 include CHANGELOG.md
 include config.example.yaml
 recursive-include examples *.txt
+recursive-include voxtral_notetaker/data *.txt

@@ -8,20 +8,27 @@ gescht bschproche"). A language model rewrites each line in Standard German
 ("Wir haben das gestern besprochen") without changing content, names or
 numbers. Commands, tasks, dates and the memo all work better on the result.
 
-Safe by design: only lines with dialect words are sent (a benchmark on the
-SPC_R test set showed that rewriting lines already in Standard German makes
-them worse); they go out numbered and without speaker labels, and any line
-the model drops, shortens, merges or inflates keeps its original text.
+Safe by design: lines go out numbered and without speaker labels; any line
+the model drops, shortens a lot, merges or inflates keeps its original text.
+A line without dialect words keeps its text unless much of it changed: a
+benchmark (SPC_R parliament speeches, Swiss German city sentences in 8
+dialects) showed that polishing lines already in Standard German makes them
+less exact, while rewriting dialect lines makes them much better.
 """
 
+import os
 import re
+import difflib
+from functools import lru_cache
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import httpx
 
+from .chat import message_text
 from .config import NotetakerConfig
 from .swiss import SWISS_STYLE
+from .places import place_hints
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +37,9 @@ CHUNK_LINES = 40
 MAX_GROWTH = 2.5
 # ... or shorter: a much shorter line lost content
 MIN_SHRINK = 0.6
+# A line without dialect words takes the model's version only if at least
+# this share of its words changed (dialect rewritten, not Standard German polished)
+MIN_CHANGE = 0.3
 _NUMBERED = re.compile(r'^\s*(\d+)\s*[|:.)]\s?(.*)$')
 
 # Words that only occur in Swiss German, not in Standard German. Lines with
@@ -47,6 +57,7 @@ DIALECT_WORDS = frozenset("""
 # "es", "merci", "mache": those are Standard German as well):
 # a line needs two of them
 WEAK_DIALECT_WORDS = frozenset("bi cha mer en e uf vo ufe abe ine use grüezi".split())
+_CORPUS_WORDS = os.path.join(os.path.dirname(__file__), "data", "swiss_german_words.txt")
 _WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)?")
 
 
@@ -69,12 +80,70 @@ PROMPT = (
 )
 
 
+PLACE_RULE = (
+    "- Ortsnamen: Die Spracherkennung verhört kleine Schweizer Orte oft. Für diese "
+    "Wörter sind ähnlich klingende amtliche Ortsnamen bekannt. Schreibe einen davon nur, "
+    "wenn er eindeutig zum Gesagten passt; sonst lass das Wort, wie es ist. Rate nie einen "
+    "anderen Ort, der nicht in der Liste steht:\n"
+)
+
+
+@lru_cache(maxsize=1)
+def _corpus_words() -> frozenset:
+    """Dialect words from the Swiss German Wikipedia (data/swiss_german_words.txt)"""
+    try:
+        with open(_CORPUS_WORDS, encoding="utf-8") as f:
+            return frozenset(w.strip() for w in f if w.strip() and not w.startswith("#"))
+    except OSError:
+        return frozenset()
+
+
 def has_dialect(line: str) -> bool:
     """Does the line contain words that only exist in Swiss German?"""
-    words = [w.lower() for w in _WORD.findall(line)]
+    found = _WORD.findall(line)
+    words = [w.lower() for w in found]
     if any(w in DIALECT_WORDS or w.startswith("d'") for w in words):
         return True
+    # Corpus words are written in lower case (capitalised words are names)
+    corpus = _corpus_words()
+    if any(w.lower() in corpus for i, w in enumerate(found) if i == 0 or w[:1].islower()):
+        return True
     return sum(1 for w in words if w in WEAK_DIALECT_WORDS) >= 2
+
+
+def changed_share(old: str, new: str) -> float:
+    """Share of words that differ between two versions of a line (0..1)"""
+    a, b = old.lower().split(), new.lower().split()
+    if not a and not b:
+        return 0.0
+    return 1.0 - difflib.SequenceMatcher(None, a, b).ratio()
+
+
+def _only_place_fixes(old: str, new: str, hints: Dict[str, List[str]]) -> bool:
+    """Is every change a misheard place replaced by one of its official names?"""
+    a, b = old.split(), new.split()
+    changes = [op for op in difflib.SequenceMatcher(None, a, b).get_opcodes() if op[0] != 'equal']
+    if not changes:
+        return False
+    for tag, i1, i2, j1, j2 in changes:
+        heard = ' '.join(a[i1:i2]).strip('.,;:!?')
+        written = ' '.join(b[j1:j2]).strip('.,;:!?')
+        if tag != 'replace' or written not in hints.get(heard, ()):
+            return False
+    return True
+
+
+def accept_change(old: str, new: str, hints: Optional[Dict[str, List[str]]] = None) -> bool:
+    """
+    Keep the model's version only where the line was dialect (it has dialect
+    words, or much of it changed) or where a misheard place got its official
+    name. Small edits to Standard German (polishing, rewording) are not taken:
+    measured, they make the transcript less exact.
+    """
+    if new == old:
+        return False
+    return (has_dialect(old) or changed_share(old, new) >= MIN_CHANGE
+            or _only_place_fixes(old, new, hints or {}))
 
 
 def should_clean(config: NotetakerConfig, detected_language: Optional[str]) -> bool:
@@ -91,14 +160,19 @@ def _endpoint(config: NotetakerConfig):
     summary = config.summary
     base_url = summary.base_url or config.voxtral.base_url
     api_key = summary.api_key or config.voxtral.resolved_api_key()
-    return f"{base_url.rstrip('/')}/chat/completions", api_key, summary.model
+    model = config.voxtral.dialect_model or summary.model
+    return f"{base_url.rstrip('/')}/chat/completions", api_key, model
 
 
-def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
+def _clean_chunk(lines: List[str], config: NotetakerConfig,
+                 hints: Optional[Dict[str, List[str]]] = None) -> List[str]:
     url, api_key, model = _endpoint(config)
     vocabulary = ", ".join(config.voxtral.vocabulary)
     system = PROMPT + (f"- Schreibweise dieser Namen und Begriffe beachten: {vocabulary}\n"
                        if vocabulary else "")
+    if hints:
+        system += PLACE_RULE + "".join(f"  «{heard}»: {', '.join(names)}\n"
+                                       for heard, names in hints.items())
     numbered = "\n".join(f"{i}|{line}" for i, line in enumerate(lines, 1))
     response = httpx.post(
         url,
@@ -108,11 +182,12 @@ def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
             'messages': [{'role': 'system', 'content': system},
                          {'role': 'user', 'content': numbered}],
             'temperature': 0.0,
+            'top_p': 1,  # some models (Mistral Large 4) refuse greedy sampling otherwise
         },
         timeout=config.summary.timeout,
     )
     response.raise_for_status()
-    content = response.json()['choices'][0]['message']['content']
+    content = message_text(response.json())
     return merge_cleaned(lines, content)
 
 
@@ -147,15 +222,17 @@ def clean_lines(lines: List[str], config: NotetakerConfig) -> List[str]:
     if not lines or not config.voxtral.resolved_api_key():
         return list(lines)
     out: List[str] = list(lines)
-    todo = [i for i, line in enumerate(lines) if has_dialect(line)]
-    for start in range(0, len(todo), CHUNK_LINES):
-        indexes = todo[start:start + CHUNK_LINES]
-        chunk = [lines[i] for i in indexes]
+    for start in range(0, len(lines), CHUNK_LINES):
+        chunk = lines[start:start + CHUNK_LINES]
+        hints = place_hints(chunk) if config.voxtral.place_hints else {}
         try:
-            for i, new in zip(indexes, _clean_chunk(chunk, config)):
-                out[i] = new
+            cleaned = _clean_chunk(chunk, config, hints)
         except Exception as e:
             log.warning("Swiss German clean-up skipped for %d line(s): %s", len(chunk), e)
+            continue
+        for i, (old, new) in enumerate(zip(chunk, cleaned), start):
+            if accept_change(old, new, hints):
+                out[i] = new
     changed = sum(1 for old, new in zip(lines, out) if old != new)
     log.info("Swiss German clean-up: %d of %d line(s) changed", changed, len(lines))
     return out

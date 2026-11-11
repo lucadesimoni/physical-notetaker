@@ -23,6 +23,7 @@ setup(
     author="Outthinkx by Luca De Simoni",
     license="PolyForm-Noncommercial-1.0.0",
     packages=find_packages(),
+    package_data={"voxtral_notetaker": ["data/*.txt"]},
     install_requires=requirements,
     extras_require={
         "local-diarization": ["pyannote.audio>=3.1.1"],

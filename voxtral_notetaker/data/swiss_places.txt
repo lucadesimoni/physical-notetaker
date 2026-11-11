@@ -1,0 +1,4450 @@
+# Swiss municipalities and localities. Sources: Federal Statistical Office (BFS),
+# GeoNames (CC BY 4.0, geonames.org), via the swiss-zipcodes package (MIT).
+Aadorf
+Aarau
+Aarau Rohr
+Aarberg
+Aarburg
+Aarwangen
+Aathal-Seegräben
+Aawangen
+Abländschen
+Abtwil
+Abtwil AG
+Abtwil SG
+Achseten
+Aclens
+Acquarossa
+Adelboden
+Adetswil
+Adligenswil
+Adlikon
+Adlikon b. Andelfingen
+Adlikon b. Regensdorf
+Adliswil
+Aedermannsdorf
+Aefligen
+Aegerten
+Aesch (BL)
+Aesch (LU)
+Aesch (Neftenbach)
+Aesch (ZH)
+Aesch BL
+Aesch LU
+Aesch ZH
+Aeschau
+Aeschi (SO)
+Aeschi SO
+Aeschi b. Spiez
+Aeschi bei Spiez
+Aeschiried
+Aeschlen b. Oberdiessbach
+Aeschlen ob Gunten
+Aetigkofen
+Aetingen
+Aettenschwil
+Aeugst am Albis
+Aeugstertal
+Affeltrangen
+Affoltern am Albis
+Affoltern im Emmental
+Agarn
+Agarone
+Agasul
+Agiez
+Agno
+Agra
+Agriswil
+Aigle
+Aire-la-Ville
+Airolo
+Alberswil
+Albeuve
+Albinen
+Albligen
+Albula/Alvra
+Alchenflüh
+Alchenstorf
+Aldesago
+Algetshausen
+Alikon
+Allaman
+Alle
+Allens
+Allenwinden
+Allerheiligenberg
+Allmendingen
+Allmendingen b. Bern
+Allschwil
+Almens
+Alosen
+Alp Grüm
+Alpnach
+Alpnach Dorf
+Alpnachstad
+Alpthal
+Alt St. Johann
+Altbüron
+Altdorf (UR)
+Altdorf SH
+Altdorf UR
+Alten
+Altendorf
+Altenrhein
+Alterswil
+Alterswil FR
+Alterswilen
+Altikon
+Altishausen
+Altishofen
+Altnau
+Alto Malcantone
+Altstätten
+Altstätten SG
+Altwis
+Alvaneu Bad
+Alvaneu Dorf
+Alvaschein
+Am Bach (Avers)
+Ambrì
+Amden
+Aminona
+Amlikon-Bissegg
+Ammerswil
+Ammerswil AG
+Ammerzwil BE
+Amriswil
+Amsoldingen
+Amsteg
+Andeer
+Andelfingen
+Andermatt
+Andhausen
+Andiast
+Andwil (SG)
+Andwil SG
+Andwil TG
+Anglikon
+Anières
+Anniviers
+Anwil
+Anzonico
+Anzère
+Appenzell
+Appenzell Eggerstanden
+Appenzell Enggenhütten
+Appenzell Meistersrüte
+Appenzell Schlatt
+Appenzell Steinegg
+Apples
+Aproz (Nendaz)
+Aquila
+Aran
+Aranno
+Arbaz
+Arbedo
+Arbedo-Castione
+Arboldswil
+Arbon
+Arcegno
+Arch
+Arconciel
+Ardez
+Ardon
+Areuse
+Arezen
+Argnou (Ayent)
+Arisdorf
+Aristau
+Arlesheim
+Arnegg
+Arnex-sur-Nyon
+Arnex-sur-Orbe
+Arni (AG)
+Arni (BE)
+Arni AG
+Arni BE
+Arogno
+Arolla
+Arosa
+Arosio
+Arth
+Arveyes
+Arvigo
+Arvillard (Salins)
+Arzier-Le Muids
+Arzo
+Ascharina
+Ascona
+Asp
+Assens
+Astano
+Asuel
+Athenaz (Avusy)
+Attalens
+Attelwil
+Attikon
+Attinghausen
+Attiswil
+Au (SG)
+Au SG
+Au TG
+Au ZH
+Aubonne
+Auboranges
+Auddes-sur-Riddes
+Auenstein
+Augio
+Augst
+Augst BL
+Aumont
+Auressio
+Aurigeno
+Auslikon
+Ausserberg
+Ausserbinn
+Ausserferrera
+Auswil
+Autafond
+Autavaux
+Autigny
+Auvernier
+Auw
+Avegno
+Avegno Gordevio
+Aven
+Avenches
+Avers
+Avry
+Avry-devant-Pont
+Avry-sur-Matran
+Avully
+Avusy
+Axalp
+Ayent
+Ayer
+Azmoos
+Aïre
+Baar
+Baar (Nendaz)
+Bachenbülach
+Bachs
+Bad Ragaz
+Bad Zurzach
+Baden
+Bagnes
+Baldegg
+Baldingen
+Balerna
+Balgach
+Ballaigues
+Ballens
+Ballmoos
+Ballwil
+Balm b. Günsberg
+Balm b. Messen
+Balm bei Günsberg
+Balmberg
+Balsthal
+Balterswil
+Baltschieder
+Banco
+Bangerten b. Dieterswil
+Bannwil
+Barbengo
+Barberêche
+Bardonnex
+Bargen (BE)
+Bargen (SH)
+Bargen BE
+Bargen SH
+Barmelweid
+Barzheim
+Bas-Intyamon
+Basadingen
+Basadingen-Schlattingen
+Basel
+Basse-Allaine
+Basse-Nendaz
+Bassecourt
+Bassersdorf
+Bassins
+Bauen
+Baulmes
+Bauma
+Bavois
+Bazenheid
+Beatenberg
+Beckenried
+Bedano
+Bedigliora
+Bedretto
+Beggingen
+Begnins
+Beinwil (Freiamt)
+Beinwil (SO)
+Beinwil SO
+Beinwil am See
+Belalp
+Belfaux
+Bellach
+Bellelay
+Bellerive VD
+Bellevue
+Bellikon
+Bellinzona
+Bellmund
+Bellwald
+Belmont-Broye
+Belmont-sur-Lausanne
+Belmont-sur-Yverdon
+Belp
+Belpberg
+Belprahon
+Benglen
+Benken (SG)
+Benken (ZH)
+Benken SG
+Benken ZH
+Bennau
+Bennwil
+Benzenschwil
+Bercher
+Berg (Dägerlen)
+Berg (SG)
+Berg (TG)
+Berg SG
+Berg TG
+Berg am Irchel
+Bergdietikon
+Bergün/Bravuogn
+Berikon
+Beringen
+Berken
+Berlens
+Berlingen
+Bern
+Bern Verarb.zentr.
+Berneck
+Bernex
+Bernhardzell
+Berolle
+Beromünster
+Berschis
+Bertschikon
+Bertschikon (Gossau ZH)
+Berzona
+Besazio
+Besenbüren
+Besencens
+Betschwanden
+Betten
+Bettenhausen
+Bettens
+Bettingen
+Bettlach
+Bettmeralp
+Bettwiesen
+Bettwil
+Beurnevésin
+Beuson (Nendaz)
+Bevaix
+Bever
+Bex
+Biasca
+Biberen
+Biberist
+Bibern SH
+Bibern SO
+Biberstein
+Bichelsee
+Bichelsee-Balterswil
+Bichwil
+Bidogno
+Biel VS
+Biel-Benken
+Biel-Benken BL
+Biel/Bienne
+Biembach im Emmental
+Biessenhofen
+Bieudron (Nendaz)
+Biezwil
+Bigenthal
+Biglen
+Bignasco
+Bigorio
+Billens
+Billens-Hennens
+Bilten
+Binn
+Binningen
+Binz
+Bioggio
+Biogno-Beride
+Bioley-Magnoux
+Bioley-Orjulaz
+Bionnens
+Birgisch
+Birmensdorf (ZH)
+Birmensdorf ZH
+Birmenstorf (AG)
+Birmenstorf AG
+Bironico
+Birr
+Birrhard
+Birrwil
+Birsfelden
+Birwinken
+Bischofszell
+Bisisthal
+Bissone
+Bister
+Bitsch
+Bivio
+Bière
+Blankenburg
+Blatten
+Blatten (Lötschen)
+Blatten b. Naters
+Blauen
+Blausee-Mitholz
+Bleienbach
+Bleiken b. Oberdiessbach
+Blenio
+Blessens
+Blignou (Ayent)
+Blitzingen
+Blonay
+Blumenstein
+Bodio
+Bodio TI
+Bofflens
+Bogis-Bossey
+Bogno
+Bolken
+Boll
+Bolligen
+Bollingen
+Bollion
+Bollodingen
+Boltigen
+Bombinasco
+Bonaduz
+Bonau
+Boncourt
+Bondo
+Bonfol
+Boningen
+Boniswil
+Bonnefontaine
+Bonstetten
+Bonvillars
+Boppelsen
+Borex
+Borgnone
+Borgonovo
+Bosco Luganese
+Bosco/Gurin
+Bossonnens
+Boswil
+Bottens
+Bottenwil
+Botterens
+Bottighofen
+Bottmingen
+Botyre (Ayent)
+Boudevilliers
+Boudry
+Bougy-Villars
+Boulens
+Bouloz
+Bourg-Saint-Pierre
+Bourg-St-Pierre
+Bourg-en-Lavaux
+Bourguillon
+Bournens
+Bourrignon
+Boussens
+Bouveret
+Boveresse
+Bovernier
+Bowil
+Boécourt
+Braggio
+Brail
+Bramboden
+Bramois
+Bratsch
+Braunau
+Braunwald
+Bregaglia
+Breganzona
+Breggia
+Breil/Brigels
+Breitenbach
+Bremblens
+Bremgarten (AG)
+Bremgarten AG
+Bremgarten b. Bern
+Bremgarten bei Bern
+Brenles
+Breno
+Brent
+Brenzikofen
+Bressaucourt
+Bretigny-sur-Morrens
+Bretonnières
+Bretzwil
+Brienz (BE)
+Brienz BE
+Brienz/Brinzauls GR
+Brienzwiler
+Brig
+Brig-Glis
+Brigerbad
+Brignon (Nendaz)
+Brione (Verzasca)
+Brione sopra Minusio
+Brislach
+Brissago
+Bristen
+Brittern
+Brittnau
+Broc
+Broglio
+Bronschhofen
+Brontallo
+Brot-Dessous
+Brot-Plamboz
+Bruderholz
+Brugg
+Brugg AG
+Brunegg
+Brunnadern
+Brunnen
+Brunnenthal
+Brusino Arsizio
+Brusio
+Bruson
+Bruzella
+Brè sopra Lugano
+Brügg
+Brügg BE
+Brügglen
+Brülisau
+Brünig
+Brünisried
+Brüttelen
+Brütten
+Brüttisellen
+Bubendorf
+Bubikon
+Buch (SH)
+Buch SH
+Buch am Irchel
+Buch b. Frauenfeld
+Buch b. Kümmertshausen
+Buch b. Märwil
+Buchackern
+Buchberg
+Buchegg
+Buchen BE
+Buchen im Prättigau
+Buchholterberg
+Buchillon
+Buchrain
+Buchs (AG)
+Buchs (SG)
+Buchs (ZH)
+Buchs AG
+Buchs LU
+Buchs SG
+Buchs ZH
+Buckten
+Buhwil
+Buix
+Bulle
+Bullet
+Buochs
+Buonas
+Bure
+Burg (AG)
+Burg AG
+Burg im Leimental
+Burgdorf
+Burgistein
+Burglauenen
+Burgäschi
+Bursinel
+Bursins
+Burtigny
+Buseno
+Bussigny
+Bussigny-sur-Oron
+Bussnang
+Busswil BE
+Busswil TG
+Busswil b. Melchnau
+Busswil bei Melchnau
+Bussy FR
+Bussy-Chardonney
+Bussy-sur-Moudon
+Buttes
+Buttikon SZ
+Buttisholz
+Buttwil
+Buus
+Bäch SZ
+Bächli (Hemberg)
+Bänk (Dägerlen)
+Bärau
+Bäretswil
+Bäriswil
+Bäriswil BE
+Bärschwil
+Bätterkinden
+Bättwil
+Bévilard
+Bôle
+Böbikon
+Böckten
+Bönigen
+Bönigen b. Interlaken
+Bösingen
+Böttstein
+Bözberg
+Bözen
+Büchslen
+Büetigen
+Bühl
+Bühl b. Aarberg
+Bühler
+Bülach
+Bünzen
+Bürchen
+Büren (SO)
+Büren NW
+Büren SO
+Büren an der Aare
+Büren zum Hof
+Bürgenstock
+Bürglen (TG)
+Bürglen (UR)
+Bürglen OW
+Bürglen TG
+Bürglen UR
+Büriswilen
+Büron
+Büsserach
+Bütschwil
+Bütschwil-Ganterschwil
+Büttenhardt
+Büttikon
+Büttikon AG
+Bützberg
+Cabbio
+Cademario
+Cadempino
+Cadenazzo
+Cadro
+Cagiallo
+Calanca
+Calfreisen
+Calonico
+Calpiogna
+Cama
+Camedo
+Camignolo
+Camischolas
+Camorino
+Campascio
+Campello
+Camperio
+Campo (Blenio)
+Campo (Vallemaggia)
+Campocologno
+Campora
+Campsut-Cröt
+Camuns
+Caneggio
+Canobbio
+Capolago
+Capriasca
+Carabbia
+Carabietta
+Carena
+Carona
+Carouge (GE)
+Carouge GE
+Carrera
+Carrouge VD
+Cartigny
+Carì
+Casaccia
+Casima
+Caslano
+Cassina d'Agno
+Castagnola
+Castaneda
+Castasegna
+Castel San Pietro
+Castelrotto
+Casti-Wergenstein
+Castiel
+Castione
+Castrisch
+Castro
+Cauco
+Caux
+Cavagnago
+Cavardiras
+Cavergno
+Caviano
+Cavigliano
+Cazis
+Celerina/Schlarigna
+Centovalli
+Cerentino
+Cerniat FR
+Cerniaz VD
+Cernier
+Certara
+Cevio
+Chabrey
+Chailly-Montreux
+Chalais
+Cham
+Chamblon
+Chambrelien
+Chamby
+Chambésy
+Chamoille (Sembrancher)
+Chamoson
+Champ-du-Moulin
+Champagne
+Champex-Lac
+Champfèr
+Champlan (Grimisuat)
+Champoussin
+Champoz
+Champsec
+Champtauroz
+Champvent
+Champzabé
+Champéry
+Chancy
+Chandolin
+Chandolin (Savièse)
+Chandon
+Chandonne (Liddes)
+Chanéaz
+Chapelle (Broye)
+Chapelle (Glâne)
+Chapelle-sur-Moudon
+Chardonne
+Charmey (Gruyère)
+Charmoille
+Charrat
+Chaumont
+Chavannes-de-Bogis
+Chavannes-des-Bois
+Chavannes-le-Chêne
+Chavannes-le-Veyron
+Chavannes-les-Forts
+Chavannes-près-Renens
+Chavannes-sous-Orsonnens
+Chavannes-sur-Moudon
+Chavornay
+Cheiry
+Chemin
+Chenaux
+Chermignon
+Chermignon-d'en-Bas
+Chernex
+Chesalles-sur-Moudon
+Chesalles-sur-Oron
+Cheseaux Polyval
+Cheseaux-Noréaz
+Cheseaux-sur-Lausanne
+Chesières
+Chessel
+Chevenez
+Chevilly
+Chevroux
+Chexbres
+Cheyres
+Cheyres-Châbles
+Chez Petit (Liddes)
+Chez-le-Bart
+Chiasso
+Chiggiogna
+Chigny
+Chippis
+Chironico
+Choulex
+Choëx
+Chur
+Churwalden
+Châbles FR
+Château-d'Oex
+Châtel-Saint-Denis
+Châtel-St-Denis
+Châtel-sur-Montsalvens
+Châtelaine
+Châtelat
+Châtillens
+Châtillon (FR)
+Châtillon (JU)
+Châtillon FR
+Châtillon JU
+Châtonnaye
+Chénens
+Chéserex
+Chésopelloz
+Chézard-St-Martin
+Chêne-Bougeries
+Chêne-Bourg
+Chêne-Pâquier
+Cimadera
+Cimalmotto
+Cimo
+Cinuos-chel
+Clarens
+Clarmont
+Claro
+Clavaleyres
+Clos du Doubs
+Clugin
+Clèbes (Nendaz)
+Coeuve
+Coffrane
+Coglio
+Coinsins
+Cointrin
+Coldrerio
+Colla
+Collex
+Collex-Bossy
+Collina d'Oro
+Collombey
+Collombey-Muraz
+Collonge-Bellerive
+Collonges
+Cologny
+Colombier NE
+Colombier VD
+Comano
+Combremont-le-Grand
+Combremont-le-Petit
+Commugny
+Comologno
+Comunanza Cadenazzo/Montecener
+Conches
+Concise
+Condémines (Nendaz)
+Confignon
+Constantine
+Conters im Prättigau
+Conthey
+Contone
+Contra
+Coppet
+Corban
+Corbeyrier
+Corbières
+Corcelles (BE)
+Corcelles BE
+Corcelles NE
+Corcelles-Cormondrèche
+Corcelles-le-Jorat
+Corcelles-près-Concise
+Corcelles-près-Payerne
+Corcelles-sur-Chavornay
+Cordast
+Corgémont
+Corin-de-la-Crête
+Corippo
+Corjolens
+Cormagens
+Corminboeuf
+Cormondrèche
+Cormoret
+Cormérod
+Cornaux
+Cornaux NE
+Cornol
+Corpataux
+Correvon
+Corseaux
+Corserey
+Corsier (GE)
+Corsier GE
+Corsier-sur-Vevey
+Cortaillod
+Corteglia
+Corticiasca
+Cortébert
+Corzoneso
+Cossonay
+Cossonay-Ville
+Cottens (FR)
+Cottens (VD)
+Cottens FR
+Cottens VD
+Cotterd
+Courcelon
+Courchapoix
+Courchavon
+Courfaivre
+Courgenay
+Courgevaux
+Courlevon
+Cournillens
+Courrendlin
+Courroux
+Court
+Courtaman
+Courtedoux
+Courtelary
+Courtemautruy
+Courtemaîche
+Courtepin
+Courtion
+Courtételle
+Cousset
+Couvet
+Cozzo
+Crana
+Crans-Montana
+Crans-près-Céligny
+Crassier
+Cremin
+Cresciano
+Cressier (FR)
+Cressier (NE)
+Cressier FR
+Cressier NE
+Cresta (Avers)
+Cries (Vollèges)
+Crissier
+Croglio
+Cronay
+Croy
+Crusch
+Crémines
+Crésuz
+Crête-à-l'Oeil (Les Agettes)
+Cuarnens
+Cuarny
+Cudrefin
+Cugnasco
+Cugnasco-Gerra
+Cugy (FR)
+Cugy (VD)
+Cugy FR
+Cugy VD
+Cully
+Cumbel
+Cumpadials
+Cunter
+Curaglia
+Cureggia
+Cureglia
+Curio
+Curtilles
+Curtina
+Céligny
+Dachsen
+Dagmersellen
+Daillens
+Daillon
+Daiwil
+Dalin
+Dallenwil
+Dalpe
+Damphreux
+Damvant
+Dangio
+Danis
+Dardagny
+Dardin
+Davesco-Soragno
+Davos
+Davos Clavadel
+Davos Dorf
+Davos Frauenkirch
+Davos Glaris
+Davos Monstein
+Davos Platz
+Davos Wiesen
+Davos Wolfgang
+Degen
+Degersheim
+Deisswil b. Münchenbuch.
+Deisswil b. Münchenbuchsee
+Deisswil bei Münchenbuchsee
+Deitingen
+Delley
+Delley-Portalban
+Delémont
+Denens
+Denezy
+Denges
+Densbüren
+Derendingen
+Detligen
+Dettighofen
+Dettighofen (Lengwil)
+Develier
+Dicken
+Diegten
+Dielsdorf
+Diemerswil
+Diemtigen
+Diepflingen
+Diepoldsau
+Dierikon
+Diesbach GL
+Diessbach b. Büren
+Diessbach bei Büren
+Diesse
+Diessenhofen
+Dieterswil
+Dietfurt
+Dietikon
+Dietlikon
+Dietschwil
+Dietwil
+Dinhard
+Dino
+Dintikon
+Diolly (Savièse)
+Disentis/Mustér
+Dittingen
+Dizy
+Domat/Ems
+Dombresson
+Domdidier
+Domleschg
+Dommartin
+Dompierre (VD)
+Dompierre FR
+Dompierre VD
+Donat
+Donatyre
+Dongio
+Donneloye
+Donzhausen
+Doppleschwand
+Dorf
+Dornach
+Dorénaz
+Dotnacht
+Dottikon
+Dotzigen
+Dozwil
+Dranse (Liddes)
+Drei Höfe
+Dreien
+Drône (Savièse)
+Duggingen
+Dugny (Leytron)
+Duillier
+Dulliken
+Dully
+Dussnang
+Duvin
+Dägerlen
+Dällikon
+Däniken
+Däniken SO
+Dänikon
+Dänikon ZH
+Därligen
+Därstetten
+Dättlikon
+Dättwil AG
+Démoret
+Dörflingen
+Döttingen
+Dübendorf
+Düdingen
+Dürnten
+Dürrenroth
+Dürrenäsch
+Ebersecken
+Ebersol
+Ebertswil
+Ebikon
+Ebmatingen
+Ebnat-Kappel
+Ebnet
+Echallens
+Echandens
+Echarlens
+Echichens
+Eclagnens
+Eclépens
+Ecoteaux
+Ecublens (FR)
+Ecublens (VD)
+Ecublens FR
+Ecublens VD
+Ecuvillens
+Ederswiler
+Edlibach
+Effingen
+Effretikon
+Egerkingen
+Egg
+Egg (Flawil)
+Egg SZ
+Egg b. Zürich
+Eggenwil
+Eggerberg
+Eggersriet
+Eggiwil
+Eglisau
+Egliswil
+Egnach
+Egolzwil
+Ehrendingen
+Ehrikon
+Eich
+Eichberg
+Eigenthal
+Eigergletscher
+Eiken
+Einigen
+Einsiedeln
+Eischoll
+Eison (St-Martin)
+Eisten
+Elfingen
+Elgg
+Ellighausen
+Ellikon am Rhein
+Ellikon an der Thur
+Elm
+Elsau
+Embd
+Embrach
+Emdthal
+Emmen
+Emmenbrücke
+Emmenmatt
+Emmetten
+Endingen
+Engelberg
+Engelburg
+Enges
+Enggistein
+Engi
+Engishofen
+Englisberg
+Engollon
+Engwang
+Engwilen
+Ennenda
+Ennetaach
+Ennetbaden
+Ennetbühl
+Ennetbürgen
+Ennetmoos
+Enney
+Entlebuch
+Epagny
+Epalinges
+Epautheyres
+Epauvillers
+Ependes (FR)
+Ependes (VD)
+Ependes FR
+Ependes VD
+Epesses
+Epiquerez
+Eppenberg
+Eppenberg-Wöschnau
+Epsach
+Eptingen
+Erde
+Ergisch
+Eriswil
+Eriz
+Erlach
+Erlen
+Erlenbach (ZH)
+Erlenbach ZH
+Erlenbach im Simmental
+Erlinsbach
+Erlinsbach (AG)
+Erlinsbach (SO)
+Erlinsbach SO
+Ermatingen
+Ermensee
+Ermenswil
+Ernen
+Ernetschwil
+Erschmatt
+Erschwil
+Ersigen
+Erstfeld
+Eschenbach (LU)
+Eschenbach (SG)
+Eschenbach LU
+Eschenbach SG
+Eschenz
+Eschert
+Eschikofen
+Eschlikon
+Eschlikon TG
+Escholzmatt
+Escholzmatt-Marbach
+Esmonts
+Essert FR
+Essert-Pittet
+Essert-sous-Champvent
+Essertes
+Essertines-sur-Rolle
+Essertines-sur-Yverdon
+Esslingen
+Estavannens
+Estavayer
+Estavayer-le-Gibloux
+Estavayer-le-Lac
+Estévenens
+Etagnières
+Etoy
+Ettenhausen TG
+Ettingen
+Ettiswil
+Etzelkofen
+Etzgen
+Etziken
+Etzwilen
+Euseigne
+Euthal
+Evilard
+Evionnaz
+Evolène
+Eyholz
+Eysins
+Fahrni
+Fahrni b. Thun
+Fahrwangen
+Fahrweid
+Fahy
+Faido
+Fajauna
+Falera
+Fanas
+Fankhaus (Trub)
+Faoug
+Farden
+Farnern
+Farvagny
+Farvagny-le-Petit
+Faulensee
+Fehraltorf
+Fehren
+Felben-Wellhausen
+Feldbach
+Feldbrunnen
+Feldbrunnen-St. Niklaus
+Feldis/Veulden
+Felsberg
+Fenalet-sur-Bex
+Fenil-sur-Corsier
+Fenin
+Fenkrieden
+Ferden
+Ferenbalm
+Ferlens VD
+Ferpicloz
+Ferrera
+Ferreyres
+Fescoggia
+Feuerthalen
+Feusisberg
+Feutersoey
+Fex
+Fey
+Fey (Nendaz)
+Fiaugères
+Fidaz
+Fideris
+Fiesch
+Fieschertal
+Fiez
+Figino
+Filet
+Filisur
+Filzbach
+Finhaut
+Finsterhennen
+Finstersee
+Finsterwald b. Entlebuch
+Fionnay
+Fischbach
+Fischbach LU
+Fischbach-Göslikon
+Fischenthal
+Fischingen
+Fisibach
+Fislisbach
+Flaach
+Flamatt
+Flanthey
+Flawil
+Flendruz
+Flerden
+Fleurier
+Flims
+Flims Dorf
+Flims Waldhaus
+Flond
+Flumenthal
+Flums
+Flums Hochwiese
+Flumserberg Bergheim
+Flumserberg Portels
+Flumserberg Saxli
+Flumserberg Tannenbodenalp
+Flumserberg Tannenheim
+Flurlingen
+Fläsch
+Flüelen
+Flüeli-Ranft
+Flüh
+Flühli
+Flühli LU
+Font
+Fontaine Dessous (Liddes)
+Fontaine Dessus (Liddes)
+Fontainemelon
+Fontaines NE
+Fontaines-sur-Grandson
+Fontanezier
+Fontannen b. Wolhusen
+Fontenais
+Fontnas
+Forch
+Forel (Lavaux)
+Forel FR
+Forel-sur-Lucens
+Formangueires
+Fornet-Dessous
+Fornet-Dessus
+Fornex (Liddes)
+Forst b. Längenbühl
+Forst-Längenbühl
+Fortunau (Ayent)
+Founex
+Frasco
+Frasnacht
+Frasses
+Fraubrunnen
+Frauenfeld
+Frauenkappelen
+Fregiécourt
+Freidorf TG
+Freienbach
+Freienstein
+Freienstein-Teufen
+Freienwil
+Freimettigen
+Frenières-sur-Bex
+Frenkendorf
+Fresens
+Fretereules
+Freudwil
+Fribourg
+Frick
+Frieswil
+Friltschen
+Frinvillier
+Froideville
+Fruthwilen
+Frutigen
+Fräschels
+Frümsen
+Ftan
+Fuldera
+Fulenbach
+Full-Reuenthal
+Fully
+Furna
+Fusio
+Fällanden
+Féchy
+Fétigny
+Füllinsdorf
+Fürigen
+Fürstenau
+Fürstenaubruck
+Gabi (Simplon)
+Gachnang
+Gadenstätt
+Gadmen
+Gais
+Gaiserwald
+Galgenen
+Galmiz
+Gals
+Gambarogno
+Gammen
+Gampel
+Gampel-Bratsch
+Gampelen
+Gams
+Gamsen
+Gandria
+Gansingen
+Ganterschwil
+Gasel
+Gattikon
+Gebenstorf
+Gebertingen
+Geiss
+Gelfingen
+Gelterfingen
+Gelterkinden
+Geltwil
+Gempen
+Gempenach
+Genestrerio
+Genolier
+Genthod
+Gentilino
+Genève
+Gerlafingen
+Gerlikon
+Geroldswil
+Gerolfingen
+Gerra (Gambarogno)
+Gerra (Verzasca)
+Gersau
+Gerzensee
+Geschinen
+Gettnau
+Geuensee
+Ghirone
+Gibloux
+Gibswil
+Giebenach
+Giez
+Giffers
+Gillarens
+Gilly
+Gimel
+Gimmelwald
+Gingins
+Giornico
+Gipf-Oberfrick
+Gisikon
+Giswil
+Giubiasco
+Giumaglio
+Givisiez
+Givrins
+Gland
+Glarus
+Glarus Nord
+Glarus Süd
+Glashütten
+Glaspass
+Glattbrugg
+Glattfelden
+Glattpark (Opfikon)
+Gletterens
+Glion
+Glis
+Glovelier
+Gluringen
+Gnosca
+Gockhausen
+Gohl
+Golaten
+Goldach
+Goldau
+Goldingen
+Goldiwil (Thun)
+Goldswil b. Interlaken
+Golino
+Gollion
+Gommiswald
+Goms
+Gondiswil
+Gondo
+Gonten
+Gontenbad
+Gontenschwil
+Goppenstein
+Goppisberg
+Gordevio
+Gordola
+Gorduno
+Gorgier
+Gossau (SG)
+Gossau (ZH)
+Gossau SG
+Gossau ZH
+Gossens
+Gossliwil
+Gottlieben
+Goumoens-la-Ville
+Goumoens-le-Jux
+Goumois
+Goumoëns
+Graben
+Grabs
+Grabserberg
+Grafenort
+Grafenried
+Grafstal
+Graltshausen
+Grancia
+Grancy
+Grand-Lancy
+Grandcour
+Grandevent
+Grandfontaine
+Grandsivaz
+Grandson
+Grandval
+Grandvaux
+Grandvillard
+Granges (Veveyse)
+Granges VS
+Granges-Paccot
+Granges-de-Vesin
+Granges-près-Marnand
+Grangettes
+Grangettes-près-Romont
+Granois (Savièse)
+Grasswil
+Grattavache
+Gravesano
+Greich
+Greifensee
+Grellingen
+Grenchen
+Greng
+Grengiols
+Grenilles
+Grens
+Greppen
+Gresso
+Gressy
+Gretschins
+Gretzenbach
+Grimentz
+Grimisuat
+Grindel
+Grindelwald
+Grolley
+Grono
+Gross
+Grossaffoltern
+Grossdietwil
+Grosshöchstetten
+Grosswangen
+Grub (AR)
+Grub AR
+Grub SG
+Gruben
+Grugnay (Chamoson)
+Grund b. Gstaad
+Gruyères
+Gryon
+Grächen
+Gränichen
+Gräslikon
+Grône
+Grünen
+Grünenmatt
+Grüningen
+Grüsch
+Grüt (Gossau ZH)
+Gstaad
+Gsteig
+Gsteig b. Gstaad
+Gsteigwiler
+Guarda
+Gudo
+Guggisberg
+Gumefens
+Gundetswil
+Guntalingen
+Gunten
+Guntershausen b. Aadorf
+Guntershausen b. Berg
+Gunterswilen
+Guntmadingen
+Gunzgen
+Gunzwil
+Gurbrü
+Gurmels
+Gurtnellen
+Gurzelen
+Guschelmuth
+Gutenburg
+Gutenswil
+Guttannen
+Guttet-Feschel
+Gwatt (Thun)
+Gy
+Gysenstein
+Gächlingen
+Gächliwil
+Gähwil
+Gänsbrunnen
+Göschenen
+Götighofen
+Gümligen
+Gümmenen
+Gündisau
+Gündlischwand
+Günsberg
+Güttingen
+Haag (Rheintal)
+Habkern
+Habsburg
+Hagenbuch
+Hagenbuch ZH
+Hagendorn
+Hagenwil b. Amriswil
+Hagneck
+Halden
+Haldenstein
+Haldi b. Schattdorf
+Hallau
+Hallwil
+Halten
+Happerswil
+Harenwilen
+Hasle (LU)
+Hasle LU
+Hasle b. Burgdorf
+Hasle bei Burgdorf
+Haslen AI
+Haslen GL
+Hasliberg
+Hasliberg Goldern
+Hasliberg Hohfluh
+Hasliberg Reuti
+Hasliberg Wasserwendi
+Hattenhausen
+Hauenstein
+Hauenstein-Ifenthal
+Hauptikon
+Hauptwil
+Hauptwil-Gottshaus
+Hausen (AG)
+Hausen AG
+Hausen am Albis
+Haut-Intyamon
+Haute-Ajoie
+Haute-Nendaz
+Haute-Sorne
+Hauterive (FR)
+Hauterive (NE)
+Hauterive NE
+Hauteville
+Hedingen
+Heerbrugg
+Hefenhausen
+Hefenhofen
+Heiden
+Heiligenschwendi
+Heiligkreuz (Mels)
+Heimberg
+Heimenhausen
+Heimenschwand
+Heimisbach
+Heimiswil
+Heinrichswil
+Heitenried
+Heldswil
+Helgisried-Rohrbach
+Hellbühl
+Hellikon
+Hellsau
+Hemberg
+Hemishofen
+Hemmental
+Hemmiken
+Henau
+Hendschiken
+Henggart
+Hennens
+Henniez
+Herbetswil
+Herbligen
+Herbriggen
+Herdern
+Hergiswil (NW)
+Hergiswil NW
+Hergiswil b. Willisau
+Hergiswil bei Willisau
+Herisau
+Herlisberg
+Hermance
+Hermenches
+Hermetschwil-Staffeln
+Hermiswil
+Hermrigen
+Herrenhof
+Herrenschwanden
+Herrliberg
+Hersberg
+Hersiwil
+Hertenstein AG
+Herznach
+Herzogenbuchsee
+Hessigkofen
+Hettenschwil
+Hettiswil b. Hindelbank
+Hettlingen
+Hildisrieden
+Hilfikon
+Hilterfingen
+Himmelried
+Hindelbank
+Hinteregg
+Hinterforst
+Hinterfultigen
+Hinterkappelen
+Hintermoos
+Hinterrhein
+Hinwil
+Hirschthal
+Hirzel
+Hittnau
+Hitzkirch
+Hochdorf
+Hochfelden
+Hochwald
+Hofen SH
+Hoffeld
+Hofstatt
+Hofstetten (ZH)
+Hofstetten SO
+Hofstetten ZH
+Hofstetten b. Brienz
+Hofstetten bei Brienz
+Hofstetten-Flüh
+Hohenrain
+Hohentannen
+Hohtenn
+Holderbank (AG)
+Holderbank (SO)
+Holderbank AG
+Holderbank SO
+Holzhäusern ZG
+Holziken
+Homberg
+Homberg b. Thun
+Hombrechtikon
+Homburg
+Honau
+Hondrich
+Horboden
+Horgen
+Horgenberg
+Horn
+Hornussen
+Horrenbach
+Horrenbach-Buchen
+Horriwil
+Horw
+Hosenruck
+Hospental
+Hottwil
+Hubersdorf
+Hugelshofen
+Humlikon
+Hundwil
+Hunzenschwil
+Hurden
+Huttwil
+Huémoz
+Häfelfingen
+Hägendorf
+Häggenschwil
+Hägglingen
+Hämikon
+Härkingen
+Hätzingen
+Häusernmoos im Emmental
+Häuslenen
+Häutligen
+Hérémence
+Höchstetten
+Höfen b. Thun
+Hölstein
+Hörhausen
+Höri
+Hünenberg
+Hünenberg See
+Hünibach
+Hüniken
+Hünikon (Neftenbach)
+Hüntwangen
+Hüswil
+Hütten
+Hüttikon
+Hüttlingen
+Hüttwilen
+Ibach
+Ichertswil
+Icogne
+Iffwil
+Igis
+Ilanz
+Ilanz/Glion
+Illgau
+Illhart
+Illighausen
+Illnau
+Illnau-Effretikon
+Im Fang
+Immensee
+Indemini
+Inden
+Ingenbohl
+Inkwil
+Innerberg
+Innereriz
+Innerferrera
+Innerthal
+Innertkirchen
+Ins
+Insone
+Interlaken
+Interlaken Ost
+Intragna
+Intschi
+Inwil
+Ipsach
+Iragna
+Iseltwald
+Isenfluh
+Isenthal
+Iseo
+Islikon
+Islisberg
+Isole di Brissago
+Isone
+Istighofen
+Isérables
+Itingen
+Ittenthal
+Ittigen
+Jaberg
+Jakobsbad
+Jaun
+Jegenstorf
+Jenaz
+Jenins
+Jens
+Jeuss
+Jona
+Jonen
+Jongny
+Jonschwil
+Jorat-Menthue
+Jorat-Mézières
+Jouxtens-Mézery
+Juf
+Jungfraujoch
+Juriens
+Jussy
+Kaiseraugst
+Kaiserstuhl
+Kaiserstuhl AG
+Kaisten
+Kallern
+Kallnach
+Kalpetran
+Kaltacker
+Kaltbach
+Kaltbrunn
+Kaltenbach
+Kammersrohr
+Kandergrund
+Kandersteg
+Kappel (SO)
+Kappel SO
+Kappel am Albis
+Kappelen
+Kastanienbaum
+Kaufdorf
+Kefikon TG
+Kefikon ZH
+Kehrsatz
+Kehrsiten
+Kemmental
+Kemptthal
+Kernenried
+Kerns
+Kerzers
+Kesswil
+Kestenholz
+Kienberg
+Kiental
+Kiesen
+Kilchberg (BL)
+Kilchberg (ZH)
+Kilchberg BL
+Kilchberg ZH
+Killwangen
+Kippel
+Kirchberg (BE)
+Kirchberg (SG)
+Kirchberg BE
+Kirchberg SG
+Kirchdorf (BE)
+Kirchdorf AG
+Kirchdorf BE
+Kirchenthurnen
+Kirchleerau
+Kirchlindach
+Klarsreuti
+Kleinandelfingen
+Kleinbösingen
+Kleindietwil
+Kleindöttingen
+Kleine Scheidegg
+Kleingurmels
+Kleinlützel
+Kleinwangen
+Klingnau
+Kloster Fahr
+Klosters
+Klosters Dorf
+Klosters-Serneus
+Kloten
+Klöntal
+Knonau
+Knutwil
+Koblenz
+Kollbrunn
+Konolfingen
+Koppigen
+Kottwil
+Kradolf
+Kradolf-Schönenberg
+Krattigen
+Krauchthal
+Kreuzlingen
+Kreuzlingen Ifolor
+Kriechenwil
+Kriegstetten
+Kriens
+Kriessern
+Krinau
+Krummenau
+Kräiligen
+Kulmerau
+Kyburg
+Kyburg-Buchegg
+Kägiswil
+Känerkinden
+Kölliken
+Köniz
+Küblis
+Kümmertshausen
+Künten
+Küsnacht (ZH)
+Küsnacht ZH
+Küssnacht (SZ)
+Küssnacht am Rigi
+Küttigen
+Küttigkofen
+L'Abbaye
+L'Abergement
+L'Auberson
+L'Etivaz
+L'Isle
+La Baroche
+La Brillaz
+La Brévine
+La Chaux (Cossonay)
+La Chaux-de-Fonds
+La Chaux-des-Breuleux
+La Chaux-du-Milieu
+La Châtagne
+La Cibourg
+La Comballaz
+La Conversion
+La Corbaz
+La Coudre
+La Croix (Lutry)
+La Croix-de-Rozon
+La Cure
+La Côte-aux-Fées
+La Ferrière
+La Folliaz
+La Forclaz VD
+La Forclaz VS
+La Fouly VS
+La Garde (Sembrancher)
+La Heutte
+La Joux FR
+La Lécherette
+La Magne
+La Muraz (Savièse)
+La Neirigue
+La Neuveville
+La Place (Ayent)
+La Plaine
+La Praz
+La Punt-Chamues-ch
+La Rippe
+La Roche
+La Roche FR
+La Russille
+La Rösa
+La Sage
+La Sagne
+La Sagne (Ste-Croix)
+La Sagne NE
+La Sarraz
+La Sonnaz
+La Tanne
+La Tine
+La Tour VS
+La Tour-de-Peilz
+La Tour-de-Trême
+La Tzoumaz
+La Tène
+La Vernaz (Les Agettes)
+La Verrerie
+La Vraconnaz
+La Vue-des-Alpes
+Laax
+Laax GR
+Lachen
+Lachen SZ
+Laconnex
+Ladir
+Lajoux (JU)
+Lajoux JU
+Lalden
+Lamboing
+Lamone
+Lampenberg
+Lamperswil TG
+Lancy
+Landiswil
+Landquart
+Landschlacht
+Langenbruck
+Langendorf
+Langenthal
+Langnau am Albis
+Langnau b. Reiden
+Langnau im Emmental
+Langrickenbach
+Langwies
+Langwiesen
+Lanna
+Lanterswil
+Lantsch/Lenz
+Lanzenhäusern
+Lanzenneunforn
+Largario
+Latsch
+Latterbach
+Lauenen
+Lauenen b. Gstaad
+Lauerz
+Laufen
+Laufen-Uhwiesen
+Laufenburg
+Laupen
+Laupen BE
+Laupen ZH
+Laupersdorf
+Lauperswil
+Laura
+Lausanne
+Lausanne Adm cant
+Lausanne Veillon
+Lausen
+Lauterbrunnen
+Lauwil
+Lavertezzo
+Lavey-Morcles
+Lavey-Village
+Lavey-les-Bains
+Lavigny
+Lavin
+Lavizzara
+Lavorgo
+Lax
+Le Brassus
+Le Brouillet
+Le Bry
+Le Bémont (JU)
+Le Bémont JU
+Le Cerneux-Péquignot
+Le Cerneux-Veusil
+Le Chenit
+Le Châble VS
+Le Château-de-Ste-Croix
+Le Châtelard
+Le Châtelard VS
+Le Châtelard-près-Romont
+Le Crêt-du-Locle
+Le Crêt-près-Semsales
+Le Flon
+Le Fuet
+Le Grand-Saconnex
+Le Landeron
+Le Lieu
+Le Lignon
+Le Locle
+Le Mont-Pèlerin
+Le Mont-sur-Lausanne
+Le Mouret
+Le Noirmont
+Le Pont
+Le Prese
+Le Prédame
+Le Prévoux
+Le Pâquier (FR)
+Le Pâquier NE
+Le Pâquier-Montbarry
+Le Sentier
+Le Solliat
+Le Séchey
+Le Sépey
+Le Trétien
+Le Vaud
+Leggia
+Leibstadt
+Leimbach (AG)
+Leimbach AG
+Leimbach TG
+Leimiswil
+Leissigen
+Lenggenwil
+Lengnau (AG)
+Lengnau (BE)
+Lengnau AG
+Lengnau BE
+Lengwil
+Lenk
+Lenk im Simmental
+Lens
+Lentigny
+Lenzburg
+Lenzerheide/Lai
+Leontica
+Les Acacias
+Les Agettes
+Les Avanchets
+Les Avants
+Les Bayards
+Les Bioux
+Les Bois
+Les Brenets
+Les Breuleux
+Les Charbonnières
+Les Clées
+Les Collons
+Les Crosets
+Les Cullayes
+Les Diablerets
+Les Ecasseys
+Les Ecorcheresses
+Les Emibois
+Les Enfers
+Les Evouettes
+Les Friques
+Les Geneveys-sur-Coffrane
+Les Genevez (JU)
+Les Genevez JU
+Les Giettes
+Les Granges (Salvan)
+Les Haudères
+Les Hauts-Geneveys
+Les Marécottes
+Les Mayens-de-Sion
+Les Montets
+Les Monts-de-Corsier
+Les Monts-de-Pully
+Les Mosses
+Les Moulins
+Les Moulins VS (Liddes)
+Les Paccots
+Les Planchettes
+Les Plans-sur-Bex
+Les Pommerats
+Les Pontins
+Les Ponts-de-Martel
+Les Posses-sur-Bex
+Les Prés-d'Orvin
+Les Rasses
+Les Reussilles
+Les Sagnettes
+Les Sciernes-d'Albeuve
+Les Taillères
+Les Tavernes
+Les Thioleyres
+Les Valettes (Bovernier)
+Les Verrières
+Les Vieux-Prés
+Les Vérines (Chamoson)
+Lessoc
+Leuggelbach
+Leuggern
+Leuk
+Leuk Stadt
+Leukerbad
+Leutwil
+Leuzigen
+Levron
+Leysin
+Leytron
+Li Curt
+Libingen
+Lichtensteig
+Liddes
+Liebefeld
+Liebistorf
+Liedertswil
+Lieffrens
+Lieli LU
+Lienz
+Liesberg
+Liesberg Dorf
+Liestal
+Liez (St-Martin)
+Ligerz
+Lignerolle
+Lignières
+Ligornetto
+Limpach
+Lindau
+Linden
+Linescio
+Linthal
+Lipperswil
+Lippoldswilen
+Littenheid
+Litzirüti
+Lobsigen
+Loc
+Locarno
+Loco
+Lodano
+Lodrino
+Lohn (GR)
+Lohn (SH)
+Lohn GR
+Lohn SH
+Lohn-Ammannsegg
+Lohnstorf
+Lommis
+Lommiswil
+Lonay
+Longirod
+Lopagno
+Losone
+Lossy
+Lostallo
+Lostorf
+Lottigna
+Lotzwil
+Lourtier
+Lovatens
+Lovens
+Loveresse
+Luc (Ayent)
+Lucelle
+Lucens
+Luchsingen
+Ludiano
+Lufingen
+Lugaggia
+Lugano
+Lugnez
+Lugnorre
+Luins
+Lully (FR)
+Lully (VD)
+Lully FR
+Lully VD
+Lumbrein
+Lumino
+Lumnezia
+Lunden
+Lungern
+Lupfig
+Lupsingen
+Lurtigen
+Lussery-Villars
+Lussy FR
+Lussy-sur-Morges
+Lustdorf
+Lustmühle
+Luterbach
+Luthern
+Luthern Bad
+Lutry
+Lutzenberg
+Luven
+Luzein
+Luzern
+Lyss
+Lyssach
+Längenbühl
+Lätti
+Läufelfingen
+Léchelles
+Löhningen
+Lömmenschwil
+Lü
+Lüchingen
+Lüen
+Lüscherz
+Lüsslingen
+Lüsslingen-Nennigkofen
+Lüterkofen
+Lüterkofen-Ichertswil
+Lüterswil
+Lüterswil-Gächliwil
+Lütisburg
+Lütisburg Station
+Lütschental
+Lützelflüh
+Lützelflüh-Goldbach
+Macolin
+Madetswil
+Madiswil
+Madonna del Piano
+Madrano
+Madulain
+Magadino
+Magden
+Maggia
+Magliaso
+Maglio di Colla
+Magnedens
+Maienfeld
+Mairengo
+Maisprach
+Maladers
+Malans
+Malans GR
+Malans SG
+Malix
+Malleray
+Maloja
+Malters
+Malvaglia
+Mamishaus
+Mammern
+Mandach
+Mannenbach-Salenstein
+Mannens
+Manno
+Maracon
+Marbach (SG)
+Marbach LU
+Marbach SG
+Marchissy
+Mariastein
+Marin-Epagnier
+Marly
+Marmorera
+Marnand
+Maroggia
+Marolta
+Marsens
+Marthalen
+Martherenges
+Martigny
+Martigny Mutuel
+Martigny-Combe
+Martigny-Croix
+Martina
+Martisberg
+Maschwanden
+Mase
+Masein
+Maseltrangen
+Massagno
+Massongex
+Massonnens
+Mastrils
+Mathod
+Mathon
+Matran
+Matt
+Matten (St. Stephan)
+Matten b. Interlaken
+Matten bei Interlaken
+Mattstetten
+Mattwil
+Matzendorf
+Matzingen
+Mauborget
+Mauensee
+Maules
+Maur
+Mauraz
+Mauren TG
+Mayens-de-Chamoson
+Mayens-de-la-Zour (Savièse)
+Medeglia
+Medel (Lucmagn)
+Medels im Rheinwald
+Meggen
+Mehlsecken
+Meien
+Meienberg
+Meienried
+Meierskappel
+Meikirch
+Meilen
+Meinier
+Meinisberg
+Meiringen
+Meisterschwanden
+Melano
+Melchnau
+Melchsee-Frutt
+Melchtal
+Melide
+Mellikon
+Mellingen
+Mels
+Meltingen
+Mendrisio
+Menzberg
+Menzengrüt
+Menziken
+Menzingen
+Menznau
+Menzonio
+Merenschwand
+Mergoscia
+Meride
+Merishausen
+Merligen
+Merlischachen
+Mervelier
+Merzligen
+Mesocco
+Messen
+Mettau
+Mettauertal
+Mettembert
+Mettendorf TG
+Mettlen
+Mettmenstetten
+Metzerlen
+Metzerlen-Mariastein
+Mex (VD)
+Mex VD
+Mex VS
+Meyriez
+Meyrin
+Mezzovico
+Mezzovico-Vira
+Middes
+Mies
+Miex
+Miglieglia
+Milken
+Milvignes
+Minusio
+Miralago
+Mirchel
+Misery
+Misery-Courtion
+Mission
+Missy
+Misériez (Salins)
+Mitlödi
+Mittelhäusern
+Miège
+Miécourt
+Mogelsberg
+Moghegno
+Moiry
+Moiry VD
+Molare
+Moleno
+Molinazzo di Monteggio
+Molinis
+Mollens (VD)
+Mollens VD
+Mollens VS
+Mollie-Margot
+Mollis
+Molondin
+Mols
+Moléson-sur-Gruyères
+Mon
+Moneto
+Monible
+Monnaz
+Mont-Crosin
+Mont-Noble
+Mont-Soleil
+Mont-Tramelan
+Mont-Vully
+Mont-de-Buttes
+Mont-la-Ville
+Mont-sur-Rolle
+Montagne-de-Courtelary
+Montagne-de-Sonvilier
+Montagnola
+Montagnon (Leytron)
+Montagny (FR)
+Montagny-Chamard
+Montagny-la-Ville
+Montagny-les-Monts
+Montagny-près-Yverdon
+Montalchez
+Montana
+Montanaire
+Montaubion-Chardonney
+Montavon
+Montbovon
+Montbrelloz
+Montcherand
+Monte
+Monte Carasso
+Monteceneri
+Monteggio
+Monteiller (Savièse)
+Montenol
+Montet (Broye)
+Montet (Glâne)
+Montezillon
+Montfaucon
+Montfavergier
+Montherod
+Monthey
+Montignez
+Montilliez
+Montlingen
+Montmagny
+Montmelon
+Montmollin
+Montpreveyres
+Montreux
+Montreux Redoute
+Montricher
+Montsevelier
+Montévraz
+Moosleerau
+Moosseedorf
+Morbio Inferiore
+Morbio Superiore
+Morcles
+Morcote
+Morens FR
+Morgarten
+Morges
+Morgins
+Morissen
+Morlens
+Morlon
+Morrens (VD)
+Morrens VD
+Morschach
+Mosen
+Mosnang
+Mosogno
+Mossel
+Motto (Blenio)
+Moudon
+Moutier
+Movelier
+Mugena
+Muggio
+Muhen
+Mulegns
+Mumpf
+Mumpé Medel
+Mund
+Muntelier
+Muolen
+Muotathal
+Mur (Vully) FR
+Mur (Vully) VD
+Muralto
+Muraz (Collombey)
+Muraz (Sierre)
+Murg
+Murgenthal
+Muri (AG)
+Muri AG
+Muri b. Bern
+Muri bei Bern
+Muriaux
+Murist
+Murten
+Murzelen
+Mutrux
+Mutten
+Muttenz
+Muzzano
+Mädris-Vermol
+Mägenwil
+Männedorf
+Märstetten
+Märwil
+Ménières
+Mézery-près-Donneloye
+Mézières (FR)
+Mézières FR
+Mézières VD
+Môtier (Vully)
+Môtiers NE
+Möhlin
+Mönchaltorf
+Mönthal
+Mörel
+Mörel-Filet
+Mörigen
+Möriken AG
+Möriken-Wildegg
+Mörschwil
+Mötschwil
+Mühlau
+Mühlebach (Goms)
+Mühleberg
+Mühledorf (BE)
+Mühledorf BE
+Mühledorf SO
+Mühlehorn
+Mühlethal
+Mühlethurnen
+Mühlrüti
+Mülchi
+Mülenen
+Müllheim
+Müllheim Dorf
+Müllheim-Wigoltingen
+Mülligen
+Mümliswil
+Mümliswil-Ramiswil
+Münchenbuchsee
+Münchenstein
+Münchenwiler
+Münchringen
+Münchwilen (AG)
+Münchwilen (TG)
+Münchwilen AG
+Münchwilen TG
+Münsingen
+Münster VS
+Münsterlingen
+Müntschemier
+Mürren
+Müselbach
+Müstair
+Müswangen
+Nassen
+Nassenwil
+Naters
+Nax
+Naz
+Nebikon
+Necker
+Neckertal
+Neerach
+Neftenbach
+Neggio
+Neirivue
+Nendaz
+Nennigkofen
+Nenzlingen
+Neschwil
+Nesselnbach
+Nesslau
+Netstal
+Neu St. Johann
+Neuchâtel
+Neudorf
+Neuendorf
+Neuenegg
+Neuenhof
+Neuenkirch
+Neuhaus SG
+Neuhausen am Rheinfall
+Neuheim
+Neukirch (Egnach)
+Neukirch an der Thur
+Neunforn
+Neunkirch
+Neuwilen
+Neuägeri
+Neyruz (FR)
+Neyruz FR
+Neyruz-sur-Moudon
+Nidau
+Nidfurn
+Niederbipp
+Niederbuchsiten
+Niederbüren
+Niederdorf
+Niedergampel
+Niedergesteln
+Niederglatt
+Niederglatt SG
+Niederglatt ZH
+Niedergösgen
+Niederhasli
+Niederhelfenschwil
+Niederhünigen
+Niederlenz
+Niedermuhlern
+Niederneunforn
+Niederrickenbach
+Niederried b. Interlaken
+Niederried b. Kallnach
+Niederried bei Interlaken
+Niederrohrdorf
+Niederscherli
+Niederstetten
+Niederstocken
+Niederteufen
+Niederurnen
+Niederuzwil
+Niederwald
+Niederwangen b. Bern
+Niederweningen
+Niederwil (AG)
+Niederwil AG
+Niederwil SG
+Niederwil SO
+Niederönz
+Niederösch
+Nierlet-les-Bois
+Niouc
+Niva (Vallemaggia)
+Nivo
+Nods
+Noflen
+Noflen BE
+Nohl
+Noiraigue
+Noréaz
+Nottwil
+Novaggio
+Novalles
+Novazzano
+Noville
+Noës
+Nufenen
+Nuglar
+Nuglar-St. Pantaleon
+Nunningen
+Nussbaumen AG
+Nussbaumen TG
+Nusshof
+Nuvilly
+Nyon
+Näfels
+Nänikon
+Némiaz (Chamoson)
+Nürensdorf
+Obbürgen
+Oberaach
+Oberarth
+Oberbalm
+Oberbalmberg
+Oberbipp
+Oberbuchsiten
+Oberburg
+Oberbussnang
+Oberbüren
+Oberbütschel
+Oberdiessbach
+Oberdorf (BL)
+Oberdorf (NW)
+Oberdorf (SO)
+Oberdorf BL
+Oberdorf NW
+Oberdorf SO
+Oberegg
+Oberembrach
+Oberems
+Oberengstringen
+Oberentfelden
+Oberflachs
+Oberfrittenbach
+Obergerlafingen
+Obergesteln
+Oberglatt
+Oberglatt ZH
+Obergoldbach
+Obergoms
+Obergösgen
+Oberhallau
+Oberhasli
+Oberhelfenschwil
+Oberhof
+Oberhofen AG
+Oberhofen TG
+Oberhofen am Thunersee
+Oberhünigen
+Oberiberg
+Oberkirch
+Oberkirch LU
+Oberkulm
+Oberlangenegg
+Oberlunkhofen
+Obermumpf
+Obermutten
+Obernau
+Oberneunforn
+Oberramsern
+Oberrickenbach
+Oberried FR
+Oberried am Brienzersee
+Oberrieden
+Oberriet (SG)
+Oberriet SG
+Oberrindal
+Oberrohrdorf
+Oberrüti
+Obersaxen
+Obersaxen Mundaun
+Oberschan
+Oberschrot
+Obersiggenthal
+Oberstammheim
+Obersteckholz
+Oberstetten
+Oberstocken
+Oberterzen
+Oberthal
+Oberurnen
+Oberuzwil
+Oberwald
+Oberwangen TG
+Oberwangen b. Bern
+Oberweningen
+Oberwil (BL)
+Oberwil (Dägerlen)
+Oberwil BL
+Oberwil b. Büren
+Oberwil b. Zug
+Oberwil bei Büren
+Oberwil im Simmental
+Oberwil-Lieli
+Oberägeri
+Oberönz
+Oberösch
+Obfelden
+Obstalden
+Ochlenberg
+Ocourt
+Odogno
+Oekingen
+Oensingen
+Oerlingen
+Oeschenbach
+Oeschgen
+Oeschseite
+Oetwil am See
+Oetwil an der Limmat
+Oey
+Oftringen
+Ogens
+Oggio
+Ohmstal
+Oleyres
+Olivone
+Ollon
+Ollon VD
+Ollon VS
+Olsberg
+Olten
+Oltingen
+Onex
+Onnens (VD)
+Onnens FR
+Onnens VD
+Onsernone
+Opfershofen TG
+Opfertshofen SH
+Opfikon
+Oppens
+Oppikon
+Oppligen
+Orbe
+Orges
+Orient
+Origlio
+Ormalingen
+Ormont-Dessous
+Ormont-Dessus
+Ormône (Savièse)
+Orny
+Oron
+Oron-la-Ville
+Oron-le-Châtel
+Orpund
+Orselina
+Orsières
+Orsonnens
+Ortschwaben
+Orvin
+Orzens
+Oschwand
+Osco
+Osogna
+Ospizio Bernina
+Ossingen
+Osterfingen
+Ostermundigen
+Otelfingen
+Othmarsingen
+Ottenbach
+Ottikon (Gossau ZH)
+Ottikon b. Kemptthal
+Ottoberg
+Oulens-sous-Echallens
+Oulens-sur-Lucens
+Ovronnaz
+Pagig
+Pailly
+Palagnedra
+Palasuit (Liddes)
+Palézieux
+Palézieux-Village
+Pambio-Noranco
+Pampigny
+Panex
+Pany
+Paradiso
+Parpan
+Parsonz
+Paspels
+Passugg
+Paudex
+Payerne
+Pazzallo
+Peccia
+Pedrinate
+Peiden
+Peist
+Peney-le-Jorat
+Pensier
+Penthalaz
+Penthaz
+Penthéréaz
+Perlen
+Perly
+Perly-Certoux
+Perrefitte
+Perroy
+Personico
+Peseux
+Petit Vichères (Liddes)
+Petit-Lancy
+Petit-Martel
+Petit-Val
+Peyres-Possens
+Pfaffhausen
+Pfaffnau
+Pfeffikon LU
+Pfeffingen
+Pfungen
+Pfyn
+Pfäfers
+Pfäffikon
+Pfäffikon SZ
+Pfäffikon ZH
+Piandera Paese
+Pianezzo
+Piano di Peccia
+Piazzogna
+Pierrafortscha
+Pieterlen
+Pignia
+Pigniu
+Piotta
+Pitasch
+Pizolpark (Mels)
+Pizy
+Plaffeien
+Plagne
+Plan-les-Ouates
+Plasselb
+Plateau de Diesse
+Platta
+Plaun da Lej
+Pleigne
+Pleujouse
+Plons
+Pohlern
+Poliez-Pittet
+Poliez-le-Grand
+Pollegio
+Pompaples
+Pomy
+Pont (Veveyse)
+Pont-de-la-Morge (Sion)
+Pont-en-Ogoz
+Pont-la-Ville
+Ponte Capriasca
+Ponte Cremenaga
+Ponte Tresa
+Pontenet
+Ponthaux
+Ponto Valentino
+Pontresina
+Porrentruy
+Porsel
+Port
+Port-Valais
+Portalban
+Portein
+Porto Ronco
+Porza
+Posat
+Poschiavo
+Posieux
+Praden
+Pragg-Jenaz
+Prahins
+Prangins
+Praratoud
+Prato (Leventina)
+Prato-Sornico
+Pratteln
+Pratval
+Pravidondaz (Salins)
+Praz (Vully)
+Praz-de-Fort
+Preda
+Pregassona
+Pregny-Chambésy
+Premier
+Preonzo
+Presinge
+Prez-vers-Noréaz
+Prez-vers-Siviriez
+Prilly
+Pringy
+Produit (Leytron)
+Progens
+Promasens
+Promontogno
+Prosito
+Provence
+Prugiasco
+Präz
+Préverenges
+Prévondavaux
+Prévonloup
+Prêles
+Pugerna
+Puidoux
+Pully
+Puplinge
+Pura
+Purasca
+Pusserein
+Putz
+Péry
+Péry-La Heutte
+Quarten
+Quartino
+Quinten
+Quinto
+Rabius
+Radelfingen
+Radelfingen b. Aarberg
+Rafz
+Rain
+Ramersberg
+Ramiswil
+Ramlinsburg
+Ramosch
+Ramsei
+Ramsen
+Rancate
+Rances
+Randa
+Randogne
+Ranflüh
+Ranzo
+Raperswilen
+Rapperswil (BE)
+Rapperswil BE
+Rapperswil SG
+Rapperswil-Jona
+Raron
+Rasa
+Ravoire
+Realp
+Realta
+Rebeuvelier
+Rebstein
+Rebévelier
+Recherswil
+Rechthalten
+Reckingen VS
+Reconvilier
+Regensberg
+Regensdorf
+Rehetobel
+Reichenbach im Kandertal
+Reichenburg
+Reiden
+Reidermoos
+Reigoldswil
+Reinach (AG)
+Reinach (BL)
+Reinach AG
+Reinach BL
+Reisiswil
+Reitnau
+Rekingen (AG)
+Rekingen AG
+Remaufens
+Remetschwil
+Remigen
+Renan (BE)
+Renan BE
+Renens (VD)
+Renens VD
+Rengg
+Rennaz
+Retschwil
+Reute (AR)
+Reute AR
+Reutigen
+Reutlingen (Winterthur)
+Reverolle
+Rheinau
+Rheineck
+Rheinfelden
+Rheinklingen
+Rheinsulz
+Rhäzüns
+Riaz
+Riazzino
+Richenthal
+Richigen
+Richterswil
+Ricken SG
+Rickenbach (BL)
+Rickenbach (LU)
+Rickenbach (SO)
+Rickenbach (TG)
+Rickenbach (ZH)
+Rickenbach BL
+Rickenbach LU
+Rickenbach SO
+Rickenbach Sulz
+Rickenbach ZH
+Rickenbach b. Schwyz
+Rickenbach b. Wil
+Ricketwil (Winterthur)
+Riddes
+Ried (Frutigen)
+Ried (Muotathal)
+Ried b. Kerzers
+Ried bei Kerzers
+Ried-Brig
+Ried-Mörel
+Rieden AG
+Rieden SG
+Riederalp
+Riedern
+Riedholz
+Riedikon
+Riedstätt
+Riedt b. Erlen
+Riedtwil
+Riehen
+Riein
+Riemenstalden
+Riet (Neftenbach)
+Rietheim
+Riex
+Riffenmatt
+Rifferswil
+Riggisberg
+Rigi Kaltbad
+Rigi Klösterli
+Rigi Kulm
+Rigi Scheidegg
+Rigi Staffel
+Riken AG
+Rikon im Tösstal
+Ringgenberg (BE)
+Ringgenberg BE
+Ringoldswil
+Riniken
+Riom
+Risch
+Ritzingen
+Riva San Vitale
+Rivaz
+Rive Haute (Liddes)
+Riveo
+Rivera
+Riviera
+Rizenbach
+Robasacco
+Roche (VD)
+Roche VD
+Roche-d'Or
+Rochefort
+Roches (BE)
+Roches BE
+Rocourt
+Rodels
+Rodersdorf
+Rodi-Fiesso
+Roggenburg
+Roggliswil
+Roggwil (BE)
+Roggwil (TG)
+Roggwil BE
+Roggwil TG
+Rohr (SO)
+Rohr b. Olten
+Rohrbach
+Rohrbachgraben
+Rohrmatt
+Rolle
+Romainmôtier
+Romainmôtier-Envy
+Romairon
+Romanel-sur-Lausanne
+Romanel-sur-Morges
+Romanens
+Romanshorn
+Rombach
+Romont (BE)
+Romont (FR)
+Romont BE
+Romont FR
+Romoos
+Rona
+Ronco sopra Ascona
+Rongellen
+Root
+Ropraz
+Rorbas
+Rorschach
+Rorschacherberg
+Rosenlaui
+Rossa
+Rossemaison
+Rossenges
+Rossens FR
+Rossens VD
+Rosshäusern
+Rossinière
+Rossrüti
+Rossura
+Rosswald
+Rosé
+Rothenbrunnen
+Rothenburg
+Rothenfluh
+Rothenhausen
+Rothenthurm
+Rothrist
+Rothwald
+Rotkreuz
+Rottenschwil
+Rougemont
+Roumaz (Savièse)
+Roveredo (GR)
+Roveredo GR
+Roveredo TI
+Rovio
+Rovray
+Rubigen
+Rudolfingen
+Rudolfstetten
+Rudolfstetten-Friedlisb.
+Rudolfstetten-Friedlisberg
+Rue
+Rueras
+Rueun
+Rueyres
+Rueyres-St-Laurent
+Rueyres-Treyfayes
+Rueyres-les-Prés
+Rufi
+Rumendingen
+Rumisberg
+Rumlikon
+Rupperswil
+Ruppoldsried
+Ruschein
+Russikon
+Russin
+Russo
+Russy
+Ruswil
+Rutschwil (Dägerlen)
+Ruvigliana
+Rämismühle
+Réchy
+Réclère
+Römerswil
+Römerswil LU
+Röschenz
+Röthenbach Herzogenbuchsee
+Röthenbach im Emmental
+Rüderswil
+Rüdlingen
+Rüdtligen
+Rüdtligen-Alchenflüh
+Rüedisbach
+Rüeggisberg
+Rüegsau
+Rüegsauschachen
+Rüegsbach
+Rüeterswil
+Rüfenach
+Rüfenach AG
+Rüfenacht BE
+Rümikon
+Rümikon AG
+Rümlang
+Rümligen
+Rümlingen
+Rünenberg
+Rüschegg
+Rüschegg Gambach
+Rüschegg Heubach
+Rüschlikon
+Rüte
+Rüthi (Rheintal)
+Rüthi (SG)
+Rüti (ZH)
+Rüti GL
+Rüti ZH
+Rüti b. Büren
+Rüti b. Lyssach
+Rüti b. Riggisberg
+Rüti bei Büren
+Rüti bei Lyssach
+Rütihof
+Rütli
+Rütschelen
+Rüttenen
+S-chanf
+S. Antonino
+S. Antonio (Val Morobbia)
+S. Benedetg
+S. Bernardino
+S. Carlo (Poschiavo)
+S. Carlo (Val Bavona)
+S. Nazzaro
+S. Pietro
+S. Vittore
+Saanen
+Saanenmöser
+Saas im Prättigau
+Saas-Almagell
+Saas-Balen
+Saas-Fee
+Saas-Grund
+Sachseln
+Saclentse
+Safenwil
+Safien Platz
+Safiental
+Safnern
+Sagno
+Sagogn
+Saicourt
+Saignelégier
+Saillon
+Saint-Aubin (FR)
+Saint-Aubin-Sauges
+Saint-Barthélemy (VD)
+Saint-Blaise
+Saint-Brais
+Saint-Cergue
+Saint-George
+Saint-Gingolph
+Saint-Imier
+Saint-Livres
+Saint-Légier-La Chiésaz
+Saint-Léonard
+Saint-Martin (FR)
+Saint-Martin (VS)
+Saint-Maurice
+Saint-Oyens
+Saint-Prex
+Saint-Saphorin (Lavaux)
+Saint-Sulpice (VD)
+Sainte-Croix
+Sala Capriasca
+Saland
+Salavaux
+Salenstein
+Salez
+Salgesch
+Salins
+Salmsach
+Salorino
+Salouf
+Salvan
+Salvenach
+Samedan
+Samnaun
+Samnaun Dorf
+Samnaun-Compatsch
+Samstagern
+San Vittore
+Sangernboden
+Sant'Antonino
+Santa Maria in Calanca
+Sargans
+Sarmenstorf
+Sarn
+Sarnen
+Sarreyer
+Sarzens
+Sassel
+Satigny
+Sattel
+Saubraz
+Sauge
+Saulcy
+Saules
+Saules (BE)
+Saules BE
+Savagnier
+Savigny
+Savièse
+Savognin
+Savosa
+Sax
+Saxeten
+Saxon
+Saxonne (Ayent)
+Says
+Scareglia
+Schachen LU
+Schachen b. Herisau
+Schachen b. Reute
+Schaffhausen
+Schafhausen im Emmental
+Schafisheim
+Schalchen
+Schalunen
+Schangnau
+Scharans
+Scharnachtal
+Schattdorf
+Schattenhalb
+Scheid
+Schelten
+Schenkon
+Scherz
+Scherzingen
+Scheunen
+Scheuren
+Schiers
+Schindellegi
+Schinznach
+Schinznach Bad
+Schinznach Dorf
+Schinznach-Bad
+Schlans
+Schlatt (TG)
+Schlatt (ZH)
+Schlatt TG
+Schlatt ZH
+Schlatt-Haslen
+Schlattingen
+Schleinikon
+Schleitheim
+Schlierbach
+Schlieren
+Schliern b. Köniz
+Schlossrued
+Schlosswil
+Schluein
+Schmerikon
+Schmidigen-Mühleweg
+Schmidrüti
+Schmidshof
+Schmiedrued
+Schmitten (Albula)
+Schmitten (FR)
+Schmitten (GR)
+Schmitten FR
+Schnaus
+Schneisingen
+Schnottwil
+Schocherswil
+Schongau
+Schuders
+Schupfart
+Schwaderloch
+Schwadernau
+Schwanden (Sigriswil)
+Schwanden GL
+Schwanden b. Brienz
+Schwanden bei Brienz
+Schwanden im Emmental
+Schwarzenbach (Huttwil)
+Schwarzenbach LU
+Schwarzenbach SG
+Schwarzenberg
+Schwarzenberg LU
+Schwarzenburg
+Schwarzenegg
+Schwarzhäusern
+Schwarzsee
+Schweizersholz
+Schwellbrunn
+Schwende
+Schwenden im Diemtigtal
+Schwendi im Weisstannental
+Schwendibach
+Schwerzenbach
+Schwyz
+Schwändi b. Schwanden
+Schänis
+Schöfflisdorf
+Schöftland
+Schönenbaumgarten
+Schönenberg (ZH)
+Schönenberg ZH
+Schönenberg an der Thur
+Schönenbuch
+Schönengrund
+Schönenwerd
+Schönholzerswilen
+Schönried
+Schötz
+Schübelbach
+Schüpbach
+Schüpfen
+Schüpfheim
+Scudellate
+Scuol
+Sedrun
+Seeberg
+Seedorf (BE)
+Seedorf (UR)
+Seedorf BE
+Seedorf UR
+Seegräben
+Seehof
+Seelisberg
+Seengen
+Seewen
+Seewen SO
+Seewen SZ
+Seewil
+Seewis Dorf
+Seewis im Prättigau
+Seewis-Pardisla
+Seewis-Schmitten
+Seftigen
+Segnas
+Seigneux
+Seiry
+Seleute
+Selkingen
+Selma
+Seltisberg
+Selzach
+Sembrancher
+Sementina
+Semione
+Sempach
+Sempach Station
+Semsales
+Senarclens
+Sennhof (Winterthur)
+Sennwald
+Sent
+Senèdes
+Seon
+Serfontana
+Sergey
+Serneus
+Serpiano
+Serravalle
+Servion
+Seseglio
+Sessa
+Seuzach
+Sevelen
+Sevgein
+Sfazù
+Siat
+Siblingen
+Siebnen
+Siegershausen
+Sierre
+Siggenthal Station
+Sigigen
+Sigirino
+Siglistorf
+Signau
+Signy
+Signy-Avenex
+Signèse (Ayent)
+Signôra
+Sigriswil
+Sihlbrugg
+Sihlbrugg Station
+Sihlwald
+Silenen
+Sils im Domleschg
+Sils im Engadin/Segl
+Sils/Segl Baselgia
+Sils/Segl Maria
+Silvaplana
+Silvaplana-Surlej
+Simplon
+Simplon Dorf
+Sins
+Sion
+Sirnach
+Siselen
+Siselen BE
+Sisikon
+Sissach
+Sisseln
+Sisseln AG
+Sitterdorf
+Siviez (Nendaz)
+Siviriez
+Soazza
+Sobrio
+Soglio
+Solduno
+Solothurn
+Somazzo
+Someo
+Sommentier
+Sommeri
+Sonceboz-Sombeval
+Sonnental
+Sonogno
+Sonterswil
+Sonvico
+Sonvilier
+Sool
+Soral
+Sorengo
+Sorens
+Sornard (Nendaz)
+Sornetan
+Sorvilier
+Sottens
+Soubey
+Souboz
+Soulce
+Soyhières
+Speicher
+Speicherschwendi
+Spiegel b. Bern
+Spiez
+Spiringen
+Splügen
+Spreitenbach
+Spruga
+St-Aubin FR
+St-Aubin-Sauges
+St-Barthélemy VD
+St-Blaise
+St-Brais
+St-Cergue
+St-Cierges
+St-George
+St-Germain (Savièse)
+St-Gingolph
+St-Imier
+St-Jean VS
+St-Livres
+St-Luc
+St-Légier-La Chiésaz
+St-Léonard
+St-Martin FR
+St-Martin VS
+St-Maurice
+St-Oyens
+St-Pierre-de-Clages
+St-Prex
+St-Romain (Ayent)
+St-Saphorin (Lavaux)
+St-Saphorin-sur-Morges
+St-Sulpice NE
+St-Sulpice VD
+St-Séverin
+St-Triphon
+St-Ursanne
+St. Antoni
+St. Antönien
+St. Erhard
+St. Gallen
+St. Gallen K AG
+St. Gallenkappel
+St. German
+St. Josefen
+St. Margarethen TG
+St. Margrethen
+St. Margrethen SG
+St. Margrethenberg
+St. Martin (Lugnez)
+St. Moritz
+St. Niklaus
+St. Niklaus VS
+St. Niklausen LU
+St. Niklausen OW
+St. Pantaleon
+St. Pelagiberg
+St. Peter
+St. Peterzell
+St. Silvester
+St. Stephan
+St. Urban
+St. Ursen
+Sta. Maria Val Müstair
+Sta. Maria in Calanca
+Staad SG
+Stabio
+Stachen
+Stadel
+Stadel (Winterthur)
+Stadel b. Niederglatt
+Staffelbach
+Stalden (Sarnen)
+Stalden (VS)
+Stalden VS
+Staldenried
+Stallikon
+Stampa
+Stans
+Stansstad
+Starrkirch-Wil
+Staufen
+Ste-Croix
+Stechelberg
+Steckborn
+Steffisburg
+Steg VS
+Steg im Tösstal
+Steg-Hohtenn
+Stehrenberg
+Stein (AG)
+Stein (AR)
+Stein AG
+Stein AR
+Stein SG
+Stein am Rhein
+Steinach
+Steinebrunn
+Steinen
+Steinerberg
+Steinhaus
+Steinhausen
+Steinhof SO
+Steinhuserberg
+Steinmaur
+Stels
+Sternenberg
+Stetten (AG)
+Stetten (SH)
+Stetten AG
+Stetten SH
+Stettfurt
+Stettlen
+Stierva
+Stilli
+Stocken-Höfen
+Stoos SZ
+Strada
+Strengelbach
+Studen (BE)
+Studen BE
+Studen SZ
+Stugl/Stuls
+Stäfa
+Stüsslingen
+Suberg
+Subingen
+Suchy
+Suen (St-Martin)
+Sufers
+Sugiez
+Sugnens
+Suhr
+Sulgen
+Sullens
+Sulz AG
+Sulz LU
+Sulzbach
+Sumiswald
+Summaprada
+Sumvitg
+Sundlauenen
+Sur
+Surava
+Surcasti
+Surcuolm
+Surpierre
+Surrein
+Sursee
+Surses
+Susch
+Suscévaz
+Susten
+Sutz
+Sutz-Lattrigen
+Syens
+Sâles
+Sâles (Gruyère)
+Säriswil
+Sédeilles
+Sévaz
+Sévery
+Sörenberg
+Süderen
+Sünikon
+Tafers
+Tagelswangen
+Tamins
+Tann
+Tannay
+Tarasp
+Tartar
+Tartegnin
+Tatroz
+Tavanasa
+Tavannes
+Taverne
+Tecknau
+Tegerfelden
+Tegna
+Tenero
+Tenero-Contra
+Tenna
+Tenniken
+Tennwil
+Tentlingen
+Termen
+Termine
+Terre di Pedemonte
+Territet
+Tersnaus
+Tesserete
+Teufen (AR)
+Teufen AR
+Teufen ZH
+Teufenthal (AG)
+Teufenthal AG
+Teuffenthal (BE)
+Teuffenthal b. Thun
+Thal
+Thalheim (AG)
+Thalheim AG
+Thalheim an der Thur
+Thalkirch
+Thalwil
+Thayngen
+Theilingen
+Therwil
+Thielle
+Thierachern
+Thierrens
+Thun
+Thundorf
+Thunstetten
+Thusis
+Thyon
+Thônex
+Thörigen
+Thörishaus
+Thürnen
+Tiefencastel
+Tinizong
+Titterten
+Tobel
+Tobel-Tägerschen
+Toffen
+Tolochenaz
+Torgon
+Torny
+Torny-le-Grand
+Torre
+Torricella
+Torricella-Taverne
+Trachselwald
+Trachslau
+Tramelan
+Trans
+Trasadingen
+Travers
+Treiten
+Tremona
+Trey
+Treycovagnes
+Treyfayes
+Treytorrens (Payerne)
+Treyvaux
+Triboltingen
+Triengen
+Trient
+Trimbach
+Trimmis
+Trimstein
+Trin
+Trin Mulin
+Trogen
+Trogne (St-Martin)
+Troinex
+Troistorrents
+Trub
+Trubschachen
+Trun
+Truttikon
+Trélex
+Trübbach
+Trüllikon
+Tschappina
+Tscheppach
+Tscherlach
+Tschiertschen
+Tschiertschen-Praden
+Tschierv
+Tschingel ob Gunten
+Tschlin
+Tschugg
+Tuggen
+Tujetsch
+Tumegl/Tomils
+Turbach
+Turbenthal
+Turgi
+Turin (Salins)
+Turtmann
+Turtmann-Unterems
+Tuttwil
+Twann
+Twann-Tüscherz
+Tägerig
+Tägerschen
+Tägertschi
+Tägerwilen
+Täsch
+Täuffelen
+Tévenon
+Törbel
+Tübach
+Tüscherz-Alfermée
+Udligenswil
+Ueberstorf
+Uebeschi
+Ueken
+Uerikon
+Uerkheim
+Uerschhausen
+Uerzlikon
+Uesslingen
+Uesslingen-Buch
+Uetendorf
+Uetikon am See
+Uetliberg
+Uetliburg SG
+Uettligen
+Uezwil
+Uffikon
+Ufhusen
+Uhwiesen
+Uitikon
+Uitikon Waldegg
+Ulisbach
+Ulmiz
+Ulrichen
+Umiken
+Undervelier
+Unterbach BE
+Unterbäch
+Unterbäch VS
+Untereggen
+Unterems
+Unterendingen
+Unterengstringen
+Unterentfelden
+Unteriberg
+Unterkulm
+Unterlangenegg
+Unterlunkhofen
+Unterramsern
+Unterrindal
+Unterschächen
+Unterseen
+Untersiggenthal
+Unterstammheim
+Untersteckholz
+Unterterzen
+Untervaz
+Unterwasser
+Unterägeri
+Uors (Lumnezia)
+Urdorf
+Urmein
+Urnerboden
+Urnäsch
+Ursenbach
+Ursins
+Urswil
+Ursy
+Urtenen-Schönbühl
+Uster
+Uttigen
+Uttwil
+Utzenstorf
+Utzigen
+Uvrier
+Uznach
+Uznach Vögele AG
+Uzwil
+Vacallo
+Vadura
+Vaglio
+Vairano
+Val Müstair
+Val Terbi
+Val-d'Illiez
+Val-de-Charmey
+Val-de-Ruz
+Val-de-Travers
+Valangin
+Valbella
+Valbirse
+Valbroye
+Valchava
+Valendas
+Valens
+Valeyres-sous-Montagny
+Valeyres-sous-Rances
+Valeyres-sous-Ursins
+Vallamand
+Vallon
+Vallorbe
+Vals
+Valsot
+Valzeina
+Vandoeuvres
+Varen
+Varenzo
+Vasön
+Vattiz
+Vauderens
+Vauffelin
+Vaugondry
+Vaulion
+Vaulruz
+Vaumarcus
+Vaux-sur-Morges
+Vaz/Obervaz
+Vechigen
+Vella
+Vellerat
+Veltheim (AG)
+Veltheim AG
+Vendlincourt
+Vens (Sembrancher)
+Venthône
+Verbier
+Vercorin
+Verdabbio
+Verdasio
+Vergeletto
+Vermes
+Vernamiège
+Vernate
+Vernayaz
+Vernier
+Vers-chez-Perrin
+Vers-l'Eglise
+Versam
+Verscio
+Versegères
+Versoix
+Vesin
+Vessy
+Vevey
+Vex
+Veyras
+Veyrier
+Veysonnaz
+Veytaux
+Vezia
+Vezio
+Viano
+Vich
+Vichères (Liddes)
+Vico Morcote
+Vicosoprano
+Vicques
+Vielbringen b. Worb
+Viganello
+Vignogn
+Vilars NE
+Villa (Ayent)
+Villa (Evolène)
+Villa Bedretto
+Villa Luganese
+Villaraboud
+Villarbeney
+Villard-sur-Chamby
+Villarepos
+Villargiroud
+Villariaz
+Villarimboud
+Villarlod
+Villars-Bozon
+Villars-Bramard
+Villars-Burquin
+Villars-Epeney
+Villars-Mendraz
+Villars-Sainte-Croix
+Villars-Ste-Croix
+Villars-Tiercelin
+Villars-le-Comte
+Villars-le-Grand
+Villars-le-Terroir
+Villars-sous-Champvent
+Villars-sous-Mont
+Villars-sous-Yens
+Villars-sur-Fontenais
+Villars-sur-Glâne
+Villars-sur-Ollon
+Villarsel-le-Gibloux
+Villarsel-sur-Marly
+Villarsiviriaux
+Villarvolard
+Villarzel
+Villaz-Saint-Pierre
+Villaz-St-Pierre
+Villeneuve (VD)
+Villeneuve FR
+Villeneuve VD
+Villeret
+Villette (Lavaux)
+Villiers
+Villigen
+Villmergen
+Villnachern
+Villorsonnens
+Vilters
+Vilters-Wangs
+Vinelz
+Vinzel
+Vionnaz
+Vira (Gambarogno)
+Visp
+Visperterminen
+Vissoie
+Vitznau
+Vnà
+Vogelsang AG
+Vogorno
+Volken
+Volketswil
+Vollèges
+Vordemwald
+Vorderthal
+Vouvry
+Vrin
+Vuadens
+Vuarmarens
+Vuarrens
+Vucherens
+Vufflens-la-Ville
+Vufflens-le-Château
+Vugelles-La Mothe
+Vuibroye
+Vuippens
+Vuissens
+Vuisternens-dev-Romont
+Vuisternens-devant-Romont
+Vuisternens-en-Ogoz
+Vuiteboeuf
+Vulliens
+Vullierens
+Vully-les-Lacs
+Vulpera
+Vättis
+Vérossaz
+Vésenaz
+Vétroz
+Wabern
+Wabern Weihnachten
+Wachseldorn
+Wagen
+Wagenhausen
+Wagerswil
+Wahlen
+Wahlen b. Laufen
+Wahlendorf
+Walchwil
+Wald (AR)
+Wald (BE)
+Wald (ZH)
+Wald AR
+Wald ZH
+Walde AG
+Walde SG
+Waldenburg
+Waldhäusern AG
+Waldkirch
+Waldstatt
+Walenstadt
+Walenstadtberg
+Walkringen
+Wallbach
+Wallenbuch
+Wallenried
+Wallenwil
+Wallisellen
+Walliswil b. Niederbipp
+Walliswil b. Wangen
+Walliswil bei Niederbipp
+Walliswil bei Wangen
+Walperswil
+Waltalingen
+Waltensburg/Vuorz
+Waltenschwil
+Walterswil (BE)
+Walterswil (SO)
+Walterswil BE
+Walterswil SO
+Walzenhausen
+Wangen (SZ)
+Wangen SZ
+Wangen an der Aare
+Wangen b. Dübendorf
+Wangen b. Olten
+Wangen bei Olten
+Wangen-Brüttisellen
+Wangenried
+Wangs
+Wanzwil
+Wartau
+Warth
+Warth-Weiningen
+Wasen im Emmental
+Wassen
+Wassen UR
+Wasserauen
+Wasterkingen
+Watt
+Wattenwil
+Wattwil
+Wauwil
+Wavre
+Weesen
+Wegenstetten
+Weggis
+Weiach
+Weier im Emmental
+Weinfelden
+Weingarten-Kalthäusern
+Weiningen (ZH)
+Weiningen TG
+Weiningen ZH
+Weissbad
+Weissenburg
+Weissenstein b. Solothurn
+Weisslingen
+Weisstannen
+Weite
+Welschenrohr
+Wengen
+Wengi
+Wengi b. Büren
+Wengi b. Frutigen
+Wenslingen
+Werdenberg
+Wergenstein
+Wermatswil
+Wernetshausen
+Werthenstein
+Wettingen
+Wettswil
+Wettswil am Albis
+Wetzikon (ZH)
+Wetzikon TG
+Wetzikon ZH
+Wichtrach
+Widen
+Widnau
+Wiedlisbach
+Wienacht-Tobel
+Wiesenberg
+Wiesendangen
+Wiezikon b. Sirnach
+Wiggen
+Wiggiswil
+Wigoltingen
+Wikon
+Wil (SG)
+Wil (ZH)
+Wil AG
+Wil SG
+Wil ZH
+Wila
+Wilchingen
+Wildberg
+Wildegg
+Wildensbuch
+Wilderswil
+Wildhaus
+Wildhaus-Alt St. Johann
+Wilen (Gottshaus)
+Wilen (Sarnen)
+Wilen (TG)
+Wilen b. Neunforn
+Wilen b. Wil
+Wilen b. Wollerau
+Wiler (Lötschen)
+Wiler b. Seedorf
+Wiler b. Utzenstorf
+Wiler bei Utzenstorf
+Wileroltigen
+Wiliberg
+Wilihof
+Willadingen
+Willerzell
+Willisau
+Willisdorf
+Wimmis
+Winden
+Windisch
+Windlach
+Winikon
+Winistorf
+Winkel
+Winterberg ZH
+Wintersingen
+Winterthur
+Winznau
+Wirzweli
+Wisen (SO)
+Wisen SO
+Wislikofen
+Wittenbach
+Wittenwil
+Witterswil
+Wittinsburg
+Wittnau
+Wittwil
+Wohlen (AG)
+Wohlen AG
+Wohlen b. Bern
+Wohlen bei Bern
+Wohlenschwil
+Wolfenschiessen
+Wolfertswil
+Wolfhalden
+Wolfhausen
+Wolfisberg
+Wolfwil
+Wolhusen
+Wollerau
+Worb
+Worben
+Worblaufen
+Wuppenau
+Wynau
+Wynigen
+Wyssachen
+Wädenswil
+Wäldi
+Wängi
+Wölflinswil
+Wöschnau
+Wünnewil
+Wünnewil-Flamatt
+Würenlingen
+Würenlos
+Yens
+Yverdon-les-Bains
+Yvonand
+Yvorne
+Zauggenried
+Zeglingen
+Zeihen
+Zeiningen
+Zell (LU)
+Zell (ZH)
+Zell LU
+Zell ZH
+Zeneggen
+Zermatt
+Zernez
+Zetzwil
+Zezikon
+Ziefen
+Ziegelbrücke
+Zielebach
+Zignau
+Zihlschlacht
+Zihlschlacht-Sitterdorf
+Zillis
+Zillis-Reischen
+Zimmerwald
+Zinal
+Zizers
+Zofingen
+Zollbrück
+Zollikerberg
+Zollikofen
+Zollikon
+Zuben
+Zuchwil
+Zuckenriet
+Zufikon
+Zug
+Zugerberg
+Zullwil
+Zumholz
+Zumikon
+Zunzgen
+Zuoz
+Zuzgen
+Zuzwil (BE)
+Zuzwil (SG)
+Zuzwil BE
+Zuzwil SG
+Zweidlen
+Zweilütschinen
+Zweisimmen
+Zwieselberg
+Zwillikon
+Zwingen
+Zwischbergen
+Zwischenflüh
+Zäziwil
+Zénauva
+Züberwangen
+Zürich
+Zürich R Digest
+Zürich Versich.
+Zürich Voice Pub

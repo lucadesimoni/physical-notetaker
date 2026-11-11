@@ -383,13 +383,13 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    *Einstellungen → Namen und Fachbegriffe* are passed to it as hints, so
    "TWINT" or "Anna Meier" are spelled right.
 2. **Dialect clean-up:** speech recognition writes Swiss German partly in
-   dialect. Mistral Small 4 rewrites each line in Standard German without
+   dialect. Mistral Medium 3.5 rewrites those lines in Standard German without
    changing content, names or numbers:
-   *"Mir händ das gescht bschproche"* → *"Wir haben das gestern besprochen"*.
-   Only lines with dialect words are rewritten; lines already in Standard
-   German stay exactly as recognised. Anything that looks wrong (dropped,
-   much shorter or much longer) keeps its original text. Turn it off with
-   `voxtral.dialect_cleanup: false`.
+   *"Am Wochenend lafe ech duerch Attighausen"* → *"Am Wochenende laufe ich
+   durch Attighausen"*. Lines already in Standard German stay exactly as
+   recognised (small polishing is ignored), and anything that looks wrong
+   (dropped, much shorter or much longer) keeps its original text. Model:
+   `voxtral.dialect_model`; turn it off with `voxtral.dialect_cleanup: false`.
 3. **Commands in dialect**, also during the meeting: *"Mach es Notiz: …"*,
    *"Schriib das uf"*, *"Erstell en Task: …"*, *"Ufgab: …"*, *"Lueg mol nach: …"*,
    *"Beend d'Ufnahm"*.
@@ -403,22 +403,36 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    Applies when the meeting language is `de-CH` (the default); with `de`
    the German spelling is kept.
 
+7. **Swiss place names and dialect words help the transcription:** speech
+   recognition often mishears small places (*"Meltigen"*, *"Genpe"*). The
+   most similar official names (about 4,400 municipalities and localities,
+   from the Federal Statistical Office and GeoNames) are given to the
+   clean-up as hints, so it writes *Meltingen* or *Gempen* where that clearly
+   fits, and never guesses another place. A list of 2,700 dialect words from
+   the Swiss German Wikipedia (CC BY-SA 4.0) helps it find dialect lines.
+   Turn the place hints off with `voxtral.place_hints: false`.
+
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
 
 **Measured:** `scripts/benchmark_swiss_german.py` runs the notetaker's own
 transcription on Swiss German recordings with an official Standard German
-reference. On 40 samples (112 min) of the open SPC_R test set (Bernese
-parliament, CC BY 4.0):
+reference. Word error rate (lower is better):
 
-| Setup | Word error rate | BLEU |
-|---|---|---|
-| Voxtral Small, speaker labels (device default) | 14.1 % | 78.0 |
-| Voxtral Small, language fixed to German | 14.3 % | 77.8 |
-| Voxtral Mini, language fixed to German | 14.8 % | 77.3 |
+| Setup | Parliament speeches¹ | Dialect sentences² | Place names right² |
+|---|---|---|---|
+| Voxtral Small, speaker labels, no clean-up | 14.0 % | 53.2 % | 13 % |
+| **+ clean-up with place hints (device default)** | **14.3 %** | **41.4 %** | **27 %** |
+| Voxtral Small, language fixed to German | 14.3 % | – | – |
+| Voxtral Mini, language fixed to German | 14.8 % | – | – |
 
-Rewriting lines already in Standard German made them worse (21 % WER), so
-the clean-up now only touches lines with dialect words. To compare with
+¹ 40 samples (112 min) of the open SPC_R test set (Bernese parliament,
+CC BY 4.0): clear speech, Voxtral already writes Standard German.
+² 77 sentences in dialects of 8 cantons (ZH, AG, BE, BS, SG, LU, GR, VS)
+from the i4ds Swiss German city sentences, with synthetic voices and many
+small village names, which remain the main source of errors.
+
+To compare with
 another system (e.g. Plaud) on your own meetings, put `NAME.wav`, the real
 text as `NAME.txt` and the other system's text as `NAME.plaud.txt` in a
 folder and run it with `--folder`.
