@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.3.0 (2026-11-11)
+
+Much better Swiss German dialect, Swiss place names and names from past
+meetings help the transcription.
+
+### Downloads
+
+- **Windows:** `Notetaker-Setup-1.3.0.exe` (installer, recommended) or
+  `notetaker-windows-v1.3.0.zip`.
+- **Raspberry Pi:** `notetaker-raspberry-pi-v1.3.0.tar.gz`. Unpack, run
+  `sudo ./install.sh`.
+- **Python package:** `voxtral_notetaker-1.3.0-py3-none-any.whl`.
+
+### New
+
+- **Better dialect clean-up:** Mistral Medium 3.5 rewrites lines that are
+  still in dialect ("Am Wochenend lafe ech duerch" → "Am Wochenende laufe ich
+  durch"). Lines already in Standard German stay exactly as recognised.
+  Measured on Swiss German sentences from 8 cantons: word error rate
+  53 % → 41 %; formal speech unchanged (14 %).
+- **Swiss place names help:** misheard places ("Meltigen", "Genpe") get the
+  most similar official names (about 4,400) as hints, so the clean-up writes
+  Meltingen or Gempen where that clearly fits, and never guesses another
+  place. Correct place names: 13 % → 27 % on the dialect sentences.
+- **Dialect words:** 2,700 Swiss German words from the Swiss German
+  Wikipedia (CC BY-SA 4.0) help find dialect lines.
+- **Names from past meetings:** corrected speaker names, names from
+  introductions and task owners are used as hints for the transcription.
+- **No passages in English by mistake:** in German meetings, segments that
+  came out in English are transcribed again in German.
+- **Swiss Standard German:** "ss" instead of "ß", quotes «so», Swiss words
+  kept (since 1.2.0, now also in the clean-up and summary prompts).
+- New settings: `voxtral.dialect_model`, `voxtral.place_hints`,
+  `voxtral.learn_vocabulary`, `voxtral.fix_language_flips`.
+
+### Fixed
+
+- The clean-up with Mistral Large 4 failed on every call (it needs top_p 1),
+  and answers of reasoning models were not read.
+- Benchmark: options for the reference column, per-dialect results and
+  correctly recognised names.
+
 ## 1.2.0 (2026-11-10)
 
 Windows installer, much better results with quiet microphones, Swiss
