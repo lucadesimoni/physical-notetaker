@@ -8,13 +8,16 @@ gescht bschproche"). A language model rewrites each line in Standard German
 ("Wir haben das gestern besprochen") without changing content, names or
 numbers. Commands, tasks, dates and the memo all work better on the result.
 
-Safe by design: only lines with dialect words are sent (a benchmark on the
-SPC_R test set showed that rewriting lines already in Standard German makes
-them worse); they go out numbered and without speaker labels, and any line
-the model drops, shortens, merges or inflates keeps its original text.
+Safe by design: lines go out numbered and without speaker labels; any line
+the model drops, shortens a lot, merges or inflates keeps its original text.
+A line without dialect words keeps its text unless much of it changed: a
+benchmark (SPC_R parliament speeches, Swiss German city sentences in 8
+dialects) showed that polishing lines already in Standard German makes them
+less exact, while rewriting dialect lines makes them much better.
 """
 
 import re
+import difflib
 import logging
 from typing import List, Optional
 
@@ -31,6 +34,9 @@ CHUNK_LINES = 40
 MAX_GROWTH = 2.5
 # ... or shorter: a much shorter line lost content
 MIN_SHRINK = 0.6
+# A line without dialect words takes the model's version only if at least
+# this share of its words changed (dialect rewritten, not Standard German polished)
+MIN_CHANGE = 0.3
 _NUMBERED = re.compile(r'^\s*(\d+)\s*[|:.)]\s?(.*)$')
 
 # Words that only occur in Swiss German, not in Standard German. Lines with
@@ -78,6 +84,25 @@ def has_dialect(line: str) -> bool:
     return sum(1 for w in words if w in WEAK_DIALECT_WORDS) >= 2
 
 
+def changed_share(old: str, new: str) -> float:
+    """Share of words that differ between two versions of a line (0..1)"""
+    a, b = old.lower().split(), new.lower().split()
+    if not a and not b:
+        return 0.0
+    return 1.0 - difflib.SequenceMatcher(None, a, b).ratio()
+
+
+def accept_change(old: str, new: str) -> bool:
+    """
+    Keep the model's version only where the line was dialect: it has dialect
+    words, or much of it changed. Small edits to Standard German (polishing,
+    rewording) are not taken: measured, they make the transcript less exact.
+    """
+    if new == old:
+        return False
+    return has_dialect(old) or changed_share(old, new) >= MIN_CHANGE
+
+
 def should_clean(config: NotetakerConfig, detected_language: Optional[str]) -> bool:
     """Swiss German meetings, or German ones when the language is automatic"""
     if not config.voxtral.dialect_cleanup:
@@ -92,7 +117,8 @@ def _endpoint(config: NotetakerConfig):
     summary = config.summary
     base_url = summary.base_url or config.voxtral.base_url
     api_key = summary.api_key or config.voxtral.resolved_api_key()
-    return f"{base_url.rstrip('/')}/chat/completions", api_key, summary.model
+    model = config.voxtral.dialect_model or summary.model
+    return f"{base_url.rstrip('/')}/chat/completions", api_key, model
 
 
 def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
@@ -149,15 +175,16 @@ def clean_lines(lines: List[str], config: NotetakerConfig) -> List[str]:
     if not lines or not config.voxtral.resolved_api_key():
         return list(lines)
     out: List[str] = list(lines)
-    todo = [i for i, line in enumerate(lines) if has_dialect(line)]
-    for start in range(0, len(todo), CHUNK_LINES):
-        indexes = todo[start:start + CHUNK_LINES]
-        chunk = [lines[i] for i in indexes]
+    for start in range(0, len(lines), CHUNK_LINES):
+        chunk = lines[start:start + CHUNK_LINES]
         try:
-            for i, new in zip(indexes, _clean_chunk(chunk, config)):
-                out[i] = new
+            cleaned = _clean_chunk(chunk, config)
         except Exception as e:
             log.warning("Swiss German clean-up skipped for %d line(s): %s", len(chunk), e)
+            continue
+        for i, (old, new) in enumerate(zip(chunk, cleaned), start):
+            if accept_change(old, new):
+                out[i] = new
     changed = sum(1 for old, new in zip(lines, out) if old != new)
     log.info("Swiss German clean-up: %d of %d line(s) changed", changed, len(lines))
     return out

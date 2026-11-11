@@ -104,6 +104,21 @@ def test_merge_keeps_continuation_lines_and_rejects_lost_content():
     assert merge_cleaned([long], "1|Das ist so.") == [long]
 
 
+@pytest.mark.parametrize("old,new,accepted", [
+    # Dialect words: the Standard German version is taken
+    ("Mir händ das gescht bschproche.", "Wir haben das gestern besprochen.", True),
+    # No listed dialect word, but most of the line rewritten: dialect
+    ("Am Wochenend lafe ech duerch Attighausen.", "Am Wochenende laufe ich durch Attighausen.", True),
+    # Standard German only polished: the recognised text stays
+    ("Dann würden wir jetzt zum Traktandum zurückgehen, wo wir dran sind.",
+     "Dann würden wir jetzt zum Traktandum zurückgehen, an dem wir sind.", False),
+    ("Das ist so.", "Das ist so.", False),
+])
+def test_accept_change(old, new, accepted):
+    from voxtral_notetaker.dialect import accept_change
+    assert accept_change(old, new) is accepted
+
+
 @pytest.mark.parametrize("text,dialect", [
     ("Mir händ das gescht bschproche.", True),
     ("Grüezi zäme, ich bi d'Anna.", True),
@@ -144,8 +159,8 @@ def test_clean_lines_in_chunks_with_vocabulary(monkeypatch):
     _fake_llm(monkeypatch, lambda s: s.upper(), calls)
     lines = [f"zeile {i} isch fix" for i in range(85)] + ["Das ist schon Hochdeutsch."]
     assert clean_lines(lines, config) == [l.upper() for l in lines[:85]] + [lines[85]]
-    assert len(calls) == 3  # chunks of 40, only lines with dialect
-    assert calls[0]["model"] == "mistral-small-2603"
+    assert len(calls) == 3  # chunks of 40
+    assert calls[0]["model"] == "mistral-medium-3-5"
     assert "TWINT" in calls[0]["messages"][0]["content"]
 
 

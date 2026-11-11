@@ -53,6 +53,8 @@ class VoxtralConfig:
     vocabulary: List[str] = field(default_factory=list)
     # Swiss German: turn dialect left in the transcript into Standard German
     dialect_cleanup: bool = True
+    # Language model for that clean-up (Mistral Medium 3.5: measured best for dialect)
+    dialect_model: str = "mistral-medium-3-5"
 
     def resolved_api_key(self) -> str:
         """API key from config, or the MISTRAL_API_KEY environment variable"""

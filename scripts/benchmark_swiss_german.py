@@ -53,14 +53,14 @@ class Setup:
 SETUPS = {
     # What the device does today: speaker labels (language auto) + clean-up
     "small+speakers+cleanup": Setup("small+speakers+cleanup", "voxtral-small-transcribe-3-0",
-                                    Language.AUTO, True, "mistral-small-2603"),
+                                    Language.AUTO, True, "mistral-medium-3-5"),
     "small+speakers": Setup("small+speakers", "voxtral-small-transcribe-3-0", Language.AUTO, True),
+    "small+speakers+cleanup-small": Setup("small+speakers+cleanup-small",
+                                          "voxtral-small-transcribe-3-0", Language.AUTO, True,
+                                          "mistral-small-2603"),
     "small+de": Setup("small+de", "voxtral-small-transcribe-3-0", Language.DE, False),
     "small+de+cleanup": Setup("small+de+cleanup", "voxtral-small-transcribe-3-0", Language.DE,
-                              False, "mistral-small-2603"),
-    "small+speakers+cleanup-large": Setup("small+speakers+cleanup-large",
-                                          "voxtral-small-transcribe-3-0", Language.AUTO, True,
-                                          "mistral-large-4-0"),
+                              False, "mistral-medium-3-5"),
     "mini+de": Setup("mini+de", "voxtral-mini-transcribe-3-0", Language.DE, False),
 }
 
@@ -151,7 +151,7 @@ def run_setup(setup: Setup, sample: dict, config: NotetakerConfig) -> str:
     lines = [s.text for s in result.segments if s.text] or [result.text]
     if setup.cleanup_model:
         cfg = NotetakerConfig.from_dict(config.to_dict())
-        cfg.summary.model = setup.cleanup_model
+        cfg.voxtral.dialect_model = setup.cleanup_model
         lines = clean_lines(lines, cfg)
     return " ".join(lines).strip()
 
