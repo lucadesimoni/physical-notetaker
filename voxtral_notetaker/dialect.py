@@ -66,6 +66,7 @@ WEAK_DIALECT_WORDS = frozenset("bi cha mer en e uf vo ufe abe ine grüezi ha i �
 # Dialect articles before a noun ("S Ticket", "D Charte") and "Mir mache ..."
 _DIALECT_PATTERN = re.compile(r"(?:^|[.!?:,]\s+|\s)(?:S|D)\s[A-ZÄÖÜ][a-zäöü]|^\s*Mir\s[a-zäöü]+e\b")
 _CORPUS_WORDS = os.path.join(os.path.dirname(__file__), "data", "swiss_german_words.txt")
+_CORPUS_NOUNS = os.path.join(os.path.dirname(__file__), "data", "swiss_german_nouns.txt")
 _WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)?")
 
 
@@ -96,14 +97,24 @@ PLACE_RULE = (
 )
 
 
-@lru_cache(maxsize=1)
-def _corpus_words() -> frozenset:
-    """Dialect words from the Swiss German Wikipedia (data/swiss_german_words.txt)"""
+def _word_file(path: str) -> frozenset:
     try:
-        with open(_CORPUS_WORDS, encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return frozenset(w.strip() for w in f if w.strip() and not w.startswith("#"))
     except OSError:
         return frozenset()
+
+
+@lru_cache(maxsize=1)
+def _corpus_words() -> frozenset:
+    """Dialect words from the Swiss German Wikipedia and Wiktionary (data/swiss_german_words.txt)"""
+    return _word_file(_CORPUS_WORDS)
+
+
+@lru_cache(maxsize=1)
+def _corpus_nouns() -> frozenset:
+    """Dialect nouns from Wiktionary (data/swiss_german_nouns.txt), plus DIALECT_NOUNS"""
+    return _word_file(_CORPUS_NOUNS) | DIALECT_NOUNS
 
 
 def has_dialect(line: str) -> bool:
@@ -112,7 +123,7 @@ def has_dialect(line: str) -> bool:
     words = [w.lower() for w in found]
     if any(w in DIALECT_WORDS or w.startswith("d'") for w in words):
         return True
-    if any(w in DIALECT_NOUNS for w in found) or _DIALECT_PATTERN.search(line):
+    if any(w in _corpus_nouns() for w in found) or _DIALECT_PATTERN.search(line):
         return True
     # Corpus words are written in lower case (capitalised words are names)
     corpus = _corpus_words()
