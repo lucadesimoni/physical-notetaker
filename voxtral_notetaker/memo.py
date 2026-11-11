@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 import httpx
 
+from .chat import message_text
 from .config import SummaryConfig, VoxtralConfig
 from .swiss import SWISS_STYLE, is_swiss, swiss_spelling
 
@@ -217,7 +218,7 @@ class Summarizer:
                 timeout=self.config.timeout,
             )
             response.raise_for_status()
-            content = response.json()['choices'][0]['message']['content']
+            content = message_text(response.json())
         except Exception as e:
             log.warning("AI summary skipped: %s", e)
             return []

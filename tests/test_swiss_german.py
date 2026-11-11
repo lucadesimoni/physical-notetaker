@@ -329,3 +329,12 @@ def test_swiss_summary_prompt(monkeypatch):
     summarizer.summarize("Text", "de-CH")
     summarizer.summarize("Text", "de")
     assert "Schweizer Hochdeutsch" in sent[0] and "Schweizer Hochdeutsch" not in sent[1]
+
+
+def test_reasoning_model_answer_is_read():
+    from voxtral_notetaker.chat import message_text
+    thinking = {"choices": [{"message": {"content": [
+        {"type": "thinking", "thinking": [{"type": "text", "text": "Let me think"}]},
+        {"type": "text", "text": "1|Das Ticket gilt."}]}}]}
+    assert message_text(thinking) == "1|Das Ticket gilt."
+    assert message_text({"choices": [{"message": {"content": "ok"}}]}) == "ok"

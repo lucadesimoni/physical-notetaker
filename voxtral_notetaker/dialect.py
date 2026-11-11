@@ -20,6 +20,7 @@ from typing import List, Optional
 
 import httpx
 
+from .chat import message_text
 from .config import NotetakerConfig
 from .swiss import SWISS_STYLE
 
@@ -113,7 +114,7 @@ def _clean_chunk(lines: List[str], config: NotetakerConfig) -> List[str]:
         timeout=config.summary.timeout,
     )
     response.raise_for_status()
-    content = response.json()['choices'][0]['message']['content']
+    content = message_text(response.json())
     return merge_cleaned(lines, content)
 
 
