@@ -292,6 +292,27 @@ class JobProcessor:
             self._stage(job, f"email to {len(self.config.email.to_emails)} recipient(s)",
                         lambda: self._email(job))
 
+    def _config_with_learned_names(self) -> NotetakerConfig:
+        """The settings, with names from past meetings added to the vocabulary"""
+        if not self.config.voxtral.learn_vocabulary:
+            return self.config
+        from .transcription import context_terms
+        from .vocabulary import learned_names
+        try:
+            learned = learned_names(self.store.all())
+        except Exception as e:  # never cost a memo
+            log.warning("Learned names skipped: %s", e)
+            return self.config
+        own = list(self.config.voxtral.vocabulary)
+        terms = context_terms(own, learned)
+        if len(terms) == len(context_terms(own)):
+            return self.config
+        config = NotetakerConfig.from_dict(self.config.to_dict())
+        config.voxtral.vocabulary = terms
+        log.info("Vocabulary: %d own term(s) and %d name(s) from past meetings",
+                 len(context_terms(own)), len(terms) - len(context_terms(own)))
+        return config
+
     def _make_memo(self, job: Job):
         if not self.config.voxtral.resolved_api_key():
             raise PermanentError(t('err_no_api_key', self.lang))
@@ -300,7 +321,7 @@ class JobProcessor:
             lang = Language(language)
         except ValueError:
             lang = Language.AUTO
-        notetaker = self.notetaker_factory(self.config)
+        notetaker = self.notetaker_factory(self._config_with_learned_names())
         for speaker_id, name in job.speaker_overrides.items():
             notetaker.set_speaker_name(speaker_id, name)
         try:
