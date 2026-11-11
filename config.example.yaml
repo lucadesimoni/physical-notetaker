@@ -23,6 +23,8 @@ voxtral:
   dialect_cleanup: true   # Swiss German: dialect in the transcript -> Standard German
   dialect_model: mistral-medium-3-5  # model for the clean-up (Mistral Medium 3.5)
   place_hints: true       # official Swiss place names help the clean-up with misheard places
+  fix_language_flips: true  # German meetings: passages that came out in English are redone in German
+  learn_vocabulary: true  # names from past meetings (speakers, task owners) help the transcription
 
 # Speaker recognition
 diarization:

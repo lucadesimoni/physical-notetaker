@@ -412,6 +412,19 @@ Swiss German is the default meeting language. To get it as accurate as possible:
    the Swiss German Wikipedia (CC BY-SA 4.0) helps it find dialect lines.
    Turn the place hints off with `voxtral.place_hints: false`.
 
+8. **Names learned from past meetings:** speaker names you corrected on a
+   meeting page, names from introductions and task owners of recent meetings
+   are given to the speech recognition as hints, after your own *Namen und
+   Fachbegriffe* (100 hints at most). Names seen often and recently come
+   first. Turn it off with `voxtral.learn_vocabulary: false`.
+9. **No passages in English by mistake:** with speaker labels the language is
+   detected automatically, and short or unclear passages sometimes come out
+   in English (*"I want a inbuilt brick"*). In German and Swiss German
+   meetings such segments are transcribed again with German fixed
+   (*"Ich wohne in …"*); the new text is used only if it is German. Turn it
+   off with `voxtral.fix_language_flips: false`, e.g. for meetings partly
+   held in English.
+
 The memo is always in Standard German. The raw transcription is kept next to
 the recording (`….segments.json`).
 

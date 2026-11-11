@@ -57,6 +57,10 @@ class VoxtralConfig:
     dialect_model: str = "mistral-medium-3-5"
     # Official Swiss place names as hints for misheard places ("Meltigen" -> Meltingen)
     place_hints: bool = True
+    # German meetings: passages that came out in English are redone in German
+    fix_language_flips: bool = True
+    # Names from past meetings (speakers, task owners) as hints for the transcription
+    learn_vocabulary: bool = True
 
     def resolved_api_key(self) -> str:
         """API key from config, or the MISTRAL_API_KEY environment variable"""

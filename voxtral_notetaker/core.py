@@ -24,6 +24,7 @@ from .speakers import detect_speaker_names
 from .dialect import should_clean, clean_lines
 from .swiss import is_swiss, swiss_spelling
 from .announcements import strip_announcements
+from .language_check import fix_language_flips
 from .fsutil import atomic_replace
 
 
@@ -113,6 +114,13 @@ class Notetaker:
             self.transcriber.transcribe(audio_file, language, diarize=diarize, fast=fast)
         )
     
+    def _german_meeting(self, language: Language) -> bool:
+        """Is the meeting German or Swiss German, so English passages are flips?"""
+        if not self.config.voxtral.fix_language_flips:
+            return False
+        meeting = (self.config.service.language or 'auto').lower()
+        return language in (Language.DE, Language.DE_CH) or meeting in ('de', 'de-ch')
+
     def _use_api_diarization(self, diarize: bool) -> bool:
         return diarize and self.config.diarization.provider == 'mistral'
     
@@ -191,6 +199,10 @@ class Notetaker:
                 transcription = self.transcribe(audio_file, language, diarize=True)
             else:
                 transcription = self.transcribe(audio_file, language)
+            # German meeting, but a passage came out in English: redo it in German
+            if self._german_meeting(language):
+                fix_language_flips(audio_file, transcription,
+                                   lambda path: self.transcribe(path, Language.DE).text)
             save_transcription(transcription, cache_file)
         
         # The speakerphone also records the device's own announcements
