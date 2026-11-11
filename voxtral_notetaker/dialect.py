@@ -52,11 +52,19 @@ DIALECT_WORDS = frozenset("""
     dur gäge wüsst weisch säg säge luege lueg mached tüend tuet friitig mäntig
     zischtig ziischtig mittwuch donnschtig samschtig sunntig wuche ändi mitti
     novämber dezämber auguscht gömmer gemmer bstelle
+    bsuech bsueche giut gültet vergliich schtartä schtoppä ändä wohnä
+    lueged chunsch gisch nimmsch muesch gseit gloffe gfahre trunke
 """.split())
-# Short words that are dialect too, but also names or other languages (not
-# "es", "merci", "mache": those are Standard German as well):
-# a line needs two of them
-WEAK_DIALECT_WORDS = frozenset("bi cha mer en e uf vo ufe abe ine use grüezi".split())
+# Dialect nouns, written with a capital letter like all nouns
+DIALECT_NOUNS = frozenset("""
+    Kaffi Foti Fotti Summer Wuche Wucheend Wochenänd Ziit Ziet Huus Chind Auti Charte
+    Sitzig Ufgab Ufgabe Bricht Lüüt Gschäft Znüni Zmittag Zvieri Ztrinke Bsuech Tschopä
+""".split())
+# Short dialect words that also occur in other languages: a line needs two of
+# them, written in lower case ("I use" is English, "i ha" is dialect)
+WEAK_DIALECT_WORDS = frozenset("bi cha mer en e uf vo ufe abe ine grüezi ha i ä mini".split())
+# Dialect articles before a noun ("S Ticket", "D Charte") and "Mir mache ..."
+_DIALECT_PATTERN = re.compile(r"(?:^|[.!?:,]\s+|\s)(?:S|D)\s[A-ZÄÖÜ][a-zäöü]|^\s*Mir\s[a-zäöü]+e\b")
 _CORPUS_WORDS = os.path.join(os.path.dirname(__file__), "data", "swiss_german_words.txt")
 _WORD = re.compile(r"[^\W\d_]+(?:'[^\W\d_]+)?")
 
@@ -104,11 +112,13 @@ def has_dialect(line: str) -> bool:
     words = [w.lower() for w in found]
     if any(w in DIALECT_WORDS or w.startswith("d'") for w in words):
         return True
+    if any(w in DIALECT_NOUNS for w in found) or _DIALECT_PATTERN.search(line):
+        return True
     # Corpus words are written in lower case (capitalised words are names)
     corpus = _corpus_words()
     if any(w.lower() in corpus for i, w in enumerate(found) if i == 0 or w[:1].islower()):
         return True
-    return sum(1 for w in words if w in WEAK_DIALECT_WORDS) >= 2
+    return sum(1 for w in found if w in WEAK_DIALECT_WORDS) >= 2
 
 
 def changed_share(old: str, new: str) -> float:

@@ -69,6 +69,9 @@ class CommandParser:
         r'schri+b\s+(das|es|s|dä|de)?\s*uf\b',
         r'notiz\s+(mache|machä|erstelle|erstellä)\b',
         r'merk\s+(dir|dr|der)\b',
+        # "Notier das: ...", "Mach mer e Notiz"
+        r'notier(e|ä)?\s*(das|es|s)?\s*:',
+        r'mach\s+(mer|mir)\s+(e|es|äs|ä|en|eine)\s+notiz',
     ]
     
     GERMAN_TASK_PATTERNS = [
@@ -85,6 +88,10 @@ class CommandParser:
         r'(erstell|mach)\s+(en|e|es|ä|äs)\s+(task|ufgab|uufgab|ufgaab|aufgab)\b',
         r'(ufgab|uufgab|ufgaab)\s*:',
         r'(task|ufgab|uufgab)\s+(erstelle|erstellä|mache|machä|hinzuefüege|hinzufüege)\b',
+        # "Pendenz" is the usual Swiss word for an open task; "To-do: ..."
+        r'pendenz\s*:',
+        r'(erstell|mach|notier)\s+(e|en|es|ä|äs|eine|einen|mer\s+e|mir\s+e)\s+pendenz\b',
+        r'to-?do\s*:',
     ]
     
     GERMAN_RESEARCH_PATTERNS = [
@@ -122,7 +129,7 @@ class CommandParser:
             r'beende\s+(die|eine)?\s*aufnahme',
             r'recording\s+stoppen',
             r'(beend|beendi|stopp|stop)(e|ä)?\s+(d\'|d’|di|die)?\s*(ufnahm|uufnahm|ufnahme|aufnahm)',
-            r'(ufnahm|uufnahm|ufnahme|aufnahm)\s+(beende|beendä|stoppe|stoppä)\b',
+            r'(ufnahm|uufnahm|ufnahme|aufnahm)\s+(beende|beendä|beände|stoppe|stoppä)\b',
             r'hör\s+uf\s+(mit\s+)?(dä|de|der)?\s*(ufnahm|uufnahm|ufnahme|aufnahm)',
         ],
         'pause': [
@@ -294,10 +301,11 @@ class CommandParser:
             'recherchiere', 'suche', 'aufnahme', 'warten', 'unterbrechen', 'abbrechen',
             # Swiss German
             'isch', 'nöd', 'nid', 'händ', 'hend', 'gsi', 'öppis', 'grüezi', 'sali', 'hoi',
-            'ufnahm', 'ufgab', 'es', 'mir', 'chunt', 'lueg', 'gäll',
+            'ufnahm', 'ufgab', 'es', 'mir', 'chunt', 'lueg', 'gäll', 'pendenz', 'notier',
         ]
         
-        if self._contains_word(text, german_words):
+        from .dialect import has_dialect
+        if self._contains_word(text, german_words) or has_dialect(text):
             return 'de-CH'
         
         return 'en'

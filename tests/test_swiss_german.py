@@ -223,6 +223,11 @@ def test_meeting_pipeline_cleans_dialect(tmp_path, monkeypatch):
     ("Erstell en Task: Server bstelle.", "task", "Server bstelle"),
     ("Ufgab: Sabine macht de Plan.", "task", "Sabine macht de Plan"),
     ("Lueg mol nach: TWINT Chöschte.", "research", "TWINT Chöschte"),
+    ("Notier das: Budget isch fix.", "note", "Budget isch fix"),
+    ("Mach mer e Notiz: Budget.", "note", "Budget"),
+    ("Pendenz: Offerte schicke bis Friitig.", "task", "Offerte schicke bis Friitig"),
+    ("Mach e Pendenz: Server bstelle.", "task", "Server bstelle"),
+    ("To-do: Server bstelle.", "task", "Server bstelle"),
 ])
 def test_swiss_german_commands(text, kind, content):
     command = CommandParser().parse(text, "auto", strict=True)
@@ -234,6 +239,7 @@ def test_swiss_german_commands(text, kind, content):
 @pytest.mark.parametrize("text,action", [
     ("Beend d'Ufnahm.", "stop"),
     ("Ufnahm stoppe.", "stop"),
+    ("Ufnahm beände.", "stop"),
     ("Start d'Ufnahm.", "start"),
 ])
 def test_swiss_german_recording_commands(text, action):
@@ -245,6 +251,8 @@ def test_swiss_german_recording_commands(text, action):
     "Mir händ das gescht bschproche.",
     "Ich such no en Termin.",
     "Das isch halt so.",
+    "Die Pendenzen sind erledigt.",
+    "Ich notiere mir das morgen.",
 ])
 def test_ordinary_swiss_german_is_not_a_command(text):
     assert CommandParser().parse(text, "de-CH", strict=True) is None

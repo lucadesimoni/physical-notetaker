@@ -2,7 +2,9 @@
 # Derived from the Swiss German Wikipedia Parallel Corpus (absolak/swiss-german-wiki-pairs,
 # Alemannic Wikipedia, CC BY-SA 4.0): words written in lower case at least 5 times in
 # the Swiss German sentences and 20 times more often than in the Standard German ones,
-# without words a German dictionary knows. This file is licensed CC BY-SA 4.0.
+# without words a German dictionary knows. 
+# Common English words are left out (meetings may be in English).
+# This file is licensed CC BY-SA 4.0.
 aa
 aabasst
 aabaut
@@ -493,7 +495,6 @@ drotz
 druf
 drufabe
 druff
-drum
 drumm
 drumume
 drunder
@@ -510,7 +511,6 @@ drü
 drüü
 drüüber
 ds
-due
 duet
 dum
 dure
@@ -736,7 +736,6 @@ flüüsst
 fo
 folgendi
 fom
-foot
 forderet
 französischi
 franzöösisch
@@ -803,7 +802,6 @@ genannti
 gend
 geografischi
 germanischi
-gets
 gfaare
 gfahre
 gfale
@@ -1246,7 +1244,6 @@ hüüffig
 hüüfig
 hüüt
 iber
-id
 idäntisch
 igsetzt
 ihne
@@ -1419,9 +1416,7 @@ liit
 lingge
 linggi
 linggs
-lit
 literarischi
-lo
 lokaale
 lokali
 loo
@@ -1467,7 +1462,6 @@ meischde
 meischt
 meischte
 meischtens
-men
 mene
 mengisch
 menschlige
@@ -1476,7 +1470,6 @@ mer
 merere
 meriri
 messenischi
-met
 mid
 middelalterlige
 middelalterligi
@@ -1539,7 +1532,6 @@ müesse
 müesst
 müm
 mündlig
-na
 naa
 nachane
 nachanen
@@ -1784,9 +1776,7 @@ sech
 seer
 seg
 segi
-sell
 selte
-send
 sexuelli
 sibe
 sid
@@ -1806,7 +1796,6 @@ siini
 siis
 siit
 sim
-sin
 sinds
 sine
 sinene
@@ -1816,7 +1805,6 @@ sini
 sinnere
 sire
 sis
-sit
 sither
 sithär
 sitt
@@ -2023,7 +2011,6 @@ unabhängigi
 unde
 undedra
 unden
-under
 underbroche
 underdruckt
 undere
@@ -2070,7 +2057,6 @@ usbildet
 usbreitet
 usbroche
 usbräitet
-use
 usecho
 usechoo
 usegee
@@ -2250,7 +2236,6 @@ viil
 viile
 viili
 vil
-vile
 vilecht
 vilfach
 vili
@@ -2316,7 +2301,6 @@ wele
 welem
 welere
 weli
-well
 welli
 weltwiit
 wemm
@@ -2326,7 +2310,6 @@ wenns
 werd
 werded
 werdä
-were
 wered
 weret
 weschtlech
@@ -2389,7 +2372,6 @@ wohrschiinlig
 woll
 wome
 womer
-won
 wone
 woner
 woone
@@ -2403,7 +2385,6 @@ worde
 wordu
 wordä
 wordän
-wore
 woren
 worre
 worrè
