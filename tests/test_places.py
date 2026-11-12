@@ -57,6 +57,9 @@ def test_hints_go_to_the_clean_up(monkeypatch):
     "Das hät er nume gseit.",            # from the Swiss German Wikipedia word list
     "Mir müend das zwüsche de Sitzige mache.",
     "Er isch sälber cho.",
+    "Im Summer bsuech ich Wohlen.",          # dialect verb and noun
+    "S Ticket gültet für Frenkendorf.",      # dialect article before a noun
+    "Mir mache Foti in Wegenstetten.",       # "Mir" + verb in -e
 ])
 def test_dialect_words_from_corpus(text):
     assert has_dialect(text)
@@ -66,6 +69,9 @@ def test_dialect_words_from_corpus(text):
     "Ich fahre morgen selber nach Bern und finde das gut.",
     "Das heisst, wir erinnern uns daran.",
     "Merci vielmals, Herr Präsident.",
+    "Im Sommer besuche ich Wohlen.",
+    "Das Ticket gilt für Frenkendorf.",
+    "Mir ist das recht, Dr. Meier.",
 ])
 def test_standard_german_is_not_dialect(text):
     assert not has_dialect(text)
