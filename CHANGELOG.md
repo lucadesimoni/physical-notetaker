@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.4.0 (2026-11-12)
+
+More Swiss German words and spoken commands, from public dictionaries.
+
+### Downloads
+
+- **Windows:** `Notetaker-Setup-1.4.0.exe` (installer, recommended) or
+  `notetaker-windows-v1.4.0.zip`.
+- **Raspberry Pi:** `notetaker-raspberry-pi-v1.4.0.tar.gz`. Unpack, run
+  `sudo ./install.sh`.
+- **Python package:** `voxtral_notetaker-1.4.0-py3-none-any.whl`.
+
+### New
+
+- **Commands in dialect:** "Pendenz: …" and "Mach e Pendenz" (the Swiss word
+  for an open task), "To-do: …", "Notier das: …", "Mach mer e Notiz",
+  "Ufnahm beände".
+- **More dialect words:** about 4,500 dialect words and 1,300 dialect nouns
+  from the Swiss German Wikipedia and the Alemannic entries of Wiktionary
+  (CC BY-SA 4.0), plus dialect verbs (bsuech, giut, gültet …), short words
+  (i, ha, ä) and patterns ("S Ticket", "Mir mache …"). Dialect sentences
+  recognised as dialect: 65 % → 88 %; no Standard German, formal or English
+  sentence taken for dialect.
+
+### Fixed
+
+- English meetings could be taken for dialect because of words like
+  "under", "were" or "I use"; those words are no longer counted.
+
 ## 1.3.0 (2026-11-11)
 
 Much better Swiss German dialect, Swiss place names and names from past

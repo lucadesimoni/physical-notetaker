@@ -5,7 +5,7 @@ Voxtral Notetaker - Lean Raspberry Pi meeting transcription system
 Uses Mistral Voxtral for transcription and Mistral Small 4 for meeting summaries
 """
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 from .core import Notetaker
 from .config import Config, NotetakerConfig, Language
